@@ -39,15 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
   }
 
-  const savedUrl = localStorage.getItem('SUPABASE_URL');
-  const savedKey = localStorage.getItem('SUPABASE_ANON_KEY');
+  // Credenciais do Supabase do usuário
+  const defaultUrl = 'https://bsrcbtgdayqsggcijxfu.supabase.co';
+  const defaultKey = 'sb_publishable_PEVDs7pauyzHqBRiZNMuLg_tXFhfw0v';
 
-  if (savedUrl && savedKey) {
-    conectarSupabase(savedUrl, savedKey);
-  } else {
-    usarDadosDemo();
-  }
+  const savedUrl = localStorage.getItem('SUPABASE_URL') || defaultUrl;
+  const savedKey = localStorage.getItem('SUPABASE_ANON_KEY') || defaultKey;
 
+  conectarSupabase(savedUrl, savedKey);
   configurarEventos();
 });
 
