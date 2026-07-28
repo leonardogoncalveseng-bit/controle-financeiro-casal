@@ -7,28 +7,10 @@ let chartCategoriasInstance = null;
 
 // Estado local da aplicação
 let estado = {
-  rendaConjunta: 10000,
+  sobraEle: 1500,
+  sobraEla: 1500,
   transacoes: [],
   categorias: []
-};
-
-// Dados de demonstração (Caso ainda não tenha conectado o Supabase)
-const DADOS_DEMO = {
-  categorias: [
-    { id: '1', nome: 'Mercado', icone: '🛒' },
-    { id: '2', nome: 'Casa & Contas', icone: '🏠' },
-    { id: '3', nome: 'Lazer & Restaurantes', icone: '🎮' },
-    { id: '4', nome: 'Transporte & Combustível', icone: '🚗' },
-    { id: '5', nome: 'Saúde & Farmácia', icone: '💊' },
-    { id: '6', nome: 'Outros', icone: '📦' }
-  ],
-  transacoes: [
-    { id: 't1', descricao: 'Supermercado Carrefour', valor: 850.00, data: '2026-07-27', pago_por: 'Ele', categoria: { nome: 'Mercado' } },
-    { id: 't2', descricao: 'Aluguel & Condomínio', valor: 2200.00, data: '2026-07-05', pago_por: 'Ela', categoria: { nome: 'Casa & Contas' } },
-    { id: 't3', descricao: 'Posto Shell (Gasolina)', valor: 280.00, data: '2026-07-20', pago_por: 'Ele', categoria: { nome: 'Transporte & Combustível' } },
-    { id: 't4', descricao: 'Jantar de Casal', valor: 240.00, data: '2026-07-25', pago_por: 'Ela', categoria: { nome: 'Lazer & Restaurantes' } },
-    { id: 't5', descricao: 'Farmácia Raia', valor: 110.00, data: '2026-07-15', pago_por: 'Ele', categoria: { nome: 'Saúde & Farmácia' } }
-  ]
 };
 
 // ===================================================
@@ -39,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
   }
 
-  // Credenciais do Supabase do usuário
+  // Credenciais reais do Supabase do usuário
   const defaultUrl = 'https://bsrcbtgdayqsggcijxfu.supabase.co';
   const defaultKey = 'sb_publishable_PEVDs7pauyzHqBRiZNMuLg_tXFhfw0v';
 
@@ -60,8 +42,7 @@ function conectarSupabase(url, key) {
     localStorage.setItem('SUPABASE_ANON_KEY', key);
     carregarDadosDoSupabase();
   } catch (err) {
-    alert('Erro ao conectar ao Supabase: ' + err.message);
-    usarDadosDemo();
+    console.error('Erro ao conectar ao Supabase:', err.message);
   }
 }
 
@@ -69,6 +50,7 @@ async function carregarDadosDoSupabase() {
   if (!supabaseClient) return;
 
   try {
+    // 1. Carregar Categorias
     const { data: categorias, error: errCat } = await supabaseClient
       .from('categorias')
       .select('*');
@@ -76,6 +58,7 @@ async function carregarDadosDoSupabase() {
     if (errCat) throw errCat;
     estado.categorias = categorias || [];
 
+    // 2. Carregar Transações vinculadas com categorias
     const { data: transacoes, error: errTrans } = await supabaseClient
       .from('transacoes')
       .select('*, categoria:categorias(nome)');
@@ -85,15 +68,9 @@ async function carregarDadosDoSupabase() {
 
     atualizarInterface();
   } catch (error) {
-    console.warn('Não foi possível carregar dados do Supabase. Usando dados de teste.', error.message);
-    usarDadosDemo();
+    console.warn('Erro ao carregar dados do Supabase:', error.message);
+    atualizarInterface();
   }
-}
-
-function usarDadosDemo() {
-  estado.categorias = DADOS_DEMO.categorias;
-  estado.transacoes = DADOS_DEMO.transacoes;
-  atualizarInterface();
 }
 
 // ===================================================
@@ -103,49 +80,31 @@ function atualizarInterface() {
   preencherSelectCategorias();
   preencherTabelaTransacoes();
 
-  // 1. Cálculos de Totais
-  const renda = parseFloat(document.getElementById('input-renda-conjunta').value) || 0;
+  // 1. Gastos Familiares Totais
   const totalGastos = estado.transacoes.reduce((acc, t) => acc + Number(t.valor), 0);
-  const sobraMes = renda - totalGastos;
-  const porcentagemSobra = renda > 0 ? ((sobraMes / renda) * 100).toFixed(1) : 0;
-
-  // 2. Cálculo Separado: Ele vs Ela
-  const gastosEle = estado.transacoes
-    .filter(t => t.pago_por === 'Ele')
-    .reduce((acc, t) => acc + Number(t.valor), 0);
-
-  const gastosEla = estado.transacoes
-    .filter(t => t.pago_por === 'Ela')
-    .reduce((acc, t) => acc + Number(t.valor), 0);
-
-  const porcentagemEle = totalGastos > 0 ? ((gastosEle / totalGastos) * 100).toFixed(0) : 50;
-
-  // 3. Atualizar KPIs na tela
   document.getElementById('val-gastos-totais').textContent = formatarMoeda(totalGastos);
-  document.getElementById('val-gastos-ele').textContent = formatarMoeda(gastosEle);
-  document.getElementById('val-gastos-ela').textContent = formatarMoeda(gastosEla);
 
-  const barEleEla = document.getElementById('bar-ele-ela');
-  if (barEleEla) {
-    barEleEla.style.width = `${porcentagemEle}%`;
-  }
+  // 2. Sobras Individuais e Capacidade de Aporte Conjunta
+  const sobraEle = parseFloat(document.getElementById('input-sobra-ele').value) || 0;
+  const sobraEla = parseFloat(document.getElementById('input-sobra-ela').value) || 0;
+  
+  estado.sobraEle = sobraEle;
+  estado.sobraEla = sobraEla;
 
-  const elSobra = document.getElementById('val-sobra-mes');
-  elSobra.textContent = formatarMoeda(sobraMes);
-  elSobra.style.color = sobraMes >= 0 ? '#10b981' : '#f43f5e';
+  const aporteConjunto = sobraEle + sobraEla;
 
-  document.getElementById('subtext-porcentagem-sobra').textContent = `${porcentagemSobra}% da renda livre este mês`;
+  document.getElementById('val-sobra-conjunta').textContent = formatarMoeda(aporteConjunto);
 
-  // 4. Atualizar Projeção Futura
-  const proj3 = sobraMes > 0 ? sobraMes * 3 : 0;
-  const proj6 = sobraMes > 0 ? sobraMes * 6 : 0;
-  const proj12 = sobraMes > 0 ? sobraMes * 12 : 0;
+  // 3. Projeção de Investimentos do Casal
+  const proj3 = aporteConjunto > 0 ? aporteConjunto * 3 : 0;
+  const proj6 = aporteConjunto > 0 ? aporteConjunto * 6 : 0;
+  const proj12 = aporteConjunto > 0 ? aporteConjunto * 12 : 0;
 
   document.getElementById('proj-3-meses').textContent = formatarMoeda(proj3);
   document.getElementById('proj-6-meses').textContent = formatarMoeda(proj6);
   document.getElementById('proj-12-meses').textContent = formatarMoeda(proj12);
 
-  // Renderizar Gráfico
+  // Renderizar Gráfico de Centros de Custo
   renderizarGraficoCategorias();
 }
 
@@ -173,7 +132,7 @@ function preencherTabelaTransacoes() {
   tbody.innerHTML = '';
 
   if (estado.transacoes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum gasto registrado neste mês ainda.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum gasto familiar registrado este mês ainda.</td></tr>';
     return;
   }
 
@@ -182,7 +141,7 @@ function preencherTabelaTransacoes() {
   ordenadas.forEach(t => {
     const tr = document.createElement('tr');
     const nomeCategoria = t.categoria ? t.categoria.nome : 'Outros';
-    const tagPessoa = t.pago_por === 'Ele' ? '👨 Ele' : '👩 Ela';
+    const tagPessoa = t.pago_por === 'Ele' ? '👨 Leo' : '👩 Giu';
 
     tr.innerHTML = `
       <td>${t.data ? new Date(t.data).toLocaleDateString('pt-BR') : '-'}</td>
@@ -222,7 +181,7 @@ function renderizarGraficoCategorias() {
   chartCategoriasInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: labels.length > 0 ? labels : ['Nenhum gasto'],
+      labels: labels.length > 0 ? labels : ['Nenhum gasto registrado'],
       datasets: [{
         data: valores.length > 0 ? valores : [1],
         backgroundColor: valores.length > 0 ? cores.slice(0, labels.length) : ['#334155'],
@@ -258,7 +217,9 @@ function renderizarGraficoCategorias() {
 // EVENTOS & INTERAÇÕES
 // ===================================================
 function configurarEventos() {
-  document.getElementById('input-renda-conjunta').addEventListener('input', atualizarInterface);
+  // Alterar Sobra do Leo ou da Giu atualiza a capacidade de aporte conjunta
+  document.getElementById('input-sobra-ele').addEventListener('input', atualizarInterface);
+  document.getElementById('input-sobra-ela').addEventListener('input', atualizarInterface);
 
   const modal = document.getElementById('modal-config');
   document.getElementById('btn-config').addEventListener('click', () => {
@@ -283,6 +244,7 @@ function configurarEventos() {
     }
   });
 
+  // Cadastrar Novo Gasto Manual
   document.getElementById('form-novo-gasto').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -319,13 +281,14 @@ function configurarEventos() {
     document.getElementById('form-novo-gasto').reset();
   });
 
+  // Simulador de Planejamento Futuro
   document.getElementById('btn-simular').addEventListener('click', () => {
     const nome = document.getElementById('sim-nome').value || 'Seu objetivo';
     const valorAlvo = parseFloat(document.getElementById('sim-valor').value);
-
-    const renda = parseFloat(document.getElementById('input-renda-conjunta').value) || 0;
-    const totalGastos = estado.transacoes.reduce((acc, t) => acc + Number(t.valor), 0);
-    const sobraMes = renda - totalGastos;
+    
+    const sobraEle = parseFloat(document.getElementById('input-sobra-ele').value) || 0;
+    const sobraEla = parseFloat(document.getElementById('input-sobra-ela').value) || 0;
+    const aporteConjunto = sobraEle + sobraEla;
 
     const resBox = document.getElementById('sim-resultado');
 
@@ -334,17 +297,18 @@ function configurarEventos() {
       return;
     }
 
-    if (sobraMes <= 0) {
-      resBox.innerHTML = `⚠️ No momento não há sobra no mês. Ajustem o orçamento para começar a planejar <strong>${nome}</strong>!`;
+    if (aporteConjunto <= 0) {
+      resBox.innerHTML = `⚠️ No momento não há sobras informadas. Digitem os valores de sobra do Leo e da Giu para calcular o plano de <strong>${nome}</strong>!`;
       resBox.classList.remove('hidden');
       return;
     }
 
-    const mesesNecessarios = Math.ceil(valorAlvo / sobraMes);
-    resBox.innerHTML = `🎯 Com a sobra atual de <strong>${formatarMoeda(sobraMes)}/mês</strong>, vocês realizarão <strong>${nome}</strong> em aproximadamente <strong>${mesesNecessarios} mês(es)</strong>!`;
+    const mesesNecessarios = Math.ceil(valorAlvo / aporteConjunto);
+    resBox.innerHTML = `🎯 Com o aporte conjunto de <strong>${formatarMoeda(aporteConjunto)}/mês</strong> (Leo + Giu), vocês conquistarão <strong>${nome}</strong> em aproximadamente <strong>${mesesNecessarios} mês(es)</strong>!`;
     resBox.classList.remove('hidden');
   });
 
+  // Atualizar dados
   document.getElementById('btn-atualizar').addEventListener('click', () => {
     if (supabaseClient) {
       carregarDadosDoSupabase();

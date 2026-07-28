@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle Financeiro do Casal 💰💑</title>
+  <title>Controle Financeiro & Investimentos do Casal 💰💑</title>
   <!-- Google Fonts: Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,8 +28,8 @@
           <span class="avatar ela">👩</span>
         </div>
         <div>
-          <h1>Controle Financeiro do Casal</h1>
-          <p class="subtitle">Gestão de Orçamento, Análise de Gastos (Ele vs Ela) e Projeção Futura</p>
+          <h1>Gestão de Orçamento & Investimentos do Casal</h1>
+          <p class="subtitle">Acompanhamento de Gastos Familiares, Sobras de Cada Um e Projeção de Investimentos</p>
         </div>
       </div>
       <button id="btn-config" class="btn btn-secondary">
@@ -41,7 +41,7 @@
     <div id="modal-config" class="modal hidden">
       <div class="modal-content glass-card">
         <h2><i data-lucide="key"></i> Configuração do Supabase</h2>
-        <p>Insira a URL e a Chave Pública (anon key) do seu Supabase para conectar ao vivo:</p>
+        <p>URL e Anon Key do seu banco de dados:</p>
         
         <div class="form-group">
           <label>SUPABASE URL</label>
@@ -60,58 +60,48 @@
 
     <!-- CARDS DE RESUMO DO MÊS (KPIs) -->
     <section class="kpi-grid">
-      <!-- Renda Conjunta (Editável) -->
+      <!-- Total Gastos Familiares no Mês -->
       <div class="kpi-card glass-card">
         <div class="kpi-header">
-          <span class="kpi-icon income"><i data-lucide="wallet"></i></span>
-          <span class="kpi-title">Renda Conjunta Mensal</span>
-        </div>
-        <div class="kpi-value-container">
-          <span class="currency">R$</span>
-          <input type="number" id="input-renda-conjunta" class="kpi-input" value="10000" step="100">
-        </div>
-        <small class="kpi-subtext">Renda total combinada do casal</small>
-      </div>
-
-      <!-- Total Gastos no Mês -->
-      <div class="kpi-card glass-card">
-        <div class="kpi-header">
-          <span class="kpi-icon expense"><i data-lucide="trending-down"></i></span>
-          <span class="kpi-title">Gastos Totais no Mês</span>
+          <span class="kpi-icon expense"><i data-lucide="shopping-bag"></i></span>
+          <span class="kpi-title">Gastos Familiares no Mês</span>
         </div>
         <div class="kpi-value expense-text" id="val-gastos-totais">R$ 0,00</div>
-        <small class="kpi-subtext">Soma de todas as compras do casal</small>
+        <small class="kpi-subtext">Total de compras familiares no mês</small>
       </div>
 
-      <!-- GASTOS ELE VS ELA -->
+      <!-- SOBRAS DE CADA UM (PARA INVESTIR) -->
       <div class="kpi-card glass-card">
         <div class="kpi-header">
-          <span class="kpi-icon user-split"><i data-lucide="users"></i></span>
-          <span class="kpi-title">Divisão de Gastos do Casal</span>
+          <span class="kpi-icon user-split"><i data-lucide="trending-up"></i></span>
+          <span class="kpi-title">Sobra Individual (Para Investir)</span>
         </div>
         <div class="user-split-container">
           <div class="user-split-item ele-color">
-            <span>👨 Ele</span>
-            <strong id="val-gastos-ele">R$ 0,00</strong>
+            <span>👨 Sobra do Leo</span>
+            <div class="kpi-value-container mini">
+              <span class="currency-mini">R$</span>
+              <input type="number" id="input-sobra-ele" class="kpi-input-sm" value="1500" step="100">
+            </div>
           </div>
           <div class="user-split-item ela-color">
-            <span>👩 Ela</span>
-            <strong id="val-gastos-ela">R$ 0,00</strong>
+            <span>👩 Sobra da Giu</span>
+            <div class="kpi-value-container mini">
+              <span class="currency-mini">R$</span>
+              <input type="number" id="input-sobra-ela" class="kpi-input-sm" value="1500" step="100">
+            </div>
           </div>
-        </div>
-        <div class="progress-bar-bg">
-          <div id="bar-ele-ela" class="progress-bar-fill"></div>
         </div>
       </div>
 
-      <!-- SOBRA DO MÊS / PODER DE POUPANÇA (DESTAQUE) -->
+      <!-- PODER TOTAL DE INVESTIMENTO CONJUNTO (DESTAQUE) -->
       <div class="kpi-card glass-card highlight-card">
         <div class="kpi-header">
           <span class="kpi-icon savings"><i data-lucide="piggy-bank"></i></span>
-          <span class="kpi-title">Poder de Poupança (Sobra do Mês)</span>
+          <span class="kpi-title">Capacidade de Aporte Mensal</span>
         </div>
-        <div class="kpi-value savings-text" id="val-sobra-mes">R$ 10.000,00</div>
-        <small class="kpi-subtext" id="subtext-porcentagem-sobra">100% da renda conjunta livre</small>
+        <div class="kpi-value savings-text" id="val-sobra-conjunta">R$ 3.000,00</div>
+        <small class="kpi-subtext">Soma das sobras de Leo + Giu para investir</small>
       </div>
     </section>
 
@@ -129,15 +119,15 @@
         </div>
       </section>
 
-      <!-- COLUNA DA DIREIRA: PROJEÇÃO FINANCEIRA FUTURA -->
+      <!-- COLUNA DA DIREIRA: PROJEÇÃO FINANCEIRA FUTURA DA FAMÍLIA -->
       <section class="glass-card projection-section">
         <div class="card-header">
-          <h2><i data-lucide="sparkles"></i> Projeção & Planejamento Futuro</h2>
+          <h2><i data-lucide="sparkles"></i> Projeção de Investimentos do Casal</h2>
         </div>
 
         <div class="projection-box">
           <p class="projection-description">
-            Com base na <strong>Sobra do Mês</strong> atual, vejam o potencial de economia acumulada para planejar o futuro do casal:
+            Mantendo a capacidade de aporte conjunta, vejam quanto o casal acumula para investimentos e patrimônio futuro:
           </p>
 
           <div class="projection-cards">
@@ -155,15 +145,15 @@
             </div>
           </div>
 
-          <!-- SIMULADOR DE PLANEJAMENTO -->
+          <!-- SIMULADOR DE PLANEJAMENTO FUTURO -->
           <div class="planning-simulator">
-            <h3><i data-lucide="calculator"></i> Simulador de Compra / Gasto Futuro</h3>
+            <h3><i data-lucide="calculator"></i> Simulador de Compra / Investimento Futuro</h3>
             <div class="sim-inputs">
-              <input type="text" id="sim-nome" placeholder="Ex: Reforma da Cozinha, Viagem...">
-              <input type="number" id="sim-valor" placeholder="Valor Estimado (R$)">
+              <input type="text" id="sim-nome" placeholder="Ex: Viagem, Carro, Reserva...">
+              <input type="number" id="sim-valor" placeholder="Valor Alvo (R$)">
             </div>
             <button id="btn-simular" class="btn btn-primary full-width">
-              <i data-lucide="clock"></i> Em quantos meses realizamos este objetivo?
+              <i data-lucide="clock"></i> Em quantos meses atingimos este objetivo?
             </button>
             <div id="sim-resultado" class="sim-result-box hidden"></div>
           </div>
@@ -178,12 +168,12 @@
       <!-- FORMULÁRIO DE NOVO GASTO MANUAL -->
       <div class="glass-card form-card">
         <div class="card-header">
-          <h2><i data-lucide="plus-circle"></i> Lançar Novo Gasto</h2>
+          <h2><i data-lucide="plus-circle"></i> Lançar Gasto Familiar</h2>
         </div>
         <form id="form-novo-gasto">
           <div class="form-group">
             <label>Descrição do Gasto</label>
-            <input type="text" id="gasto-descricao" placeholder="Ex: Mercado, Aluguel, Farmácia" required>
+            <input type="text" id="gasto-descricao" placeholder="Ex: Mercado Savenago, Farmácia" required>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -193,8 +183,8 @@
             <div class="form-group">
               <label>Quem Pagou?</label>
               <select id="gasto-pago-por" required>
-                <option value="Ele">Ele 👨</option>
-                <option value="Ela">Ela 👩</option>
+                <option value="Ele">Leo 👨</option>
+                <option value="Ela">Giu 👩</option>
               </select>
             </div>
           </div>
@@ -213,8 +203,8 @@
       <!-- TABELA DE ÚLTIMAS TRANSAÇÕES -->
       <div class="glass-card table-card">
         <div class="card-header">
-          <h2><i data-lucide="list"></i> Extrato de Gastos Registrados</h2>
-          <button id="btn-atualizar" class="btn btn-ghost btn-sm"><i data-lucide="refresh-cw"></i> Atualizar</button>
+          <h2><i data-lucide="list"></i> Extrato de Gastos da Família</h2>
+          <button id="btn-atualizar" class="btn btn-ghost btn-sm"><i data-lucide="refresh-cw"></i> Atualizar Dados</button>
         </div>
         <div class="table-responsive">
           <table class="data-table">
@@ -229,7 +219,7 @@
             </thead>
             <tbody id="tbody-transacoes">
               <tr>
-                <td colspan="5" class="empty-state">Nenhuma transação carregada ainda.</td>
+                <td colspan="5" class="empty-state">Nenhum gasto familiar registrado este mês ainda.</td>
               </tr>
             </tbody>
           </table>
