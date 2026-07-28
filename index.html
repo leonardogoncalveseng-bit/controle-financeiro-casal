@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle Financeiro do Casal 💰💑</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js para Gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- CABEÇALHO -->
+    <header class="main-header">
+      <div class="brand">
+        <div class="avatar-pair">
+          <span class="avatar ele">👨</span>
+          <span class="avatar ela">👩</span>
+        </div>
+        <div>
+          <h1>Controle Financeiro do Casal</h1>
+          <p class="subtitle">Gestão de Orçamento, Centros de Custo e Projeção Futura</p>
+        </div>
+      </div>
+      <button id="btn-config" class="btn btn-secondary">
+        <i data-lucide="settings"></i> Configurar Supabase
+      </button>
+    </header>
+
+    <!-- PAINEL DE CONFIGURAÇÃO (MODAL) -->
+    <div id="modal-config" class="modal hidden">
+      <div class="modal-content glass-card">
+        <h2><i data-lucide="key"></i> Configuração do Supabase</h2>
+        <p>Insira a URL e a Chave Pública (anon key) do seu Supabase para conectar o painel ao vivo:</p>
+        
+        <div class="form-group">
+          <label>SUPABASE URL</label>
+          <input type="text" id="cfg-url" placeholder="https://seu-projeto.supabase.co">
+        </div>
+        <div class="form-group">
+          <label>SUPABASE ANON KEY</label>
+          <input type="password" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+        </div>
+        <div class="modal-actions">
+          <button id="btn-salvar-config" class="btn btn-primary">Salvar e Conectar</button>
+          <button id="btn-fechar-config" class="btn btn-ghost">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARDS DE RESUMO DO MÊS (KPIs) -->
+    <section class="kpi-grid">
+      <!-- Renda Conjunta (Editável) -->
+      <div class="kpi-card glass-card">
+        <div class="kpi-header">
+          <span class="kpi-icon income"><i data-lucide="wallet"></i></span>
+          <span class="kpi-title">Renda Conjunta Mensal</span>
+        </div>
+        <div class="kpi-value-container">
+          <span class="currency">R$</span>
+          <input type="number" id="input-renda-conjunta" class="kpi-input" value="10000" step="100">
+        </div>
+        <small class="kpi-subtext">Edite o valor da renda total do casal</small>
+      </div>
+
+      <!-- Total Gastos no Mês -->
+      <div class="kpi-card glass-card">
+        <div class="kpi-header">
+          <span class="kpi-icon expense"><i data-lucide="trending-down"></i></span>
+          <span class="kpi-title">Gastos Totais no Mês</span>
+        </div>
+        <div class="kpi-value expense-text" id="val-gastos-totais">R$ 0,00</div>
+        <small class="kpi-subtext">Soma de todos os centros de custo</small>
+      </div>
+
+      <!-- SOBRA DO MÊS / PODER DE POUPANÇA (DESTAQUE) -->
+      <div class="kpi-card glass-card highlight-card">
+        <div class="kpi-header">
+          <span class="kpi-icon savings"><i data-lucide="piggy-bank"></i></span>
+          <span class="kpi-title">Poder de Poupança (Sobra do Mês)</span>
+        </div>
+        <div class="kpi-value savings-text" id="val-sobra-mes">R$ 10.000,00</div>
+        <small class="kpi-subtext" id="subtext-porcentagem-sobra">100% da renda conjunta livre</small>
+      </div>
+    </section>
+
+    <!-- SEÇÃO PRINCIPAL (GRÁFICOS & PROJEÇÃO) -->
+    <main class="dashboard-grid">
+
+      <!-- COLUNA DA ESQUERDA: GRÁFICO DE CENTROS DE CUSTO -->
+      <section class="glass-card chart-section">
+        <div class="card-header">
+          <h2><i data-lucide="pie-chart"></i> Gastos por Centro de Custo</h2>
+          <span class="badge">Este Mês</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="chart-categorias"></canvas>
+        </div>
+      </section>
+
+      <!-- COLUNA DA DIREITA: PROJEÇÃO FINANCEIRA FUTURA -->
+      <section class="glass-card projection-section">
+        <div class="card-header">
+          <h2><i data-lucide="sparkles"></i> Projeção & Planejamento Futuro</h2>
+        </div>
+
+        <div class="projection-box">
+          <p class="projection-description">
+            Com base na <strong>Sobra do Mês</strong> atual, vejam o potencial de acumulação do casal para planejar futuros gastos e investimentos:
+          </p>
+
+          <div class="projection-cards">
+            <div class="mini-projection">
+              <span class="proj-time">Em 3 Meses</span>
+              <strong id="proj-3-meses">R$ 0,00</strong>
+            </div>
+            <div class="mini-projection">
+              <span class="proj-time">Em 6 Meses</span>
+              <strong id="proj-6-meses">R$ 0,00</strong>
+            </div>
+            <div class="mini-projection highlight">
+              <span class="proj-time">Em 1 Ano (12M)</span>
+              <strong id="proj-12-meses">R$ 0,00</strong>
+            </div>
+          </div>
+
+          <!-- SIMULADOR DE PLANEJAMENTO -->
+          <div class="planning-simulator">
+            <h3><i data-lucide="calculator"></i> Simulador de Compra / Gasto Futuro</h3>
+            <div class="sim-inputs">
+              <input type="text" id="sim-nome" placeholder="Ex: Reforma da Cozinha, Trocar de Carro...">
+              <input type="number" id="sim-valor" placeholder="Valor Estimado (R$)">
+            </div>
+            <button id="btn-simular" class="btn btn-primary full-width">
+              <i data-lucide="clock"></i> Em quantos meses realizamos este sonho?
+            </button>
+            <div id="sim-resultado" class="sim-result-box hidden"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- SEÇÃO INFERIOR: REGISTRO DE TRANSAÇÕES E NOVO GASTO -->
+    <section class="dashboard-grid bottom-grid">
+      
+      <!-- FORMULÁRIO DE NOVO GASTO MANUALL -->
+      <div class="glass-card form-card">
+        <div class="card-header">
+          <h2><i data-lucide="plus-circle"></i> Lançar Novo Gasto Manualmente</h2>
+        </div>
+        <form id="form-novo-gasto">
+          <div class="form-group">
+            <label>Descrição do Gasto</label>
+            <input type="text" id="gasto-descricao" placeholder="Ex: Supermercado, Aluguel, Posto" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Valor (R$)</label>
+              <input type="number" step="0.01" id="gasto-valor" placeholder="0,00" required>
+            </div>
+            <div class="form-group">
+              <label>Quem Pagou?</label>
+              <select id="gasto-pago-por" required>
+                <option value="Ele">Ele 👨</option>
+                <option value="Ela">Ela 👩</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Centro de Custo (Categoria)</label>
+            <select id="gasto-categoria" required>
+              <option value="">Carregando categorias...</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success full-width">
+            <i data-lucide="check"></i> Cadastrar Gasto
+          </button>
+        </form>
+      </div>
+
+      <!-- TABELA DE ÚLTIMAS TRANSAÇÕES -->
+      <div class="glass-card table-card">
+        <div class="card-header">
+          <h2><i data-lucide="list"></i> Extrato de Gastos Registrados</h2>
+          <button id="btn-atualizar" class="btn btn-ghost btn-sm"><i data-lucide="refresh-cw"></i> Atualizar</button>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Quem Pagou</th>
+                <th>Categoria</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-transacoes">
+              <tr>
+                <td colspan="5" class="empty-state">Nenhuma transação carregada ainda. Configure o Supabase acima.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
