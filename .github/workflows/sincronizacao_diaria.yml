@@ -1,0 +1,33 @@
+name: Sincronização Diária de Extratos (Pluggy -> Supabase)
+
+on:
+  schedule:
+    # Roda todos os dias às 03:00 da manhã no horário de Brasília (UTC-3 -> 06:00 UTC)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Permite executar manualmente pelo painel do GitHub a qualquer momento!
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v3
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Executar robô noturno de sincronização
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          PLUGGY_CLIENT_ID: ${{ secrets.PLUGGY_CLIENT_ID }}
+          PLUGGY_CLIENT_SECRET: ${{ secrets.PLUGGY_CLIENT_SECRET }}
+          PLUGGY_ITEM_ID_ELE: ${{ secrets.PLUGGY_ITEM_ID_ELE }}
+          PLUGGY_ITEM_ID_ELA: ${{ secrets.PLUGGY_ITEM_ID_ELA }}
+        run: node sincronizar.js
