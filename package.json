@@ -1,0 +1,14 @@
+{
+  "name": "controle-financeiro-casal-backend",
+  "version": "1.0.0",
+  "description": "Script de sincronização automática de dados bancários (Pluggy -> Supabase)",
+  "main": "sincronizar.js",
+  "scripts": {
+    "start": "node sincronizar.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  }
+}
