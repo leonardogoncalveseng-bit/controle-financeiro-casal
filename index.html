@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle Financeiro & Investimentos do Casal 💰💑</title>
+  <title>Controle Financeiro Familiar 💰💑</title>
   <!-- Google Fonts: Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,8 +28,8 @@
           <span class="avatar ela">👩</span>
         </div>
         <div>
-          <h1>Gestão de Orçamento & Investimentos do Casal</h1>
-          <p class="subtitle">Acompanhamento de Gastos Familiares, Sobras de Cada Um e Projeção de Investimentos</p>
+          <h1>Controle Financeiro da Família</h1>
+          <p class="subtitle">Análise por Centro de Custo, Nome do Estabelecimento e Projeção de Investimentos</p>
         </div>
       </div>
       <button id="btn-config" class="btn btn-secondary">
@@ -67,41 +67,20 @@
           <span class="kpi-title">Gastos Familiares no Mês</span>
         </div>
         <div class="kpi-value expense-text" id="val-gastos-totais">R$ 0,00</div>
-        <small class="kpi-subtext">Total de compras familiares no mês</small>
+        <small class="kpi-subtext" id="subtext-qtd-compras">0 compras registradas</small>
       </div>
 
-      <!-- SOBRAS DE CADA UM (PARA INVESTIR) -->
-      <div class="kpi-card glass-card">
-        <div class="kpi-header">
-          <span class="kpi-icon user-split"><i data-lucide="trending-up"></i></span>
-          <span class="kpi-title">Sobra Individual (Para Investir)</span>
-        </div>
-        <div class="user-split-container">
-          <div class="user-split-item ele-color">
-            <span>👨 Sobra do Leo</span>
-            <div class="kpi-value-container mini">
-              <span class="currency-mini">R$</span>
-              <input type="number" id="input-sobra-ele" class="kpi-input-sm" value="1500" step="100">
-            </div>
-          </div>
-          <div class="user-split-item ela-color">
-            <span>👩 Sobra da Giu</span>
-            <div class="kpi-value-container mini">
-              <span class="currency-mini">R$</span>
-              <input type="number" id="input-sobra-ela" class="kpi-input-sm" value="1500" step="100">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PODER TOTAL DE INVESTIMENTO CONJUNTO (DESTAQUE) -->
+      <!-- SOBRA REAL DA CONTA NO MÊS (PARA INVESTIMENTOS DO CASAL) -->
       <div class="kpi-card glass-card highlight-card">
         <div class="kpi-header">
           <span class="kpi-icon savings"><i data-lucide="piggy-bank"></i></span>
-          <span class="kpi-title">Capacidade de Aporte Mensal</span>
+          <span class="kpi-title">Sobra Real Guardada no Mês</span>
         </div>
-        <div class="kpi-value savings-text" id="val-sobra-conjunta">R$ 3.000,00</div>
-        <small class="kpi-subtext">Soma das sobras de Leo + Giu para investir</small>
+        <div class="kpi-value-container">
+          <span class="currency">R$</span>
+          <input type="number" id="input-sobra-real" class="kpi-input" value="3000" step="100">
+        </div>
+        <small class="kpi-subtext">Capacidade de investimento mensal do casal</small>
       </div>
     </section>
 
@@ -119,7 +98,7 @@
         </div>
       </section>
 
-      <!-- COLUNA DA DIREIRA: PROJEÇÃO FINANCEIRA FUTURA DA FAMÍLIA -->
+      <!-- COLUNA DA DIREIRA: PROJEÇÃO FINANCEIRA FUTURA -->
       <section class="glass-card projection-section">
         <div class="card-header">
           <h2><i data-lucide="sparkles"></i> Projeção de Investimentos do Casal</h2>
@@ -127,7 +106,7 @@
 
         <div class="projection-box">
           <p class="projection-description">
-            Mantendo a capacidade de aporte conjunta, vejam quanto o casal acumula para investimentos e patrimônio futuro:
+            Mantendo a <strong>Sobra Real Guardada</strong> neste mês, vejam o potencial de acumulação da família para investimentos:
           </p>
 
           <div class="projection-cards">
@@ -149,7 +128,7 @@
           <div class="planning-simulator">
             <h3><i data-lucide="calculator"></i> Simulador de Compra / Investimento Futuro</h3>
             <div class="sim-inputs">
-              <input type="text" id="sim-nome" placeholder="Ex: Viagem, Carro, Reserva...">
+              <input type="text" id="sim-nome" placeholder="Ex: Viagem, Carro, Reforma...">
               <input type="number" id="sim-valor" placeholder="Valor Alvo (R$)">
             </div>
             <button id="btn-simular" class="btn btn-primary full-width">
@@ -172,8 +151,12 @@
         </div>
         <form id="form-novo-gasto">
           <div class="form-group">
-            <label>Descrição do Gasto</label>
-            <input type="text" id="gasto-descricao" placeholder="Ex: Mercado Savenago, Farmácia" required>
+            <label>Categoria (Centro de Custo)</label>
+            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Oficina, Mercado, Farmacia, Lazer" required>
+          </div>
+          <div class="form-group">
+            <label>Nome do Estabelecimento / Lugar</label>
+            <input type="text" id="gasto-descricao" placeholder="Ex: Sóbreque, Savenago, Drogasil" required>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -187,12 +170,6 @@
                 <option value="Ela">Giu 👩</option>
               </select>
             </div>
-          </div>
-          <div class="form-group">
-            <label>Centro de Custo (Categoria)</label>
-            <select id="gasto-categoria" required>
-              <option value="">Carregando categorias...</option>
-            </select>
           </div>
           <button type="submit" class="btn btn-success full-width">
             <i data-lucide="check"></i> Cadastrar Gasto
@@ -211,15 +188,15 @@
             <thead>
               <tr>
                 <th>Data</th>
-                <th>Descrição</th>
-                <th>Quem Pagou</th>
                 <th>Categoria</th>
+                <th>Estabelecimento</th>
+                <th>Quem Pagou</th>
                 <th>Valor</th>
               </tr>
             </thead>
             <tbody id="tbody-transacoes">
               <tr>
-                <td colspan="5" class="empty-state">Nenhum gasto familiar registrado este mês ainda.</td>
+                <td colspan="5" class="empty-state">Carregando extrato do Supabase...</td>
               </tr>
             </tbody>
           </table>

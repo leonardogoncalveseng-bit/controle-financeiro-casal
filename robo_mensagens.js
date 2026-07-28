@@ -1,7 +1,9 @@
 // ===================================================
-// ROBÔ DE MENSAGENS TELEGRAM - Leitor Inteligente
-// Formato aceito: "Mercado Savenago 150,00"
-//                 "Posto Shell ela 80"
+// ROBÔ DE MENSAGENS TELEGRAM - Leitor Estrito
+// REGRA:
+// 1ª Palavra: Categoria (ex: Oficina, Mercado, Farmacia)
+// Palavras do Meio: Nome do Estabelecimento (ex: sóbreque, Savenago)
+// Última Palavra: Valor (ex: 250, 150,00, 85.50)
 // ===================================================
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
@@ -15,69 +17,64 @@ if (supabaseUrl && supabaseKey) {
 }
 
 /**
- * Inteligência do Robô: Interpreta mensagens naturais
- * Exemplos ACEITOS (sem precisar de prefixo!):
- *   "Mercado Savenago 150,00"
- *   "Posto Shell 85.50 ela"
- *   "Farmácia 45 ele"
- *   "250 Aluguel"
- *
- * Exemplos IGNORADOS automaticamente:
- *   "Bom dia a todos!" (sem número claro de valor)
- *   Links, textos longos, etc.
+ * Interpreta a mensagem segundo a regra estrita do usuário:
+ * 1ª palavra = Categoria
+ * Palavras do meio = Estabelecimento / Descrição
+ * Última palavra = Valor
  */
 function processarTextoMensagem(texto, remetentePadrao = 'Ele') {
   if (!texto || typeof texto !== 'string') return null;
 
   const textoLimpo = texto.trim();
 
-  // REGRA 1: Ignorar mensagens com mais de 8 palavras (provavelmente texto normal)
-  const palavras = textoLimpo.split(/\s+/);
-  if (palavras.length > 8) return null;
-
-  // REGRA 2: Ignorar links (mensagens com http)
+  // Ignorar mensagens longas, links ou frases comuns
   if (/https?:\/\//i.test(textoLimpo)) return null;
-
-  // REGRA 2b: Ignorar mensagens religiosas, cumprimentos e expressões comuns
-  const palavrasIgnorar = ['salmos', 'bom dia', 'boa tarde', 'boa noite', 'amém', 'amen', 'senhor', 'deus', 'jesus', 'oração', 'versículo', ':8', 'corín', 'filipen', 'isaías', 'gênesis'];
+  const palavrasIgnorar = ['salmos', 'bom dia', 'boa tarde', 'boa noite', 'amém', 'oração', 'versículo'];
   if (palavrasIgnorar.some(p => textoLimpo.toLowerCase().includes(p))) return null;
 
-  // REGRA 3: Ignorar mensagens que são só texto sem número
-  if (!/\d/.test(textoLimpo)) return null;
+  const palavras = textoLimpo.split(/\s+/);
+  if (palavras.length < 2) return null; // Precisa ter pelo menos 2 palavras (ex: Mercado 150)
 
-  // Identificar quem pagou
+  // 1. Verificar se quem pagou foi especificado no final (ex: ela/ele)
   let pagoPor = remetentePadrao;
-  if (/\b(ela|esposa|mulher)\b/i.test(textoLimpo)) {
+  let palavrasFiltradas = [...palavras];
+
+  const ultimaPalavra = palavrasFiltradas[palavrasFiltradas.length - 1].toLowerCase();
+  if (ultimaPalavra === 'ela' || ultimaPalavra === 'esposa') {
     pagoPor = 'Ela';
-  } else if (/\b(ele|marido|eu)\b/i.test(textoLimpo)) {
+    palavrasFiltradas.pop(); // Remove "ela" do final
+  } else if (ultimaPalavra === 'ele' || ultimaPalavra === 'marido') {
     pagoPor = 'Ele';
+    palavrasFiltradas.pop(); // Remove "ele" do final
   }
 
-  // Extrair o valor (suporta 150, 150.50, 150,50, R$ 150)
+  if (palavrasFiltradas.length < 2) return null;
+
+  // 2. A ÚLTIMA palavra do restante DEVE ser o valor numérico
+  const tokenValor = palavrasFiltradas.pop();
   const regexValor = /(?:R\$\s*)?(\d{1,6}(?:[.,]\d{1,2})?)/i;
-  const matchValor = textoLimpo.match(regexValor);
+  const matchValor = tokenValor.match(regexValor);
 
-  if (!matchValor) return null;
+  if (!matchValor) return null; // Se a última palavra não for um valor, ignora
 
-  const valorString = matchValor[1].replace(',', '.');
-  const valor = parseFloat(valorString);
+  const valor = parseFloat(matchValor[1].replace(',', '.'));
+  if (isNaN(valor) || valor <= 0) return null;
 
-  // REGRA 4: Ignorar valores ridiculamente pequenos ou grandes (provavelmente não é gasto)
-  if (valor < 1 || valor > 100000) return null;
+  // 3. A PRIMEIRA palavra é a Categoria
+  const categoriaNome = palavrasFiltradas[0];
+  const categoriaFormatada = categoriaNome.charAt(0).toUpperCase() + categoriaNome.slice(1).toLowerCase();
 
-  // Extrair a Descrição (remove o valor e indicação de pessoa)
-  let descricao = textoLimpo
-    .replace(matchValor[0], '')
-    .replace(/\b(ela|ele|esposa|marido|mulher|eu|R\$)\b/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!descricao) {
-    descricao = 'Gasto Registrado';
+  // 4. As palavras do MEIO são o nome do estabelecimento / lugar
+  let estabelecimento = palavrasFiltradas.slice(1).join(' ');
+  if (!estabelecimento) {
+    estabelecimento = categoriaFormatada; // Caso o usuário mande só "Mercado 150"
+  } else {
+    estabelecimento = estabelecimento.charAt(0).toUpperCase() + estabelecimento.slice(1);
   }
 
   return {
-    descricao: descricao.charAt(0).toUpperCase() + descricao.slice(1),
+    categoria_nome: categoriaFormatada,
+    descricao: estabelecimento,
     valor: valor,
     pago_por: pagoPor,
     data: new Date().toISOString().split('T')[0]
@@ -85,7 +82,7 @@ function processarTextoMensagem(texto, remetentePadrao = 'Ele') {
 }
 
 /**
- * Registra o gasto processado no Supabase
+ * Registra o gasto no Supabase garantindo que a categoria seja vinculada/criada
  */
 async function registrarGastoNoSupabase(gasto) {
   if (!supabase) {
@@ -93,37 +90,65 @@ async function registrarGastoNoSupabase(gasto) {
     return { success: true, mode: 'demo' };
   }
 
-  const { data: categoriaOutros } = await supabase
-    .from('categorias')
-    .select('id')
-    .eq('nome', 'Outros')
-    .maybeSingle();
+  try {
+    // 1. Procurar ou criar a Categoria no Supabase
+    let categoriaId = null;
 
-  const gastoFinal = {
-    ...gasto,
-    categoria_id: categoriaOutros ? categoriaOutros.id : null
-  };
+    if (gasto.categoria_nome) {
+      const { data: catExistente } = await supabase
+        .from('categorias')
+        .select('id')
+        .ilike('nome', gasto.categoria_nome)
+        .maybeSingle();
 
-  const { data, error } = await supabase
-    .from('transacoes')
-    .insert([gastoFinal]);
+      if (catExistente) {
+        categoriaId = catExistente.id;
+      } else {
+        // Criar nova categoria automaticamente se não existir
+        const { data: novaCat, error: errNovaCat } = await supabase
+          .from('categorias')
+          .insert([{ nome: gasto.categoria_nome, icone: '📌' }])
+          .select('id')
+          .single();
 
-  if (error) {
-    console.error('❌ Erro ao salvar no Supabase:', error.message);
-    return { success: false, error: error.message };
+        if (!errNovaCat && novaCat) {
+          categoriaId = novaCat.id;
+        }
+      }
+    }
+
+    // 2. Inserir a Transação
+    const transacaoObj = {
+      descricao: gasto.descricao,
+      valor: gasto.valor,
+      pago_por: gasto.pago_por,
+      data: gasto.data,
+      categoria_id: categoriaId
+    };
+
+    const { data, error } = await supabase
+      .from('transacoes')
+      .insert([transacaoObj]);
+
+    if (error) {
+      console.error('❌ Erro ao salvar no Supabase:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`✅ [ROBÔ] Categoria: "${gasto.categoria_nome}" | Lugar: "${gasto.descricao}" | R$ ${gasto.valor} (${gasto.pago_por})!`);
+    return { success: true, data };
+  } catch (err) {
+    console.error('Erro na gravação:', err.message);
+    return { success: false, error: err.message };
   }
-
-  console.log(`✅ [ROBÔ] R$ ${gasto.valor} registrado (${gasto.pago_por})!`);
-  return { success: true, data };
 }
 
-// Teste
+// Testes do leitor estrito
 if (require.main === module) {
-  console.log('🤖 Testando leitor inteligente do Robô:');
+  console.log('🤖 Testando Leitor Estrito:');
+  console.log('"Oficina sóbreque 250" ->', processarTextoMensagem("Oficina sóbreque 250"));
   console.log('"Mercado Savenago 150,00" ->', processarTextoMensagem("Mercado Savenago 150,00"));
-  console.log('"Posto Shell ela 80" ->', processarTextoMensagem("Posto Shell ela 80"));
-  console.log('"Bom dia a todos amigos! 🙏" ->', processarTextoMensagem("Bom dia a todos amigos! 🙏"));
-  console.log('"Salmos 32:8 Bom dia!" ->', processarTextoMensagem("Salmos 32:8 Bom dia!"));
+  console.log('"Farmacia Drogasil 45,90 ela" ->', processarTextoMensagem("Farmacia Drogasil 45,90 ela"));
 }
 
 module.exports = { processarTextoMensagem, registrarGastoNoSupabase };

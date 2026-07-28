@@ -11,51 +11,46 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ===================================================
-// ENDPOINT DE SAÚDE (Para o UptimeRobot manter vivo)
-// ===================================================
+// Servidor de saúde para manter online
 app.get('/', (req, res) => {
-  res.send('✅ Robô Financeiro do Casal está Online e Funcionando!');
+  res.send('✅ Robô Financeiro do Casal está Online e Funcionando no Render!');
 });
 
 app.listen(PORT, () => {
   console.log(`🌐 Servidor de saúde rodando na porta ${PORT}`);
 });
 
-// ===================================================
-// INICIALIZAÇÃO DO BOT (Long Polling - Sem Chrome!)
-// ===================================================
+if (!TELEGRAM_TOKEN) {
+  console.error('❌ TELEGRAM_TOKEN não configurado!');
+  process.exit(1);
+}
+
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
 console.log('🚀 Robô Financeiro do Casal (Telegram) iniciado!');
 console.log('📩 Aguardando mensagens no grupo...');
 
-// ===================================================
-// LEITURA DE MENSAGENS (Formato Natural, Sem Prefixo!)
-// ===================================================
 bot.on('message', async (msg) => {
   try {
     const texto = msg.text || '';
-    if (!texto || texto.startsWith('/')) return; // Ignora comandos /start etc.
+    if (!texto || texto.startsWith('/')) return; // Ignora comandos /start
 
-    // Processar com leitor inteligente
+    // Processar mensagem estrita:
+    // 1ª Palavra = Categoria | Meio = Estabelecimento | Fim = Valor
     const gasto = processarTextoMensagem(texto);
-    if (!gasto) return; // Mensagem não é um lançamento financeiro, ignora silenciosamente
+    if (!gasto) return; // Se não for gasto, ignora silenciosamente
 
-    // Identificar automaticamente Ele vs Ela pelo usuário do Telegram
-    const telegramIdEle = process.env.TELEGRAM_ID_ELE;
-    const telegramIdEla = process.env.TELEGRAM_ID_ELA;
-    const remetenteId = String(msg.from?.id);
-
-    if (telegramIdEla && remetenteId === telegramIdEla) {
-      gasto.pago_por = 'Ela';
-    } else if (telegramIdEle && remetenteId === telegramIdEle) {
-      gasto.pago_por = 'Ele';
+    // Identificar automaticamente Ele vs Ela pelo nome do Telegram se não especificado
+    const nomeUsuario = (msg.from?.first_name || '').toLowerCase();
+    if (!/\b(ela|ele)\b/i.test(texto)) {
+      if (nomeUsuario.includes('giu') || nomeUsuario.includes('esposa') || nomeUsuario.includes('giulissima')) {
+        gasto.pago_por = 'Ela';
+      } else {
+        gasto.pago_por = 'Ele';
+      }
     }
-    // Se tiver "ela" ou "ele" na mensagem, isso já foi detectado pelo parser
 
-    const nomeRemetente = msg.from?.first_name || 'Alguém';
-    console.log(`\n💰 ${nomeRemetente}: "${texto}" → R$ ${gasto.valor} (${gasto.pago_por})`);
+    console.log(`\n💰 ${msg.from?.first_name}: "${texto}" → Categoria: ${gasto.categoria_nome} | Lugar: ${gasto.descricao} | R$ ${gasto.valor} (${gasto.pago_por})`);
 
     const resultado = await registrarGastoNoSupabase(gasto);
 
@@ -63,10 +58,11 @@ bot.on('message', async (msg) => {
       bot.sendMessage(
         msg.chat.id,
         `✅ *Gasto Registrado!*\n\n` +
-        `📌 *${gasto.descricao}*\n` +
-        `💰 R$ ${gasto.valor.toFixed(2)}\n` +
-        `👤 ${gasto.pago_por === 'Ele' ? 'Ele 👨' : 'Ela 👩'}\n\n` +
-        `_Painel atualizado!_ 📊`,
+        `🗂️ *Categoria:* ${gasto.categoria_nome}\n` +
+        `🏪 *Lugar:* ${gasto.descricao}\n` +
+        `💰 *Valor:* R$ ${gasto.valor.toFixed(2)}\n` +
+        `👤 *Pago por:* ${gasto.pago_por === 'Ele' ? 'Leo 👨' : 'Giu 👩'}\n\n` +
+        `_Já atualizado no painel do casal!_ 📊`,
         { parse_mode: 'Markdown' }
       );
     }
@@ -75,20 +71,16 @@ bot.on('message', async (msg) => {
   }
 });
 
-// ===================================================
-// COMANDO /inicio - Mostra como usar o robô
-// ===================================================
 bot.onText(/\/start|\/inicio/i, (msg) => {
   bot.sendMessage(
     msg.chat.id,
     `👋 *Olá! Sou o Robô Financeiro do Casal!*\n\n` +
-    `Para registrar um gasto, basta mandar uma mensagem assim:\n\n` +
+    `Para lançar um gasto no grupo, mande no formato:\n\n` +
+    `\`[Categoria] [Estabelecimento] [Valor]\`\n\n` +
     `📝 *Exemplos:*\n` +
+    `• \`Oficina sóbreque 250\`\n` +
     `• \`Mercado Savenago 150,00\`\n` +
-    `• \`Posto Shell 85 ela\`\n` +
-    `• \`Farmácia 45 ele\`\n` +
-    `• \`Almoço 38,50\`\n\n` +
-    `_Formato: [Descrição] [Valor] [quem pagou - opcional]_`,
+    `• \`Farmacia Drogasil 45 ela\`\n`,
     { parse_mode: 'Markdown' }
   );
 });

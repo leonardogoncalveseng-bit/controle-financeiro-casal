@@ -7,8 +7,7 @@ let chartCategoriasInstance = null;
 
 // Estado local da aplicação
 let estado = {
-  sobraEle: 1500,
-  sobraEla: 1500,
+  sobraReal: 3000,
   transacoes: [],
   categorias: []
 };
@@ -50,7 +49,6 @@ async function carregarDadosDoSupabase() {
   if (!supabaseClient) return;
 
   try {
-    // 1. Carregar Categorias
     const { data: categorias, error: errCat } = await supabaseClient
       .from('categorias')
       .select('*');
@@ -58,7 +56,6 @@ async function carregarDadosDoSupabase() {
     if (errCat) throw errCat;
     estado.categorias = categorias || [];
 
-    // 2. Carregar Transações vinculadas com categorias
     const { data: transacoes, error: errTrans } = await supabaseClient
       .from('transacoes')
       .select('*, categoria:categorias(nome)');
@@ -77,28 +74,20 @@ async function carregarDadosDoSupabase() {
 // ATUALIZAÇÃO DA INTERFACE & CÁLCULOS
 // ===================================================
 function atualizarInterface() {
-  preencherSelectCategorias();
   preencherTabelaTransacoes();
 
   // 1. Gastos Familiares Totais
   const totalGastos = estado.transacoes.reduce((acc, t) => acc + Number(t.valor), 0);
   document.getElementById('val-gastos-totais').textContent = formatarMoeda(totalGastos);
+  document.getElementById('subtext-qtd-compras').textContent = `${estado.transacoes.length} compra(s) registrada(s) este mês`;
 
-  // 2. Sobras Individuais e Capacidade de Aporte Conjunta
-  const sobraEle = parseFloat(document.getElementById('input-sobra-ele').value) || 0;
-  const sobraEla = parseFloat(document.getElementById('input-sobra-ela').value) || 0;
-  
-  estado.sobraEle = sobraEle;
-  estado.sobraEla = sobraEla;
+  // 2. Sobra Real e Projeções de Vida
+  const sobraReal = parseFloat(document.getElementById('input-sobra-real').value) || 0;
+  estado.sobraReal = sobraReal;
 
-  const aporteConjunto = sobraEle + sobraEla;
-
-  document.getElementById('val-sobra-conjunta').textContent = formatarMoeda(aporteConjunto);
-
-  // 3. Projeção de Investimentos do Casal
-  const proj3 = aporteConjunto > 0 ? aporteConjunto * 3 : 0;
-  const proj6 = aporteConjunto > 0 ? aporteConjunto * 6 : 0;
-  const proj12 = aporteConjunto > 0 ? aporteConjunto * 12 : 0;
+  const proj3 = sobraReal > 0 ? sobraReal * 3 : 0;
+  const proj6 = sobraReal > 0 ? sobraReal * 6 : 0;
+  const proj12 = sobraReal > 0 ? sobraReal * 12 : 0;
 
   document.getElementById('proj-3-meses').textContent = formatarMoeda(proj3);
   document.getElementById('proj-6-meses').textContent = formatarMoeda(proj6);
@@ -115,18 +104,6 @@ function formatarMoeda(valor) {
 // ===================================================
 // PREENCHIMENTO DE ELEMENTOS
 // ===================================================
-function preencherSelectCategorias() {
-  const select = document.getElementById('gasto-categoria');
-  select.innerHTML = '<option value="">Selecione um Centro de Custo...</option>';
-
-  estado.categorias.forEach(cat => {
-    const opt = document.createElement('option');
-    opt.value = cat.id;
-    opt.textContent = `${cat.icone || '📌'} ${cat.nome}`;
-    select.appendChild(opt);
-  });
-}
-
 function preencherTabelaTransacoes() {
   const tbody = document.getElementById('tbody-transacoes');
   tbody.innerHTML = '';
@@ -145,9 +122,9 @@ function preencherTabelaTransacoes() {
 
     tr.innerHTML = `
       <td>${t.data ? new Date(t.data).toLocaleDateString('pt-BR') : '-'}</td>
+      <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">${nomeCategoria}</span></td>
       <td><strong>${t.descricao}</strong></td>
-      <td><span class="badge">${tagPessoa}</span></td>
-      <td>${nomeCategoria}</td>
+      <td>${tagPessoa}</td>
       <td style="color: var(--accent-expense); font-weight: 600;">${formatarMoeda(t.valor)}</td>
     `;
     tbody.appendChild(tr);
@@ -217,9 +194,7 @@ function renderizarGraficoCategorias() {
 // EVENTOS & INTERAÇÕES
 // ===================================================
 function configurarEventos() {
-  // Alterar Sobra do Leo ou da Giu atualiza a capacidade de aporte conjunta
-  document.getElementById('input-sobra-ele').addEventListener('input', atualizarInterface);
-  document.getElementById('input-sobra-ela').addEventListener('input', atualizarInterface);
+  document.getElementById('input-sobra-real').addEventListener('input', atualizarInterface);
 
   const modal = document.getElementById('modal-config');
   document.getElementById('btn-config').addEventListener('click', () => {
@@ -248,34 +223,50 @@ function configurarEventos() {
   document.getElementById('form-novo-gasto').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const descricao = document.getElementById('gasto-descricao').value;
+    const catTexto = document.getElementById('gasto-categoria-texto').value.trim();
+    const descricao = document.getElementById('gasto-descricao').value.trim();
     const valor = parseFloat(document.getElementById('gasto-valor').value);
     const pago_por = document.getElementById('gasto-pago-por').value;
-    const categoria_id = document.getElementById('gasto-categoria').value;
-
-    const novaTransacao = {
-      descricao,
-      valor,
-      pago_por,
-      categoria_id: categoria_id || null,
-      data: new Date().toISOString().split('T')[0]
-    };
 
     if (supabaseClient) {
-      const { error } = await supabaseClient.from('transacoes').insert([novaTransacao]);
+      // 1. Procurar ou criar categoria
+      let catId = null;
+      if (catTexto) {
+        const catFormatada = catTexto.charAt(0).toUpperCase() + catTexto.slice(1).toLowerCase();
+        const { data: catExistente } = await supabaseClient
+          .from('categorias')
+          .select('id')
+          .ilike('nome', catFormatada)
+          .maybeSingle();
+
+        if (catExistente) {
+          catId = catExistente.id;
+        } else {
+          const { data: novaCat } = await supabaseClient
+            .from('categorias')
+            .insert([{ nome: catFormatada, icone: '📌' }])
+            .select('id')
+            .single();
+
+          if (novaCat) catId = novaCat.id;
+        }
+      }
+
+      // 2. Inserir Transação
+      const { error } = await supabaseClient.from('transacoes').insert([{
+        descricao,
+        valor,
+        pago_por,
+        categoria_id: catId,
+        data: new Date().toISOString().split('T')[0]
+      }]);
+
       if (error) {
         alert('Erro ao salvar no Supabase: ' + error.message);
         return;
       }
+
       carregarDadosDoSupabase();
-    } else {
-      const catObj = estado.categorias.find(c => c.id === categoria_id);
-      estado.transacoes.push({
-        id: 't' + Date.now(),
-        ...novaTransacao,
-        categoria: catObj || { nome: 'Outros' }
-      });
-      atualizarInterface();
     }
 
     document.getElementById('form-novo-gasto').reset();
@@ -285,10 +276,7 @@ function configurarEventos() {
   document.getElementById('btn-simular').addEventListener('click', () => {
     const nome = document.getElementById('sim-nome').value || 'Seu objetivo';
     const valorAlvo = parseFloat(document.getElementById('sim-valor').value);
-    
-    const sobraEle = parseFloat(document.getElementById('input-sobra-ele').value) || 0;
-    const sobraEla = parseFloat(document.getElementById('input-sobra-ela').value) || 0;
-    const aporteConjunto = sobraEle + sobraEla;
+    const sobraReal = parseFloat(document.getElementById('input-sobra-real').value) || 0;
 
     const resBox = document.getElementById('sim-resultado');
 
@@ -297,14 +285,14 @@ function configurarEventos() {
       return;
     }
 
-    if (aporteConjunto <= 0) {
-      resBox.innerHTML = `⚠️ No momento não há sobras informadas. Digitem os valores de sobra do Leo e da Giu para calcular o plano de <strong>${nome}</strong>!`;
+    if (sobraReal <= 0) {
+      resBox.innerHTML = `⚠️ No momento não há sobra informada. Digitem o valor da sobra real guardada no mês para calcular o plano de <strong>${nome}</strong>!`;
       resBox.classList.remove('hidden');
       return;
     }
 
-    const mesesNecessarios = Math.ceil(valorAlvo / aporteConjunto);
-    resBox.innerHTML = `🎯 Com o aporte conjunto de <strong>${formatarMoeda(aporteConjunto)}/mês</strong> (Leo + Giu), vocês conquistarão <strong>${nome}</strong> em aproximadamente <strong>${mesesNecessarios} mês(es)</strong>!`;
+    const mesesNecessarios = Math.ceil(valorAlvo / sobraReal);
+    resBox.innerHTML = `🎯 Guardando a sobra real de <strong>${formatarMoeda(sobraReal)}/mês</strong>, vocês conquistarão <strong>${nome}</strong> em aproximadamente <strong>${mesesNecessarios} mês(es)</strong>!`;
     resBox.classList.remove('hidden');
   });
 
