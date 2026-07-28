@@ -1,0 +1,5 @@
+node_modules/
+.env
+whatsapp_sessao/
+npm-debug.log
+*.log

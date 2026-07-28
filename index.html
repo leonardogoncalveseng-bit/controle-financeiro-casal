@@ -29,7 +29,7 @@
         </div>
         <div>
           <h1>Controle Financeiro do Casal</h1>
-          <p class="subtitle">Gestão de Orçamento, Centros de Custo e Projeção Futura</p>
+          <p class="subtitle">Gestão de Orçamento, Análise de Gastos (Ele vs Ela) e Projeção Futura</p>
         </div>
       </div>
       <button id="btn-config" class="btn btn-secondary">
@@ -41,7 +41,7 @@
     <div id="modal-config" class="modal hidden">
       <div class="modal-content glass-card">
         <h2><i data-lucide="key"></i> Configuração do Supabase</h2>
-        <p>Insira a URL e a Chave Pública (anon key) do seu Supabase para conectar o painel ao vivo:</p>
+        <p>Insira a URL e a Chave Pública (anon key) do seu Supabase para conectar ao vivo:</p>
         
         <div class="form-group">
           <label>SUPABASE URL</label>
@@ -70,7 +70,7 @@
           <span class="currency">R$</span>
           <input type="number" id="input-renda-conjunta" class="kpi-input" value="10000" step="100">
         </div>
-        <small class="kpi-subtext">Edite o valor da renda total do casal</small>
+        <small class="kpi-subtext">Renda total combinada do casal</small>
       </div>
 
       <!-- Total Gastos no Mês -->
@@ -80,7 +80,28 @@
           <span class="kpi-title">Gastos Totais no Mês</span>
         </div>
         <div class="kpi-value expense-text" id="val-gastos-totais">R$ 0,00</div>
-        <small class="kpi-subtext">Soma de todos os centros de custo</small>
+        <small class="kpi-subtext">Soma de todas as compras do casal</small>
+      </div>
+
+      <!-- GASTOS ELE VS ELA -->
+      <div class="kpi-card glass-card">
+        <div class="kpi-header">
+          <span class="kpi-icon user-split"><i data-lucide="users"></i></span>
+          <span class="kpi-title">Divisão de Gastos do Casal</span>
+        </div>
+        <div class="user-split-container">
+          <div class="user-split-item ele-color">
+            <span>👨 Ele</span>
+            <strong id="val-gastos-ele">R$ 0,00</strong>
+          </div>
+          <div class="user-split-item ela-color">
+            <span>👩 Ela</span>
+            <strong id="val-gastos-ela">R$ 0,00</strong>
+          </div>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="bar-ele-ela" class="progress-bar-fill"></div>
+        </div>
       </div>
 
       <!-- SOBRA DO MÊS / PODER DE POUPANÇA (DESTAQUE) -->
@@ -108,7 +129,7 @@
         </div>
       </section>
 
-      <!-- COLUNA DA DIREITA: PROJEÇÃO FINANCEIRA FUTURA -->
+      <!-- COLUNA DA DIREIRA: PROJEÇÃO FINANCEIRA FUTURA -->
       <section class="glass-card projection-section">
         <div class="card-header">
           <h2><i data-lucide="sparkles"></i> Projeção & Planejamento Futuro</h2>
@@ -116,7 +137,7 @@
 
         <div class="projection-box">
           <p class="projection-description">
-            Com base na <strong>Sobra do Mês</strong> atual, vejam o potencial de acumulação do casal para planejar futuros gastos e investimentos:
+            Com base na <strong>Sobra do Mês</strong> atual, vejam o potencial de economia acumulada para planejar o futuro do casal:
           </p>
 
           <div class="projection-cards">
@@ -138,11 +159,11 @@
           <div class="planning-simulator">
             <h3><i data-lucide="calculator"></i> Simulador de Compra / Gasto Futuro</h3>
             <div class="sim-inputs">
-              <input type="text" id="sim-nome" placeholder="Ex: Reforma da Cozinha, Trocar de Carro...">
+              <input type="text" id="sim-nome" placeholder="Ex: Reforma da Cozinha, Viagem...">
               <input type="number" id="sim-valor" placeholder="Valor Estimado (R$)">
             </div>
             <button id="btn-simular" class="btn btn-primary full-width">
-              <i data-lucide="clock"></i> Em quantos meses realizamos este sonho?
+              <i data-lucide="clock"></i> Em quantos meses realizamos este objetivo?
             </button>
             <div id="sim-resultado" class="sim-result-box hidden"></div>
           </div>
@@ -154,15 +175,15 @@
     <!-- SEÇÃO INFERIOR: REGISTRO DE TRANSAÇÕES E NOVO GASTO -->
     <section class="dashboard-grid bottom-grid">
       
-      <!-- FORMULÁRIO DE NOVO GASTO MANUALL -->
+      <!-- FORMULÁRIO DE NOVO GASTO MANUAL -->
       <div class="glass-card form-card">
         <div class="card-header">
-          <h2><i data-lucide="plus-circle"></i> Lançar Novo Gasto Manualmente</h2>
+          <h2><i data-lucide="plus-circle"></i> Lançar Novo Gasto</h2>
         </div>
         <form id="form-novo-gasto">
           <div class="form-group">
             <label>Descrição do Gasto</label>
-            <input type="text" id="gasto-descricao" placeholder="Ex: Supermercado, Aluguel, Posto" required>
+            <input type="text" id="gasto-descricao" placeholder="Ex: Mercado, Aluguel, Farmácia" required>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -208,7 +229,7 @@
             </thead>
             <tbody id="tbody-transacoes">
               <tr>
-                <td colspan="5" class="empty-state">Nenhuma transação carregada ainda. Configure o Supabase acima.</td>
+                <td colspan="5" class="empty-state">Nenhuma transação carregada ainda.</td>
               </tr>
             </tbody>
           </table>

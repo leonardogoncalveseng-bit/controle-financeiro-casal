@@ -1,14 +1,19 @@
 {
   "name": "controle-financeiro-casal-backend",
   "version": "1.0.0",
-  "description": "Script de sincronização automática de dados bancários (Pluggy -> Supabase)",
-  "main": "sincronizar.js",
+  "description": "Script de automação e robô de WhatsApp do Controle Financeiro do Casal",
+  "main": "robo_whatsapp_grupo.js",
   "scripts": {
-    "start": "node sincronizar.js"
+    "start": "node robo_whatsapp_grupo.js",
+    "cloud-api": "node servidor_whatsapp.js",
+    "test-robo": "node robo_mensagens.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.6.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
   }
 }

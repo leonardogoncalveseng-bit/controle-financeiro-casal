@@ -35,19 +35,16 @@ const DADOS_DEMO = {
 // INICIALIZAÇÃO DA APLICAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Inicializar Lucide Icons
   if (window.lucide) {
     lucide.createIcons();
   }
 
-  // Tentar carregar credenciais do Supabase salvas no navegador
   const savedUrl = localStorage.getItem('SUPABASE_URL');
   const savedKey = localStorage.getItem('SUPABASE_ANON_KEY');
 
   if (savedUrl && savedKey) {
     conectarSupabase(savedUrl, savedKey);
   } else {
-    console.log('💡 Rodando em modo de demonstração inicial. Clique em "Configurar Supabase" para conectar o banco real!');
     usarDadosDemo();
   }
 
@@ -73,7 +70,6 @@ async function carregarDadosDoSupabase() {
   if (!supabaseClient) return;
 
   try {
-    // 1. Carregar Categorias
     const { data: categorias, error: errCat } = await supabaseClient
       .from('categorias')
       .select('*');
@@ -81,7 +77,6 @@ async function carregarDadosDoSupabase() {
     if (errCat) throw errCat;
     estado.categorias = categorias || [];
 
-    // 2. Carregar Transações com a categoria vinculada
     const { data: transacoes, error: errTrans } = await supabaseClient
       .from('transacoes')
       .select('*, categoria:categorias(nome)');
@@ -109,22 +104,40 @@ function atualizarInterface() {
   preencherSelectCategorias();
   preencherTabelaTransacoes();
 
-  // Cálculos Financeiros
+  // 1. Cálculos de Totais
   const renda = parseFloat(document.getElementById('input-renda-conjunta').value) || 0;
   const totalGastos = estado.transacoes.reduce((acc, t) => acc + Number(t.valor), 0);
   const sobraMes = renda - totalGastos;
   const porcentagemSobra = renda > 0 ? ((sobraMes / renda) * 100).toFixed(1) : 0;
 
-  // Atualizar KPIs na tela
+  // 2. Cálculo Separado: Ele vs Ela
+  const gastosEle = estado.transacoes
+    .filter(t => t.pago_por === 'Ele')
+    .reduce((acc, t) => acc + Number(t.valor), 0);
+
+  const gastosEla = estado.transacoes
+    .filter(t => t.pago_por === 'Ela')
+    .reduce((acc, t) => acc + Number(t.valor), 0);
+
+  const porcentagemEle = totalGastos > 0 ? ((gastosEle / totalGastos) * 100).toFixed(0) : 50;
+
+  // 3. Atualizar KPIs na tela
   document.getElementById('val-gastos-totais').textContent = formatarMoeda(totalGastos);
-  
+  document.getElementById('val-gastos-ele').textContent = formatarMoeda(gastosEle);
+  document.getElementById('val-gastos-ela').textContent = formatarMoeda(gastosEla);
+
+  const barEleEla = document.getElementById('bar-ele-ela');
+  if (barEleEla) {
+    barEleEla.style.width = `${porcentagemEle}%`;
+  }
+
   const elSobra = document.getElementById('val-sobra-mes');
   elSobra.textContent = formatarMoeda(sobraMes);
   elSobra.style.color = sobraMes >= 0 ? '#10b981' : '#f43f5e';
 
   document.getElementById('subtext-porcentagem-sobra').textContent = `${porcentagemSobra}% da renda livre este mês`;
 
-  // Atualizar Projeção Futura
+  // 4. Atualizar Projeção Futura
   const proj3 = sobraMes > 0 ? sobraMes * 3 : 0;
   const proj6 = sobraMes > 0 ? sobraMes * 6 : 0;
   const proj12 = sobraMes > 0 ? sobraMes * 12 : 0;
@@ -165,7 +178,6 @@ function preencherTabelaTransacoes() {
     return;
   }
 
-  // Ordenar por data decrescente
   const ordenadas = [...estado.transacoes].sort((a, b) => new Date(b.data) - new Date(a.data));
 
   ordenadas.forEach(t => {
@@ -190,7 +202,6 @@ function preencherTabelaTransacoes() {
 function renderizarGraficoCategorias() {
   const ctx = document.getElementById('chart-categorias').getContext('2d');
 
-  // Agrupar gastos por categoria
   const mapaCategorias = {};
   estado.transacoes.forEach(t => {
     const nomeCat = t.categoria ? t.categoria.nome : 'Outros';
@@ -248,10 +259,8 @@ function renderizarGraficoCategorias() {
 // EVENTOS & INTERAÇÕES
 // ===================================================
 function configurarEventos() {
-  // Alterar renda conjunta recarrega os cálculos
   document.getElementById('input-renda-conjunta').addEventListener('input', atualizarInterface);
 
-  // Botões de Configuração Supabase (Modal)
   const modal = document.getElementById('modal-config');
   document.getElementById('btn-config').addEventListener('click', () => {
     document.getElementById('cfg-url').value = localStorage.getItem('SUPABASE_URL') || '';
@@ -275,7 +284,6 @@ function configurarEventos() {
     }
   });
 
-  // Cadastrar Novo Gasto Manual
   document.getElementById('form-novo-gasto').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -300,7 +308,6 @@ function configurarEventos() {
       }
       carregarDadosDoSupabase();
     } else {
-      // Adicionar no estado demo
       const catObj = estado.categorias.find(c => c.id === categoria_id);
       estado.transacoes.push({
         id: 't' + Date.now(),
@@ -313,7 +320,6 @@ function configurarEventos() {
     document.getElementById('form-novo-gasto').reset();
   });
 
-  // Simulador de Planejamento Futuro
   document.getElementById('btn-simular').addEventListener('click', () => {
     const nome = document.getElementById('sim-nome').value || 'Seu objetivo';
     const valorAlvo = parseFloat(document.getElementById('sim-valor').value);
@@ -340,7 +346,6 @@ function configurarEventos() {
     resBox.classList.remove('hidden');
   });
 
-  // Atualizar dados
   document.getElementById('btn-atualizar').addEventListener('click', () => {
     if (supabaseClient) {
       carregarDadosDoSupabase();
