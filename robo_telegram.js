@@ -11,9 +11,8 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Servidor de saúde para manter online
 app.get('/', (req, res) => {
-  res.send('✅ Robô Financeiro do Casal está Online e Funcionando no Render!');
+  res.send('✅ Robô Financeiro do Casal está Online no Render!');
 });
 
 app.listen(PORT, () => {
@@ -33,14 +32,13 @@ console.log('📩 Aguardando mensagens no grupo...');
 bot.on('message', async (msg) => {
   try {
     const texto = msg.text || '';
-    if (!texto || texto.startsWith('/')) return; // Ignora comandos /start
+    if (!texto || texto.startsWith('/')) return;
 
-    // Processar mensagem estrita:
-    // 1ª Palavra = Categoria | Meio = Estabelecimento | Fim = Valor
+    // Processar mensagem com mapeamento inteligente
     const gasto = processarTextoMensagem(texto);
-    if (!gasto) return; // Se não for gasto, ignora silenciosamente
+    if (!gasto) return;
 
-    // Identificar automaticamente Ele vs Ela pelo nome do Telegram se não especificado
+    // Identificar Ele vs Ela
     const nomeUsuario = (msg.from?.first_name || '').toLowerCase();
     if (!/\b(ela|ele)\b/i.test(texto)) {
       if (nomeUsuario.includes('giu') || nomeUsuario.includes('esposa') || nomeUsuario.includes('giulissima')) {
@@ -50,7 +48,7 @@ bot.on('message', async (msg) => {
       }
     }
 
-    console.log(`\n💰 ${msg.from?.first_name}: "${texto}" → Categoria: ${gasto.categoria_nome} | Lugar: ${gasto.descricao} | R$ ${gasto.valor} (${gasto.pago_por})`);
+    console.log(`\n💰 ${msg.from?.first_name}: "${texto}" → ${gasto.categoria_nome} (${gasto.subcategoria_nome}) | ${gasto.descricao} | R$ ${gasto.valor}`);
 
     const resultado = await registrarGastoNoSupabase(gasto);
 
@@ -58,11 +56,12 @@ bot.on('message', async (msg) => {
       bot.sendMessage(
         msg.chat.id,
         `✅ *Gasto Registrado!*\n\n` +
-        `🗂️ *Categoria:* ${gasto.categoria_nome}\n` +
+        `📁 *Centro de Custo:* ${gasto.categoria_nome}\n` +
+        `🏷️ *Subcategoria:* ${gasto.subcategoria_nome}\n` +
         `🏪 *Lugar:* ${gasto.descricao}\n` +
         `💰 *Valor:* R$ ${gasto.valor.toFixed(2)}\n` +
         `👤 *Pago por:* ${gasto.pago_por === 'Ele' ? 'Leo 👨' : 'Giu 👩'}\n\n` +
-        `_Já atualizado no painel do casal!_ 📊`,
+        `_Atualizado no painel do casal!_ 📊`,
         { parse_mode: 'Markdown' }
       );
     }
@@ -75,12 +74,11 @@ bot.onText(/\/start|\/inicio/i, (msg) => {
   bot.sendMessage(
     msg.chat.id,
     `👋 *Olá! Sou o Robô Financeiro do Casal!*\n\n` +
-    `Para lançar um gasto no grupo, mande no formato:\n\n` +
-    `\`[Categoria] [Estabelecimento] [Valor]\`\n\n` +
-    `📝 *Exemplos:*\n` +
-    `• \`Oficina sóbreque 250\`\n` +
-    `• \`Mercado Savenago 150,00\`\n` +
-    `• \`Farmacia Drogasil 45 ela\`\n`,
+    `Mande um gasto assim no grupo:\n\n` +
+    `• \`Padaria Real 35\` (Alimentação ➔ Padaria)\n` +
+    `• \`Mercado Savenago 150\` (Alimentação ➔ Supermercado)\n` +
+    `• \`Oficina sóbreque 250\` (Transporte ➔ Manutenção)\n` +
+    `• \`Farmacia Drogasil 45 ela\` (Saúde ➔ Farmácia)\n`,
     { parse_mode: 'Markdown' }
   );
 });
