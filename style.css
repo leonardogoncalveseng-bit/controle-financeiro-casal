@@ -1,11 +1,11 @@
 /* ===================================================
-   DESIGN SYSTEM & CSS VARIABLES
+   DESIGN SYSTEM & CSS VARIABLES (NEON GLASSMORPHISM)
    =================================================== */
 :root {
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-  --card-bg: rgba(30, 41, 59, 0.7);
-  --card-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --bg-gradient: linear-gradient(135deg, #090d16 0%, #111827 50%, #090d16 100%);
+  --card-bg: rgba(17, 24, 39, 0.65);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -13,7 +13,7 @@
   --accent-income: #38bdf8;  /* Azul neon */
   --accent-expense: #f43f5e; /* Rosa/Vermelho neon */
   --accent-savings: #10b981; /* Verde esmeralda neon */
-  --accent-purple: #8b5cf6;  /* Roxo neon */
+  --accent-purple: #a855f7;  /* Roxo neon */
   --accent-ele: #38bdf8;     /* Azul para Leo */
   --accent-ela: #ec4899;     /* Rosa para Giu */
 
@@ -28,11 +28,24 @@
 
 body {
   background: var(--bg-gradient);
-  background-attachment: fixed;
   color: var(--text-main);
   font-family: var(--font-family);
   min-height: 100vh;
   padding: 24px;
+  overflow-x: hidden;
+}
+
+/* ===================================================
+   CANVAS 3D BACKGROUND (THREE.JS)
+   =================================================== */
+#canvas-3d-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .app-container {
@@ -41,6 +54,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 /* ===================================================
@@ -48,13 +63,25 @@ body {
    =================================================== */
 .glass-card {
   background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--card-border);
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 24px;
   box-shadow: var(--glass-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.glass-card-hero {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 20px 28px;
 }
 
 /* ===================================================
@@ -66,7 +93,6 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  padding-bottom: 8px;
 }
 
 .brand {
@@ -75,7 +101,7 @@ body {
   gap: 16px;
 }
 
-.avatar-pair {
+.avatar-pair-3d {
   display: flex;
   align-items: center;
 }
@@ -86,23 +112,38 @@ body {
   padding: 8px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
 }
 
 .avatar.ela {
   margin-left: -12px;
+  box-shadow: 0 0 15px rgba(236, 72, 153, 0.3);
 }
 
-.main-header h1 {
+.glow-title {
   font-size: 26px;
-  font-weight: 700;
-  background: linear-gradient(90deg, #38bdf8, #a855f7);
+  font-weight: 800;
+  background: linear-gradient(90deg, #38bdf8, #a855f7, #ec4899);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-3d {
+  font-size: 11px;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  -webkit-text-fill-color: initial;
+  letter-spacing: 1px;
 }
 
 .subtitle {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
   margin-top: 2px;
 }
 
@@ -175,6 +216,46 @@ body {
   width: 100%;
 }
 
+/* BOTÕES DE AÇÃO NA TABELA (EDITAR & EXCLUIR) */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-action-edit {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action-edit:hover {
+  background: rgba(56, 189, 248, 0.3);
+  transform: scale(1.05);
+}
+
+.btn-action-delete {
+  background: rgba(244, 63, 94, 0.15);
+  color: #f43f5e;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action-delete:hover {
+  background: rgba(244, 63, 94, 0.3);
+  transform: scale(1.05);
+}
+
 /* ===================================================
    KPI CARDS GRID
    =================================================== */
@@ -203,7 +284,7 @@ body {
   justify-content: center;
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .kpi-icon.expense { background: rgba(244, 63, 94, 0.15); color: var(--accent-expense); }
@@ -225,60 +306,38 @@ body {
 .savings-text { color: var(--accent-savings); }
 
 .highlight-card {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(30, 41, 59, 0.8));
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(17, 24, 39, 0.8));
   border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.kpi-value-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.currency {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent-savings);
+}
+
+.kpi-input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 12px;
+  color: var(--accent-savings);
+  font-family: var(--font-family);
+  font-size: 24px;
+  font-weight: 700;
+  padding: 6px 12px;
+  width: 100%;
 }
 
 .kpi-subtext {
   font-size: 12px;
   color: var(--text-muted);
 }
-
-/* SOBRA INDIVIDUAL (LEO VS GIU) */
-.user-split-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.user-split-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.user-split-item span {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.kpi-value-container.mini {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.currency-mini {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.kpi-input-sm {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: var(--text-main);
-  font-family: var(--font-family);
-  font-size: 16px;
-  font-weight: 700;
-  padding: 4px 8px;
-  width: 100%;
-}
-
-.ele-color .kpi-input-sm { color: var(--accent-ele); border-color: rgba(56, 189, 248, 0.3); }
-.ela-color .kpi-input-sm { color: var(--accent-ela); border-color: rgba(236, 72, 153, 0.3); }
 
 /* ===================================================
    DASHBOARD GRID & SECTIONS
@@ -310,20 +369,34 @@ body {
   gap: 10px;
 }
 
-.badge {
-  background: rgba(255, 255, 255, 0.1);
+.badge-tag {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-income);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
-  color: var(--accent-income);
+  border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
 .chart-wrapper {
   position: relative;
-  height: 280px;
+  height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.dicas-box {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  font-size: 13px;
+  color: #fde68a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* PROJEÇÃO FUTURA */
@@ -342,16 +415,16 @@ body {
 }
 
 .mini-projection {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.25);
   padding: 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .mini-projection.highlight {
   border-color: rgba(168, 85, 247, 0.4);
-  background: rgba(168, 85, 247, 0.1);
+  background: rgba(168, 85, 247, 0.15);
 }
 
 .proj-time {
@@ -369,8 +442,8 @@ body {
 
 .planning-simulator {
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -417,17 +490,17 @@ body {
 }
 
 label {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 input, select {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--text-main);
   font-family: var(--font-family);
   font-size: 14px;
@@ -440,12 +513,24 @@ input:focus, select:focus {
   border-color: var(--accent-income);
 }
 
+.input-search-sm {
+  font-size: 12px;
+  padding: 6px 10px;
+  width: 160px;
+}
+
+.table-actions-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ===================================================
    TABLES
    =================================================== */
 .table-responsive {
   overflow-x: auto;
-  max-height: 280px;
+  max-height: 320px;
   overflow-y: auto;
 }
 
@@ -457,14 +542,14 @@ input:focus, select:focus {
 }
 
 .data-table th {
-  padding: 10px;
+  padding: 12px 10px;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: sticky;
   top: 0;
-  background: #1e293b;
+  background: #0f172a;
 }
 
 .data-table td {
@@ -484,7 +569,8 @@ input:focus, select:focus {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -503,16 +589,10 @@ input:focus, select:focus {
 
 .modal-content h2 {
   font-size: 20px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.modal-content p {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 20px;
 }
 
 .modal-actions {

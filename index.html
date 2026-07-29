@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle Financeiro Familiar 💰💑</title>
+  <title>Controle Financeiro Familiar 3D 💰💑</title>
   <!-- Google Fonts: Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Three.js CDN para fundo 3D Interativo -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <!-- Chart.js para Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Supabase JS Client -->
@@ -18,49 +20,33 @@
 </head>
 <body>
 
+  <!-- CANVAS 3D INTERATIVO (THREE.JS) -->
+  <canvas id="canvas-3d-bg"></canvas>
+
   <div class="app-container">
 
-    <!-- CABEÇALHO -->
-    <header class="main-header">
+    <!-- CABEÇALHO COM ESTILO PREMIUM 3D -->
+    <header class="main-header glass-card-hero">
       <div class="brand">
-        <div class="avatar-pair">
+        <div class="avatar-pair-3d">
           <span class="avatar ele">👨</span>
           <span class="avatar ela">👩</span>
         </div>
         <div>
-          <h1>Controle Financeiro da Família</h1>
-          <p class="subtitle">Análise por Centro de Custo, Nome do Estabelecimento e Projeção de Investimentos</p>
+          <h1 class="glow-title">Finanças do Casal <span class="badge-3d">3D</span></h1>
+          <p class="subtitle">Gestão Inteligente por Centro de Custo, Categorias e Projeção de Investimento</p>
         </div>
       </div>
-      <button id="btn-config" class="btn btn-secondary">
-        <i data-lucide="settings"></i> Configurar Supabase
-      </button>
+      <div class="header-actions">
+        <button id="btn-config" class="btn btn-secondary glass-btn">
+          <i data-lucide="settings"></i> Conectar Supabase
+        </button>
+      </div>
     </header>
-
-    <!-- PAINEL DE CONFIGURAÇÃO (MODAL) -->
-    <div id="modal-config" class="modal hidden">
-      <div class="modal-content glass-card">
-        <h2><i data-lucide="key"></i> Configuração do Supabase</h2>
-        <p>URL e Anon Key do seu banco de dados:</p>
-        
-        <div class="form-group">
-          <label>SUPABASE URL</label>
-          <input type="text" id="cfg-url" placeholder="https://seu-projeto.supabase.co">
-        </div>
-        <div class="form-group">
-          <label>SUPABASE ANON KEY</label>
-          <input type="password" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
-        </div>
-        <div class="modal-actions">
-          <button id="btn-salvar-config" class="btn btn-primary">Salvar e Conectar</button>
-          <button id="btn-fechar-config" class="btn btn-ghost">Cancelar</button>
-        </div>
-      </div>
-    </div>
 
     <!-- CARDS DE RESUMO DO MÊS (KPIs) -->
     <section class="kpi-grid">
-      <!-- Total Gastos Familiares no Mês -->
+      <!-- Total Gastos Familiares -->
       <div class="kpi-card glass-card">
         <div class="kpi-header">
           <span class="kpi-icon expense"><i data-lucide="shopping-bag"></i></span>
@@ -70,35 +56,49 @@
         <small class="kpi-subtext" id="subtext-qtd-compras">0 compras registradas</small>
       </div>
 
-      <!-- SOBRA REAL DA CONTA NO MÊS (PARA INVESTIMENTOS DO CASAL) -->
+      <!-- Categoria Campeã de Gastos -->
+      <div class="kpi-card glass-card">
+        <div class="kpi-header">
+          <span class="kpi-icon user-split"><i data-lucide="pie-chart"></i></span>
+          <span class="kpi-title">Maior Centro de Custo</span>
+        </div>
+        <div class="kpi-value" id="val-maior-categoria" style="color: var(--accent-income); font-size: 22px;">Nenhum</div>
+        <small class="kpi-subtext" id="subtext-maior-categoria">Mês em análise</small>
+      </div>
+
+      <!-- Sobra Real Guardada (para Projeções) -->
       <div class="kpi-card glass-card highlight-card">
         <div class="kpi-header">
           <span class="kpi-icon savings"><i data-lucide="piggy-bank"></i></span>
-          <span class="kpi-title">Sobra Real Guardada no Mês</span>
+          <span class="kpi-title">Sobra Real da Conta (Investimento)</span>
         </div>
         <div class="kpi-value-container">
           <span class="currency">R$</span>
           <input type="number" id="input-sobra-real" class="kpi-input" value="3000" step="100">
         </div>
-        <small class="kpi-subtext">Capacidade de investimento mensal do casal</small>
+        <small class="kpi-subtext">Valor exato para calcular acúmulo futuro</small>
       </div>
     </section>
 
-    <!-- SEÇÃO PRINCIPAL (GRÁFICOS & PROJEÇÃO) -->
+    <!-- PAINEL PRINCIPAL: GRÁFICO E PROJEÇÕES -->
     <main class="dashboard-grid">
 
-      <!-- COLUNA DA ESQUERDA: GRÁFICO DE CENTROS DE CUSTO -->
+      <!-- GRÁFICO DE CENTROS DE CUSTO COM PORCENTAGEM -->
       <section class="glass-card chart-section">
         <div class="card-header">
-          <h2><i data-lucide="pie-chart"></i> Gastos por Centro de Custo</h2>
-          <span class="badge">Este Mês</span>
+          <h2><i data-lucide="pie-chart"></i> Gastos por Centro de Custo (%)</h2>
+          <span class="badge-tag">Análise Inteligente</span>
         </div>
         <div class="chart-wrapper">
           <canvas id="chart-categorias"></canvas>
         </div>
+        <div id="dicas-economia" class="dicas-box">
+          <i data-lucide="lightbulb" style="color: #f59e0b;"></i>
+          <span id="texto-dica-economia">Carregando sugestões de economia...</span>
+        </div>
       </section>
 
-      <!-- COLUNA DA DIREIRA: PROJEÇÃO FINANCEIRA FUTURA -->
+      <!-- PROJEÇÃO DE INVESTIMENTOS & SIMULADOR DE VIDA -->
       <section class="glass-card projection-section">
         <div class="card-header">
           <h2><i data-lucide="sparkles"></i> Projeção de Investimentos do Casal</h2>
@@ -106,7 +106,7 @@
 
         <div class="projection-box">
           <p class="projection-description">
-            Mantendo a <strong>Sobra Real Guardada</strong> neste mês, vejam o potencial de acumulação da família para investimentos:
+            Mantendo a <strong>Sobra Real Guardada</strong> neste mês, vejam a projeção de patrimônio acumulado:
           </p>
 
           <div class="projection-cards">
@@ -126,9 +126,9 @@
 
           <!-- SIMULADOR DE PLANEJAMENTO FUTURO -->
           <div class="planning-simulator">
-            <h3><i data-lucide="calculator"></i> Simulador de Compra / Investimento Futuro</h3>
+            <h3><i data-lucide="calculator"></i> Simulador de Compra / Financiamento</h3>
             <div class="sim-inputs">
-              <input type="text" id="sim-nome" placeholder="Ex: Viagem, Carro, Reforma...">
+              <input type="text" id="sim-nome" placeholder="Ex: Viagem, Carro, Entrada do Apê">
               <input type="number" id="sim-valor" placeholder="Valor Alvo (R$)">
             </div>
             <button id="btn-simular" class="btn btn-primary full-width">
@@ -141,7 +141,7 @@
 
     </main>
 
-    <!-- SEÇÃO INFERIOR: REGISTRO DE TRANSAÇÕES E NOVO GASTO -->
+    <!-- EXTRATO COM EDIÇÃO E EXCLUSÃO -->
     <section class="dashboard-grid bottom-grid">
       
       <!-- FORMULÁRIO DE NOVO GASTO MANUAL -->
@@ -151,12 +151,12 @@
         </div>
         <form id="form-novo-gasto">
           <div class="form-group">
-            <label>Categoria (Centro de Custo)</label>
-            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Oficina, Mercado, Farmacia, Lazer" required>
+            <label>Categoria (ex: Alimentação, Transporte, Lazer, Saúde)</label>
+            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Padaria, Mercado, Oficina" required>
           </div>
           <div class="form-group">
             <label>Nome do Estabelecimento / Lugar</label>
-            <input type="text" id="gasto-descricao" placeholder="Ex: Sóbreque, Savenago, Drogasil" required>
+            <input type="text" id="gasto-descricao" placeholder="Ex: Real, Savenago, Drogasil" required>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -177,11 +177,14 @@
         </form>
       </div>
 
-      <!-- TABELA DE ÚLTIMAS TRANSAÇÕES -->
+      <!-- TABELA DE EXTRATO DE GASTOS DA FAMÍLIA COM BOTÕES EDITAR E EXCLUIR -->
       <div class="glass-card table-card">
         <div class="card-header">
           <h2><i data-lucide="list"></i> Extrato de Gastos da Família</h2>
-          <button id="btn-atualizar" class="btn btn-ghost btn-sm"><i data-lucide="refresh-cw"></i> Atualizar Dados</button>
+          <div class="table-actions-header">
+            <input type="text" id="input-busca-extrato" placeholder="🔍 Buscar gasto..." class="input-search-sm">
+            <button id="btn-atualizar" class="btn btn-ghost btn-sm"><i data-lucide="refresh-cw"></i></button>
+          </div>
         </div>
         <div class="table-responsive">
           <table class="data-table">
@@ -192,11 +195,12 @@
                 <th>Estabelecimento</th>
                 <th>Quem Pagou</th>
                 <th>Valor</th>
+                <th style="text-align: center;">Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-transacoes">
               <tr>
-                <td colspan="5" class="empty-state">Carregando extrato do Supabase...</td>
+                <td colspan="6" class="empty-state">Carregando extrato do Supabase...</td>
               </tr>
             </tbody>
           </table>
@@ -205,6 +209,54 @@
 
     </section>
 
+  </div>
+
+  <!-- MODAL DE EDIÇÃO DE GASTO -->
+  <div id="modal-editar" class="modal hidden">
+    <div class="modal-content glass-card">
+      <h2><i data-lucide="edit-3"></i> Editar Gasto</h2>
+      <input type="hidden" id="edit-id">
+      <div class="form-group">
+        <label>Descrição / Estabelecimento</label>
+        <input type="text" id="edit-descricao">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input type="number" step="0.01" id="edit-valor">
+        </div>
+        <div class="form-group">
+          <label>Quem Pagou?</label>
+          <select id="edit-pago-por">
+            <option value="Ele">Leo 👨</option>
+            <option value="Ela">Giu 👩</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-salvar-edicao" class="btn btn-primary">Salvar Alterações</button>
+        <button id="btn-cancelar-edicao" class="btn btn-ghost">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURAÇÃO SUPABASE -->
+  <div id="modal-config" class="modal hidden">
+    <div class="modal-content glass-card">
+      <h2><i data-lucide="key"></i> Configuração do Supabase</h2>
+      <div class="form-group">
+        <label>SUPABASE URL</label>
+        <input type="text" id="cfg-url" placeholder="https://seu-projeto.supabase.co">
+      </div>
+      <div class="form-group">
+        <label>SUPABASE ANON KEY</label>
+        <input type="password" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+      </div>
+      <div class="modal-actions">
+        <button id="btn-salvar-config" class="btn btn-primary">Salvar e Conectar</button>
+        <button id="btn-fechar-config" class="btn btn-ghost">Cancelar</button>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>

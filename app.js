@@ -1,5 +1,5 @@
 // ===================================================
-// APLICATIVO FINANCEIRO DO CASAL (LÓGICA PRINCIPAL)
+// APLICATIVO FINANCEIRO DO CASAL 3D (LÓGICA PRINCIPAL)
 // ===================================================
 
 let supabaseClient = null;
@@ -13,12 +13,15 @@ let estado = {
 };
 
 // ===================================================
-// INICIALIZAÇÃO DA APLICAÇÃO
+// INICIALIZAÇÃO DA APLICAÇÃO & THREE.JS
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
   if (window.lucide) {
     lucide.createIcons();
   }
+
+  // Inicializar o fundo 3D com Three.js
+  inicializarFundo3D();
 
   // Credenciais reais do Supabase do usuário
   const defaultUrl = 'https://bsrcbtgdayqsggcijxfu.supabase.co';
@@ -30,6 +33,85 @@ document.addEventListener('DOMContentLoaded', () => {
   conectarSupabase(savedUrl, savedKey);
   configurarEventos();
 });
+
+// ===================================================
+// THREE.JS: CANVAS 3D INTERATIVO EM SEGUNDO PLANO
+// ===================================================
+function inicializarFundo3D() {
+  const canvas = document.getElementById('canvas-3d-bg');
+  if (!canvas || !window.THREE) return;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 30;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Criar 120 partículas geométricas 3D flutuantes
+  const geometry = new THREE.IcosahedronGeometry(0.8, 0);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.25
+  });
+
+  const particles = [];
+  const count = 100;
+
+  for (let i = 0; i < count; i++) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.x = (Math.random() - 0.5) * 80;
+    mesh.position.y = (Math.random() - 0.5) * 80;
+    mesh.position.z = (Math.random() - 0.5) * 40;
+
+    mesh.rotation.x = Math.random() * Math.PI;
+    mesh.rotation.y = Math.random() * Math.PI;
+
+    mesh.userData = {
+      rotX: (Math.random() - 0.5) * 0.01,
+      rotY: (Math.random() - 0.5) * 0.01
+    };
+
+    scene.add(mesh);
+    particles.push(mesh);
+  }
+
+  // Interatividade com o mouse
+  let mouseX = 0;
+  let mouseY = 0;
+
+  window.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // Loop de animação contínua 3D
+  function animate() {
+    requestAnimationFrame(animate);
+
+    particles.forEach(p => {
+      p.rotation.x += p.userData.rotX;
+      p.rotation.y += p.userData.rotY;
+    });
+
+    camera.position.x += (mouseX * 5 - camera.position.x) * 0.05;
+    camera.position.y += (-mouseY * 5 - camera.position.y) * 0.05;
+    camera.lookAt(scene.position);
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+}
 
 // ===================================================
 // CONEXÃO COM SUPABASE
@@ -81,7 +163,29 @@ function atualizarInterface() {
   document.getElementById('val-gastos-totais').textContent = formatarMoeda(totalGastos);
   document.getElementById('subtext-qtd-compras').textContent = `${estado.transacoes.length} compra(s) registrada(s) este mês`;
 
-  // 2. Sobra Real e Projeções de Vida
+  // 2. Maior Categoria de Gasto
+  const mapaCategorias = {};
+  estado.transacoes.forEach(t => {
+    const nomeCat = t.categoria ? t.categoria.nome : 'Outros';
+    mapaCategorias[nomeCat] = (mapaCategorias[nomeCat] || 0) + Number(t.valor);
+  });
+
+  let maiorCatNome = 'Nenhuma';
+  let maiorCatValor = 0;
+
+  Object.entries(mapaCategorias).forEach(([nome, val]) => {
+    if (val > maiorCatValor) {
+      maiorCatValor = val;
+      maiorCatNome = nome;
+    }
+  });
+
+  const elMaiorCat = document.getElementById('val-maior-categoria');
+  if (elMaiorCat) {
+    elMaiorCat.textContent = maiorCatValor > 0 ? `${maiorCatNome} (${formatarMoeda(maiorCatValor)})` : 'Nenhum';
+  }
+
+  // 3. Sobra Real e Projeções de Vida
   const sobraReal = parseFloat(document.getElementById('input-sobra-real').value) || 0;
   estado.sobraReal = sobraReal;
 
@@ -93,8 +197,24 @@ function atualizarInterface() {
   document.getElementById('proj-6-meses').textContent = formatarMoeda(proj6);
   document.getElementById('proj-12-meses').textContent = formatarMoeda(proj12);
 
-  // Renderizar Gráfico de Centros de Custo
-  renderizarGraficoCategorias();
+  // 4. Renderizar Gráfico de Centros de Custo com %
+  renderizarGraficoCategorias(mapaCategorias, totalGastos);
+
+  // 5. Sugestão Inteligente de Economia
+  gerarDicaEconomia(maiorCatNome, maiorCatValor, totalGastos);
+}
+
+function gerarDicaEconomia(maiorCat, maiorVal, totalGastos) {
+  const elDica = document.getElementById('texto-dica-economia');
+  if (!elDica) return;
+
+  if (totalGastos === 0) {
+    elDica.textContent = 'Lancem gastos pelo Telegram para ver análises e sugestões de corte de custos!';
+    return;
+  }
+
+  const pct = ((maiorVal / totalGastos) * 100).toFixed(0);
+  elDica.innerHTML = `<strong>Dica de Economia:</strong> A categoria <strong>${maiorCat}</strong> representa <strong>${pct}%</strong> dos gastos da família este mês (${formatarMoeda(maiorVal)}). Reduzir 15% aqui libera <strong>${formatarMoeda(maiorVal * 0.15)}</strong> adicionais para investimentos!`;
 }
 
 function formatarMoeda(valor) {
@@ -102,18 +222,28 @@ function formatarMoeda(valor) {
 }
 
 // ===================================================
-// PREENCHIMENTO DE ELEMENTOS
+// PREENCHIMENTO DA TABELA COM BOTÕES EDITAR E EXCLUIR
 // ===================================================
-function preencherTabelaTransacoes() {
+function preencherTabelaTransacoes(filtroBusca = '') {
   const tbody = document.getElementById('tbody-transacoes');
   tbody.innerHTML = '';
 
-  if (estado.transacoes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum gasto familiar registrado este mês ainda.</td></tr>';
+  let filtradas = estado.transacoes;
+  if (filtroBusca) {
+    const termo = filtroBusca.toLowerCase();
+    filtradas = estado.transacoes.filter(t => 
+      t.descricao.toLowerCase().includes(termo) ||
+      (t.categoria && t.categoria.nome.toLowerCase().includes(termo)) ||
+      t.pago_por.toLowerCase().includes(termo)
+    );
+  }
+
+  if (filtradas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum gasto encontrado.</td></tr>';
     return;
   }
 
-  const ordenadas = [...estado.transacoes].sort((a, b) => new Date(b.data) - new Date(a.data));
+  const ordenadas = [...filtradas].sort((a, b) => new Date(b.data) - new Date(a.data));
 
   ordenadas.forEach(t => {
     const tr = document.createElement('tr');
@@ -122,26 +252,57 @@ function preencherTabelaTransacoes() {
 
     tr.innerHTML = `
       <td>${t.data ? new Date(t.data).toLocaleDateString('pt-BR') : '-'}</td>
-      <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">${nomeCategoria}</span></td>
+      <td><span class="badge-tag">${nomeCategoria}</span></td>
       <td><strong>${t.descricao}</strong></td>
       <td>${tagPessoa}</td>
       <td style="color: var(--accent-expense); font-weight: 600;">${formatarMoeda(t.valor)}</td>
+      <td style="text-align: center;">
+        <div class="action-buttons">
+          <button class="btn-action-edit" onclick="abrirModalEdicao('${t.id}')" title="Editar Gasto">✏️</button>
+          <button class="btn-action-delete" onclick="excluirGasto('${t.id}')" title="Excluir Gasto">🗑️</button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
 // ===================================================
+// LÓGICA DE EXCLUSÃO E EDIÇÃO
+// ===================================================
+async function excluirGasto(id) {
+  if (!confirm('Deseja realmente excluir este gasto?')) return;
+
+  if (supabaseClient) {
+    const { error } = await supabaseClient.from('transacoes').delete().eq('id', id);
+    if (error) {
+      alert('Erro ao excluir do Supabase: ' + error.message);
+      return;
+    }
+    carregarDadosDoSupabase();
+  } else {
+    estado.transacoes = estado.transacoes.filter(t => t.id !== id);
+    atualizarInterface();
+  }
+}
+
+function abrirModalEdicao(id) {
+  const transacao = estado.transacoes.find(t => t.id === id);
+  if (!transacao) return;
+
+  document.getElementById('edit-id').value = transacao.id;
+  document.getElementById('edit-descricao').value = transacao.descricao;
+  document.getElementById('edit-valor').value = transacao.valor;
+  document.getElementById('edit-pago-por').value = transacao.pago_por;
+
+  document.getElementById('modal-editar').classList.remove('hidden');
+}
+
+// ===================================================
 // GRÁFICO DE CENTROS DE CUSTO (CHART.JS)
 // ===================================================
-function renderizarGraficoCategorias() {
+function renderizarGraficoCategorias(mapaCategorias, totalGastos) {
   const ctx = document.getElementById('chart-categorias').getContext('2d');
-
-  const mapaCategorias = {};
-  estado.transacoes.forEach(t => {
-    const nomeCat = t.categoria ? t.categoria.nome : 'Outros';
-    mapaCategorias[nomeCat] = (mapaCategorias[nomeCat] || 0) + Number(t.valor);
-  });
 
   const labels = Object.keys(mapaCategorias);
   const valores = Object.values(mapaCategorias);
@@ -158,12 +319,12 @@ function renderizarGraficoCategorias() {
   chartCategoriasInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: labels.length > 0 ? labels : ['Nenhum gasto registrado'],
+      labels: labels.length > 0 ? labels : ['Nenhum gasto'],
       datasets: [{
         data: valores.length > 0 ? valores : [1],
         backgroundColor: valores.length > 0 ? cores.slice(0, labels.length) : ['#334155'],
         borderWidth: 0,
-        hoverOffset: 6
+        hoverOffset: 8
       }]
     },
     options: {
@@ -180,7 +341,9 @@ function renderizarGraficoCategorias() {
         tooltip: {
           callbacks: {
             label: function(context) {
-              return ` ${context.label}: ${formatarMoeda(context.raw)}`;
+              const val = context.raw;
+              const pct = totalGastos > 0 ? ((val / totalGastos) * 100).toFixed(1) : 0;
+              return ` ${context.label}: ${formatarMoeda(val)} (${pct}%)`;
             }
           }
         }
@@ -196,15 +359,52 @@ function renderizarGraficoCategorias() {
 function configurarEventos() {
   document.getElementById('input-sobra-real').addEventListener('input', atualizarInterface);
 
-  const modal = document.getElementById('modal-config');
+  // Busca em tempo real no extrato
+  document.getElementById('input-busca-extrato').addEventListener('input', (e) => {
+    preencherTabelaTransacoes(e.target.value);
+  });
+
+  // Salvar Edição
+  document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
+    const id = document.getElementById('edit-id').value;
+    const descricao = document.getElementById('edit-descricao').value.trim();
+    const valor = parseFloat(document.getElementById('edit-valor').value);
+    const pago_por = document.getElementById('edit-pago-por').value;
+
+    if (!descricao || !valor) {
+      alert('Preencha a descrição e o valor!');
+      return;
+    }
+
+    if (supabaseClient) {
+      const { error } = await supabaseClient
+        .from('transacoes')
+        .update({ descricao, valor, pago_por })
+        .eq('id', id);
+
+      if (error) {
+        alert('Erro ao atualizar no Supabase: ' + error.message);
+        return;
+      }
+      document.getElementById('modal-editar').classList.add('hidden');
+      carregarDadosDoSupabase();
+    }
+  });
+
+  document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
+    document.getElementById('modal-editar').classList.add('hidden');
+  });
+
+  // Configuração Supabase
+  const modalConfig = document.getElementById('modal-config');
   document.getElementById('btn-config').addEventListener('click', () => {
     document.getElementById('cfg-url').value = localStorage.getItem('SUPABASE_URL') || '';
     document.getElementById('cfg-key').value = localStorage.getItem('SUPABASE_ANON_KEY') || '';
-    modal.classList.remove('hidden');
+    modalConfig.classList.remove('hidden');
   });
 
   document.getElementById('btn-fechar-config').addEventListener('click', () => {
-    modal.classList.add('hidden');
+    modalConfig.classList.add('hidden');
   });
 
   document.getElementById('btn-salvar-config').addEventListener('click', () => {
@@ -213,9 +413,7 @@ function configurarEventos() {
 
     if (url && key) {
       conectarSupabase(url, key);
-      modal.classList.add('hidden');
-    } else {
-      alert('Por favor, informe a URL e a Anon Key!');
+      modalConfig.classList.add('hidden');
     }
   });
 
@@ -229,7 +427,6 @@ function configurarEventos() {
     const pago_por = document.getElementById('gasto-pago-por').value;
 
     if (supabaseClient) {
-      // 1. Procurar ou criar categoria
       let catId = null;
       if (catTexto) {
         const catFormatada = catTexto.charAt(0).toUpperCase() + catTexto.slice(1).toLowerCase();
@@ -252,7 +449,6 @@ function configurarEventos() {
         }
       }
 
-      // 2. Inserir Transação
       const { error } = await supabaseClient.from('transacoes').insert([{
         descricao,
         valor,
@@ -286,7 +482,7 @@ function configurarEventos() {
     }
 
     if (sobraReal <= 0) {
-      resBox.innerHTML = `⚠️ No momento não há sobra informada. Digitem o valor da sobra real guardada no mês para calcular o plano de <strong>${nome}</strong>!`;
+      resBox.innerHTML = `⚠️ No momento não há sobra informada. Digitem o valor da sobra real para calcular o plano de <strong>${nome}</strong>!`;
       resBox.classList.remove('hidden');
       return;
     }
@@ -296,7 +492,7 @@ function configurarEventos() {
     resBox.classList.remove('hidden');
   });
 
-  // Atualizar dados
+  // Botão Atualizar
   document.getElementById('btn-atualizar').addEventListener('click', () => {
     if (supabaseClient) {
       carregarDadosDoSupabase();
