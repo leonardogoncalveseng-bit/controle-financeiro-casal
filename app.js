@@ -1,5 +1,5 @@
 // ===================================================
-// APLICATIVO FINANCEIRO DO CASAL v2.0 (COM APRENDIZADO DO ROBÔ)
+// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA AVANÇADA)
 // ===================================================
 
 let supabaseClient = null;
@@ -7,6 +7,8 @@ let supabaseClient = null;
 // Estado global da aplicação
 let estado = {
   filtroPeriodo: 'mes-atual',
+  dataInicio: null,
+  dataFim: null,
   filtroMacro: 'todas',
   sobraReal: 3000,
   rendaCasal: 8000,
@@ -75,7 +77,19 @@ async function carregarDados() {
 function atualizarUI() {
   const filtradas = obterTransacoesFiltradas();
 
-  // 1. KPI #1 & #6: Total e Média Diária
+  // 0. NOTIFICAÇÃO DE PENDENTES DE AJUSTE (9.0 OUTROS)
+  const pendentes = estado.transacoes.filter(t => t.categoria && t.categoria.nome.includes('9.0 Outros'));
+  const alertBox = document.getElementById('alert-pendentes-box');
+  if (alertBox) {
+    if (pendentes.length > 0) {
+      document.getElementById('alert-pendentes-texto').textContent = `Existem ${pendentes.length} lançamento(s) pendentes de classificação em "Outros"!`;
+      alertBox.classList.remove('hidden');
+    } else {
+      alertBox.classList.add('hidden');
+    }
+  }
+
+  // 1. Total e Média Diária
   const total = filtradas.reduce((s, t) => s + Number(t.valor), 0);
   document.getElementById('val-gastos-totais').textContent = fmt(total);
 
@@ -83,7 +97,7 @@ function atualizarUI() {
   const mediaDiaria = total > 0 ? (total / diasNoMes) : 0;
   document.getElementById('val-media-diaria').textContent = `Média: ${fmt(mediaDiaria)}/dia (${filtradas.length} compras)`;
 
-  // 2. KPI #4: Maior Gasto Individual
+  // 2. Maior Gasto Individual
   let maiorGasto = null;
   filtradas.forEach(t => {
     if (!maiorGasto || Number(t.valor) > Number(maiorGasto.valor)) {
@@ -99,7 +113,7 @@ function atualizarUI() {
     document.getElementById('val-maior-gasto-detalhe').textContent = 'Nenhum lançamento no período';
   }
 
-  // 3. KPI #7: Dia da Semana que Mais Gasta
+  // 3. Dia da Semana que Mais Gasta
   const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   const somaPorDia = [0, 0, 0, 0, 0, 0, 0];
 
@@ -120,7 +134,7 @@ function atualizarUI() {
   document.getElementById('val-dia-mais-gasta').textContent = diaNome;
   document.getElementById('val-dia-mais-gasta-sub').textContent = somaPorDia[maxDiaIndex] > 0 ? `${pctDia}% dos gastos (${fmt(somaPorDia[maxDiaIndex])})` : 'Sem dados';
 
-  // 4. KPI #8 & #9: Maior vs Menor Centro de Custo Macro
+  // 4. Maior vs Menor Centro de Custo Macro
   const mapaMacro = {};
   filtradas.forEach(t => {
     const nomeCat = t.categoria ? t.categoria.nome : '9.0 Outros';
@@ -140,7 +154,7 @@ function atualizarUI() {
   document.getElementById('val-maior-macro').textContent = maiorVal > 0 ? `${maiorMacro} (${fmt(maiorVal)})` : '—';
   document.getElementById('val-menor-macro').textContent = menorVal > 0 ? `${menorMacro} (${fmt(menorVal)})` : '—';
 
-  // 5. KPI #21: Dica de Economia Potencial
+  // 5. Dica de Economia Potencial
   gerarDica(maiorMacro, maiorVal, total);
 
   // 6. Preencher Extrato e Gráfico 3D de Barras
@@ -156,7 +170,17 @@ function obterTransacoesFiltradas() {
   let res = estado.transacoes;
   const hoje = new Date();
 
-  if (estado.filtroPeriodo === 'mes-atual') {
+  // Filtro de Período Personalizado ou Pré-definido
+  if (estado.filtroPeriodo === 'custom' && estado.dataInicio && estado.dataFim) {
+    const dIni = new Date(estado.dataInicio);
+    const dFim = new Date(estado.dataFim);
+    dFim.setHours(23, 59, 59);
+
+    res = res.filter(t => {
+      const d = new Date(t.data);
+      return d >= dIni && d <= dFim;
+    });
+  } else if (estado.filtroPeriodo === 'mes-atual') {
     const anoAtual = hoje.getFullYear();
     const mesAtual = hoje.getMonth();
     res = res.filter(t => {
@@ -175,6 +199,7 @@ function obterTransacoesFiltradas() {
     res = res.filter(t => new Date(t.data) >= limite3M);
   }
 
+  // Filtro de Centro de Custo Macro
   if (estado.filtroMacro !== 'todas') {
     res = res.filter(t => t.categoria && t.categoria.nome.toLowerCase().includes(estado.filtroMacro.toLowerCase()));
   }
@@ -195,7 +220,7 @@ function fmt(v) {
 }
 
 // ===================================================
-// THREE.JS: GRÁFICO 3D DE BARRAS POR CATEGORIA (KPI #10)
+// THREE.JS: GRÁFICO 3D DE BARRAS POR CATEGORIA
 // ===================================================
 let sceneBars, cameraBars, rendererBars, barGroup;
 
@@ -331,7 +356,7 @@ window.abrirEdicao = function(id) {
 };
 
 // ===================================================
-// MÓDULO 2: GASTOS RECORRENTES (KPI #25, #26, #27)
+// MÓDULO 2: GASTOS RECORRENTES COM RESPONSÁVEL
 // ===================================================
 function atualizarRecorrentes() {
   const tbody = document.getElementById('tbody-recorrentes');
@@ -345,7 +370,7 @@ function atualizarRecorrentes() {
   document.getElementById('val-pct-comprometido').textContent = `${pctRenda}% da renda comprometida`;
 
   if (estado.recorrentes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma conta fixa cadastrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhuma conta fixa cadastrada.</td></tr>';
     return;
   }
 
@@ -356,9 +381,12 @@ function atualizarRecorrentes() {
     const dias = r.dia_vencimento - hoje;
     let statusText = dias === 0 ? '🚨 Vence Hoje' : (dias > 0 && dias <= 3 ? `⏰ Em ${dias} dia(s)` : '✅ Ok');
 
+    const respTag = r.responsavel === 'Ele' ? '👨 Leo' : (r.responsavel === 'Ela' ? '👩 Giu' : '💑 Casal');
+
     tr.innerHTML = `
       <td>Dia ${r.dia_vencimento}</td>
       <td><strong>${r.nome}</strong></td>
+      <td>${respTag}</td>
       <td>${r.categoria_macro || '3.0 Moradia'}</td>
       <td style="color:var(--red); font-weight:600">${fmt(r.valor)}</td>
       <td><span class="tag">${statusText}</span></td>
@@ -376,31 +404,46 @@ window.excluirRecorrente = async function(id) {
 };
 
 // ===================================================
-// MÓDULO 3: SIMULADOR DE INVESTIMENTOS PARA SOBRA
+// MÓDULO 3: SIMULADOR DE INVESTIMENTOS & CORRELAÇÃO COM FINANCIAMENTO
 // ===================================================
 function atualizarInvestimentos() {
   const sobra = parseFloat(document.getElementById('inv-input-sobra').value) || estado.sobraReal;
+  const taxaAnualInput = parseFloat(document.getElementById('inv-input-taxa').value) || 13.65;
+  const prazoMesesInput = parseInt(document.getElementById('inv-input-prazo').value) || 24;
 
-  function calcFuturo(taxaAnual, meses) {
-    const i = Math.pow(1 + taxaAnual, 1 / 12) - 1;
+  const taxaAnualDecimal = taxaAnualInput / 100;
+
+  function calcFuturo(taxa, meses) {
+    const i = Math.pow(1 + taxa, 1 / 12) - 1;
     let acum = 0;
     for (let m = 0; m < meses; m++) {
       acum = (acum + sobra) * (1 + i);
     }
-    return fmt(acum);
+    return acum;
   }
 
-  document.getElementById('inv-poup-12m').textContent = calcFuturo(0.075, 12);
-  document.getElementById('inv-poup-36m').textContent = calcFuturo(0.075, 36);
-  document.getElementById('inv-poup-60m').textContent = calcFuturo(0.075, 60);
+  const saldoResgate = calcFuturo(taxaAnualDecimal, prazoMesesInput);
+  document.getElementById('inv-resgate-calculado').textContent = fmt(saldoResgate);
+  document.getElementById('inv-resgate-sub').textContent = `Em ${prazoMesesInput} meses a ${taxaAnualInput}% a.a.`;
 
-  document.getElementById('inv-cdb100-12m').textContent = calcFuturo(0.1365, 12);
-  document.getElementById('inv-cdb100-36m').textContent = calcFuturo(0.1365, 36);
-  document.getElementById('inv-cdb100-60m').textContent = calcFuturo(0.1365, 60);
+  // CORRELAÇÃO COM FINANCIAMENTO: QUITAÇÃO OU AMORTIZAÇÃO ANTECIPADA
+  const finValorTotal = parseFloat(document.getElementById('fin-valor-total').value) || 0;
+  const finEntrada = parseFloat(document.getElementById('fin-entrada').value) || 0;
+  const saldoDevedor = finValorTotal - finEntrada;
 
-  document.getElementById('inv-lci-12m').textContent = calcFuturo(0.11, 12);
-  document.getElementById('inv-lci-36m').textContent = calcFuturo(0.11, 36);
-  document.getElementById('inv-lci-60m').textContent = calcFuturo(0.11, 60);
+  const elCorrelacao = document.getElementById('inv-correlacao-financiamento');
+
+  if (saldoDevedor > 0) {
+    const pctQuitacao = ((saldoResgate / saldoDevedor) * 100).toFixed(0);
+
+    if (saldoResgate >= saldoDevedor) {
+      elCorrelacao.innerHTML = `🎉 <strong>QUITAÇÃO TOTAL POSSÍVEL!</strong> Em <strong>${prazoMesesInput} meses</strong>, o saldo acumulado de <strong>${fmt(saldoResgate)}</strong> será suficiente para <strong>quitar 100% do saldo devedor</strong> do financiamento (${fmt(saldoDevedor)})!`;
+    } else {
+      elCorrelacao.innerHTML = `💡 <strong>AMORTIZAÇÃO ANTECIPADA:</strong> Em <strong>${prazoMesesInput} meses</strong>, vocês terão <strong>${fmt(saldoResgate)}</strong>, cobrindo <strong>${pctQuitacao}%</strong> do saldo devedor de ${fmt(saldoDevedor)}. Isso reduzirá drasticamente os juros futuros!`;
+    }
+  } else {
+    elCorrelacao.innerHTML = `💡 Configure uma simulação na aba <strong>Financiamento</strong> para ver o plano de amortização antecipada aqui!`;
+  }
 }
 
 // ===================================================
@@ -418,6 +461,7 @@ function configurarEventos() {
     });
   });
 
+  // Filtros de Período Pré-definidos
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
@@ -427,12 +471,41 @@ function configurarEventos() {
     });
   });
 
+  // Aplicar Datas Personalizadas
+  document.getElementById('btn-aplicar-datas').addEventListener('click', () => {
+    const dIni = document.getElementById('filtro-data-inicio').value;
+    const dFim = document.getElementById('filtro-data-fim').value;
+
+    if (!dIni || !dFim) return alert('Selecione a data de início e fim!');
+
+    estado.filtroPeriodo = 'custom';
+    estado.dataInicio = dIni;
+    estado.dataFim = dFim;
+
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    atualizarUI();
+  });
+
+  // Botão Filtrar Pendentes (9.0 Outros)
+  const btnPendentes = document.getElementById('btn-filtrar-pendentes');
+  if (btnPendentes) {
+    btnPendentes.addEventListener('click', () => {
+      estado.filtroMacro = '9.0 Outros';
+      document.getElementById('filtro-categoria-macro').value = '9.0 Outros';
+      atualizarUI();
+    });
+  }
+
+  // Filtro Macro
   document.getElementById('filtro-categoria-macro').addEventListener('change', (e) => {
     estado.filtroMacro = e.target.value;
     atualizarUI();
   });
 
+  // Atualizar Investimentos ao alterar campos
   document.getElementById('inv-input-sobra').addEventListener('input', atualizarInvestimentos);
+  document.getElementById('inv-input-taxa').addEventListener('input', atualizarInvestimentos);
+  document.getElementById('inv-input-prazo').addEventListener('input', atualizarInvestimentos);
 
   // Salvar Edição e Ensinar Regra ao Robô
   document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
@@ -445,7 +518,6 @@ function configurarEventos() {
     if (!descricao || !valor) return alert('Preencha os campos!');
 
     if (supabaseClient) {
-      // 1. Procurar ou criar a nova categoria
       let catId = null;
       const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', novaMacro).maybeSingle();
       if (ex) {
@@ -455,10 +527,8 @@ function configurarEventos() {
         if (nv) catId = nv.id;
       }
 
-      // 2. Atualizar a transação
       await supabaseClient.from('transacoes').update({ descricao, valor, pago_por, categoria_id: catId }).eq('id', id);
 
-      // 3. ENSINAR O ROBÔ: Criar/Atualizar a Regra de Mapeamento
       const primeiraPalavra = descricao.split(/\s+/)[0].toLowerCase();
       if (primeiraPalavra && primeiraPalavra.length > 2) {
         const { data: regraEx } = await supabaseClient
@@ -525,11 +595,12 @@ function configurarEventos() {
     const nome = document.getElementById('rec-nome').value.trim();
     const valor = parseFloat(document.getElementById('rec-valor').value);
     const dia_vencimento = parseInt(document.getElementById('rec-dia').value);
+    const responsavel = document.getElementById('rec-responsavel').value;
     const categoria_macro = document.getElementById('rec-macro').value;
 
     if (supabaseClient) {
       await supabaseClient.from('gastos_recorrentes').insert([{
-        nome, valor, dia_vencimento, categoria_macro, ativo: true
+        nome, valor, dia_vencimento, responsavel, categoria_macro, ativo: true
       }]);
       carregarDados();
     }
@@ -561,6 +632,8 @@ function configurarEventos() {
     } else {
       document.getElementById('fin-res-impacto').innerHTML = `⚠️ <strong>ALERTA DE ORÇAMENTO!</strong> Essa parcela de <strong>${fmt(parcela)}</strong> ultrapassa a sobra atual do casal em <strong>${fmt(Math.abs(novaSobra))}</strong>. É necessário reduzir custos antes.`;
     }
+
+    atualizarInvestimentos();
   });
 
   // Configuração Supabase

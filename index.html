@@ -51,7 +51,13 @@
           <button class="period-btn active" data-period="mes-atual">Este Mês</button>
           <button class="period-btn" data-period="mes-passado">Mês Passado</button>
           <button class="period-btn" data-period="3-meses">Últimos 3 Meses</button>
-          <button class="period-btn" data-period="tudo">Tudo</button>
+
+          <div class="custom-date-container">
+            <input type="date" id="filtro-data-inicio" title="Data de Início">
+            <span>até</span>
+            <input type="date" id="filtro-data-fim" title="Data de Fim">
+            <button id="btn-aplicar-datas" class="btn-sm-apply">Filtrar</button>
+          </div>
         </div>
       </div>
 
@@ -59,6 +65,7 @@
         <label>Centro de Custo:</label>
         <select id="filtro-categoria-macro">
           <option value="todas">Todos os Centros de Custo</option>
+          <option value="9.0 Outros">⚠️ Pendentes de Ajuste (Outros)</option>
           <option value="1.0 Alimentação">1.0 Alimentação</option>
           <option value="2.0 Transporte">2.0 Transporte</option>
           <option value="3.0 Moradia">3.0 Moradia</option>
@@ -67,7 +74,6 @@
           <option value="6.0 Educação">6.0 Educação</option>
           <option value="7.0 Roupas">7.0 Roupas & Compras</option>
           <option value="8.0 Investimentos">8.0 Investimentos</option>
-          <option value="9.0 Outros">9.0 Outros</option>
         </select>
       </div>
     </section>
@@ -75,31 +81,38 @@
     <!-- ABA 1: DASHBOARD DE ANÁLISE COMPLETA -->
     <div id="tab-dashboard" class="tab-content active">
 
-      <!-- GRID DE KPIS ESCOLHIDOS (#1, #4, #6, #7, #8, #9, #21) -->
+      <!-- BADGE NOTIFICAÇÃO DE PENDENTES DE AJUSTE -->
+      <div id="alert-pendentes-box" class="alert-pendentes hidden">
+        <i data-lucide="alert-triangle"></i>
+        <span id="alert-pendentes-texto">Existem lançamentos sem categoria definida!</span>
+        <button id="btn-filtrar-pendentes" class="btn-sm-alert">Filtrar Pendentes</button>
+      </div>
+
+      <!-- GRID DE KPIS -->
       <section class="kpi-grid-v2">
         
-        <!-- KPI #1 & #6: Total de Gastos & Média Diária -->
+        <!-- Total de Gastos & Média Diária -->
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Total de Gastos no Período</span>
           <div class="kpi-number-v2 expense" id="val-gastos-totais">R$ 0,00</div>
           <span class="kpi-sub-v2" id="val-media-diaria">Média: R$ 0,00/dia</span>
         </div>
 
-        <!-- KPI #4: Maior Gasto Individual -->
+        <!-- Maior Gasto Individual -->
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Maior Gasto Individual</span>
           <div class="kpi-highlight-text" id="val-maior-gasto-item">—</div>
           <span class="kpi-sub-v2" id="val-maior-gasto-detalhe">Nenhum lançamento no período</span>
         </div>
 
-        <!-- KPI #7: Dia da Semana que Mais Gasta -->
+        <!-- Dia da Semana que Mais Gasta -->
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Dia da Semana que Mais Gasta</span>
           <div class="kpi-number-v2" id="val-dia-mais-gasta">—</div>
           <span class="kpi-sub-v2" id="val-dia-mais-gasta-sub">Análise de comportamento</span>
         </div>
 
-        <!-- KPI #8 & #9: Maior vs Menor Centro de Custo -->
+        <!-- Maior vs Menor Centro de Custo -->
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Maior vs Menor Centro de Custo</span>
           <div class="split-kpi">
@@ -113,7 +126,7 @@
       <!-- SEÇÃO DO GRÁFICO 3D E DICAS DE ECONOMIA -->
       <main class="main-grid">
 
-        <!-- GRÁFICO 3D DE BARRAS POR CATEGORIA (THREE.JS - KPI #10) -->
+        <!-- GRÁFICO 3D DE BARRAS POR CATEGORIA (THREE.JS) -->
         <section class="card">
           <div class="card-top">
             <h2>Gastos por Centro de Custo (Visão 3D)</h2>
@@ -122,7 +135,7 @@
           <div class="chart-3d-wrapper">
             <canvas id="canvas-bars-3d"></canvas>
           </div>
-          <!-- KPI #21: Dica de Economia Potencial -->
+          <!-- Dica de Economia Potencial -->
           <div id="dicas-economia" class="tip-bar">
             <span id="texto-dica-economia">Carregando sugestão de economia...</span>
           </div>
@@ -188,7 +201,7 @@
 
     </div>
 
-    <!-- ABA 2: MÓDULO DE GASTOS RECORRENTES (CONTAS FIXAS - KPI #25, #26, #27) -->
+    <!-- ABA 2: MÓDULO DE GASTOS RECORRENTES (CONTAS FIXAS COM RESPONSÁVEL) -->
     <div id="tab-recorrentes" class="tab-content">
       <div class="main-grid">
 
@@ -212,16 +225,26 @@
                 <input type="number" id="rec-dia" min="1" max="31" placeholder="Ex: 10" required>
               </div>
             </div>
-            <div class="field">
-              <label>Centro de Custo Macro</label>
-              <select id="rec-macro">
-                <option value="3.0 Moradia">3.0 Moradia</option>
-                <option value="1.0 Alimentação">1.0 Alimentação</option>
-                <option value="4.0 Saúde">4.0 Saúde</option>
-                <option value="5.0 Lazer">5.0 Lazer</option>
-                <option value="6.0 Educação">6.0 Educação</option>
-                <option value="9.0 Outros">9.0 Outros</option>
-              </select>
+            <div class="field-row">
+              <div class="field">
+                <label>Responsável pelo Pagamento</label>
+                <select id="rec-responsavel">
+                  <option value="Casal">Casal 💑 (Conjunto)</option>
+                  <option value="Ele">Leo 👨</option>
+                  <option value="Ela">Giu 👩</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Centro de Custo Macro</label>
+                <select id="rec-macro">
+                  <option value="3.0 Moradia">3.0 Moradia</option>
+                  <option value="1.0 Alimentação">1.0 Alimentação</option>
+                  <option value="4.0 Saúde">4.0 Saúde</option>
+                  <option value="5.0 Lazer">5.0 Lazer</option>
+                  <option value="6.0 Educação">6.0 Educação</option>
+                  <option value="9.0 Outros">9.0 Outros</option>
+                </select>
+              </div>
             </div>
             <button type="submit" class="btn-primary">Adicionar Conta Fixa</button>
           </form>
@@ -235,11 +258,11 @@
 
           <div class="kpi-row-mini">
             <div class="mini-kpi">
-              <span>KPI #25 — Total Fixo Mensal</span>
+              <span>Total Fixo Mensal</span>
               <strong id="val-total-recorrente">R$ 0,00</strong>
             </div>
             <div class="mini-kpi">
-              <span>KPI #27 — Comprometimento</span>
+              <span>Comprometimento da Renda</span>
               <strong id="val-pct-comprometido" style="color: var(--accent);">0% da Renda</strong>
             </div>
           </div>
@@ -250,6 +273,7 @@
                 <tr>
                   <th>Vencimento</th>
                   <th>Conta</th>
+                  <th>Responsável</th>
                   <th>Categoria</th>
                   <th>Valor</th>
                   <th>Status</th>
@@ -257,7 +281,7 @@
                 </tr>
               </thead>
               <tbody id="tbody-recorrentes">
-                <tr><td colspan="6" class="empty">Nenhuma conta fixa cadastrada.</td></tr>
+                <tr><td colspan="7" class="empty">Nenhuma conta fixa cadastrada.</td></tr>
               </tbody>
             </table>
           </div>
@@ -266,7 +290,7 @@
       </div>
     </div>
 
-    <!-- ABA 3: SIMULADOR DE FINANCIAMENTO (KPI #28, #29) -->
+    <!-- ABA 3: SIMULADOR DE FINANCIAMENTO -->
     <div id="tab-financiamento" class="tab-content">
       <div class="main-grid">
 
@@ -315,7 +339,7 @@
               <strong id="fin-res-juros" style="color: var(--red);">R$ 0,00</strong>
             </div>
             <div class="result-card full">
-              <span>KPI #29 — Impacto na Sobra Real do Casal:</span>
+              <span>Impacto na Sobra Real do Casal:</span>
               <p id="fin-res-impacto">Simule um financiamento para ver o impacto no orçamento.</p>
             </div>
           </div>
@@ -324,45 +348,44 @@
       </div>
     </div>
 
-    <!-- ABA 4: SIMULADOR DE INVESTIMENTOS PARA A SOBRA GUARDADA -->
+    <!-- ABA 4: SIMULADOR DE INVESTIMENTOS & ANTECIPAÇÃO DE FINANCIAMENTO -->
     <div id="tab-investimentos" class="tab-content">
       <section class="card full-card">
         <div class="card-top">
-          <h2>Simulador de Investimentos para a Sobra Guardada</h2>
-          <div class="input-inline">
-            <label>Sombra Guardada/mês (R$):</label>
-            <input type="number" id="inv-input-sobra" value="3000" class="input-sm">
+          <h2>Simulador de Investimentos Personalizado</h2>
+        </div>
+
+        <div class="invest-config-bar">
+          <div class="field-inline">
+            <label>Aporte Mensal (R$):</label>
+            <input type="number" id="inv-input-sobra" value="3000">
+          </div>
+          <div class="field-inline">
+            <label>Taxa Rendimento Personalizada (% a.a.):</label>
+            <input type="number" step="0.1" id="inv-input-taxa" value="13.65">
+          </div>
+          <div class="field-inline">
+            <label>Prazo de Resgate Desejado (Meses):</label>
+            <input type="number" id="inv-input-prazo" value="24">
           </div>
         </div>
 
-        <p class="card-desc">Vejam quanto a sobra mensal do casal rende em cada modalidade ao longo do tempo (com juros compostos):</p>
-
         <div class="proj-row-invest">
-          <div class="invest-card">
-            <h3>Poupança (7.5% a.a.)</h3>
-            <div class="inv-val"><span>1 Ano:</span> <strong id="inv-poup-12m">R$ 0</strong></div>
-            <div class="inv-val"><span>3 Anos:</span> <strong id="inv-poup-36m">R$ 0</strong></div>
-            <div class="inv-val"><span>5 Anos:</span> <strong id="inv-poup-60m">R$ 0</strong></div>
-          </div>
-
           <div class="invest-card highlight">
-            <h3>CDB 100% CDI (~13.65% a.a.)</h3>
-            <div class="inv-val"><span>1 Ano:</span> <strong id="inv-cdb100-12m">R$ 0</strong></div>
-            <div class="inv-val"><span>3 Anos:</span> <strong id="inv-cdb100-36m">R$ 0</strong></div>
-            <div class="inv-val"><span>5 Anos:</span> <strong id="inv-cdb100-60m">R$ 0</strong></div>
+            <h3>Saldo Acumulado no Resgate Escolhido</h3>
+            <div class="inv-val-big"><strong id="inv-resgate-calculado">R$ 0,00</strong></div>
+            <small class="kpi-sub-v2" id="inv-resgate-sub">Com juros compostos</small>
           </div>
 
           <div class="invest-card highlight-super">
-            <h3>LCI / LCA (Isento de IR ~11% a.a.)</h3>
-            <div class="inv-val"><span>1 Ano:</span> <strong id="inv-lci-12m">R$ 0</strong></div>
-            <div class="inv-val"><span>3 Anos:</span> <strong id="inv-lci-36m">R$ 0</strong></div>
-            <div class="inv-val"><span>5 Anos:</span> <strong id="inv-lci-60m">R$ 0</strong></div>
+            <h3>Correlação com Financiamento (Quitação Antecipada)</h3>
+            <p id="inv-correlacao-financiamento">Calcule seu investimento para verificar a possibilidade de amortização ou quitação antecipada.</p>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- ABA 5: FECHAMENTO MENSAL + COMPARATIVO (KPI #14, #15) -->
+    <!-- ABA 5: FECHAMENTO MENSAL + COMPARATIVO -->
     <div id="tab-fechamento" class="tab-content">
       <section class="card full-card">
         <div class="card-top">
@@ -372,11 +395,11 @@
 
         <div class="fechamento-grid">
           <div class="fechamento-box">
-            <h3>KPI #14 — Centro de Custo que MAIS CRESCEU</h3>
+            <h3>Centro de Custo que MAIS CRESCEU</h3>
             <p id="fech-maior-crescimento">Comparando com o mês anterior...</p>
           </div>
           <div class="fechamento-box success">
-            <h3>KPI #15 — Centro de Custo que MAIS REDUZIU</h3>
+            <h3>Centro de Custo que MAIS REDUZIU</h3>
             <p id="fech-maior-reducao">Comparando com o mês anterior...</p>
           </div>
         </div>
