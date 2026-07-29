@@ -1,5 +1,5 @@
 // ===================================================
-// ROBÔ TELEGRAM - Casal v2.0 (Com Lançamento Retroativo)
+// ROBÔ TELEGRAM - Casal v2.0 (Identificação Automática + Cron)
 // ===================================================
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
@@ -44,23 +44,34 @@ bot.on('message', async (msg) => {
     const texto = msg.text || '';
     if (!texto || texto.startsWith('/')) return;
 
-    // Await processarTextoMensagem para consultar regras e extrair data retroativa
+    // Processar texto
     const gasto = await processarTextoMensagem(texto);
     if (!gasto) return;
 
+    // IDENTIFICAÇÃO AUTOMÁTICA DO REMETENTE
     const nomeUsuario = (msg.from?.first_name || '').toLowerCase();
+    const sobrenome = (msg.from?.last_name || '').toLowerCase();
+    const username = (msg.from?.username || '').toLowerCase();
+
+    // Se o usuário não escreveu "ela" ou "ele" explicitamente no final
     if (!/\b(ela|ele)\b/i.test(texto)) {
-      if (nomeUsuario.includes('giu') || nomeUsuario.includes('esposa') || nomeUsuario.includes('giulissima')) {
+      if (
+        nomeUsuario.includes('giu') ||
+        nomeUsuario.includes('giulissima') ||
+        sobrenome.includes('giu') ||
+        username.includes('giu')
+      ) {
         gasto.pago_por = 'Ela';
       } else {
         gasto.pago_por = 'Ele';
       }
     }
 
+    console.log(`💰 Lançamento por ${msg.from?.first_name} (ID ${msg.from?.id}) → ${gasto.pago_por}`);
+
     const resultado = await registrarGastoNoSupabase(gasto);
 
     if (resultado.success) {
-      // Formatar data em PT-BR para a mensagem de confirmação
       const dataFormatada = gasto.data ? gasto.data.split('-').reverse().join('/') : 'Hoje';
 
       bot.sendMessage(
@@ -81,7 +92,7 @@ bot.on('message', async (msg) => {
   }
 });
 
-// Verificação de contas recorrentes a vencer
+// Verificação diária de contas recorrentes
 async function verificarContasAVencer() {
   if (!supabase || !grupoChatId) return;
 
@@ -102,6 +113,7 @@ async function verificarContasAVencer() {
           `⚠️ *ALERTA DE CONTA FIXA A VENCER!*\n\n` +
           `📌 *Conta:* ${c.nome}\n` +
           `💰 *Valor:* R$ ${Number(c.valor).toFixed(2)}\n` +
+          `👤 *Responsável:* ${c.responsavel || 'Casal 💑'}\n` +
           `📅 *Vencimento:* Dia ${c.dia_vencimento} (${msgDias})\n\n` +
           `_Lembrete automático para o casal!_ 💑`,
           { parse_mode: 'Markdown' }

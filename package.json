@@ -1,16 +1,17 @@
 {
-  "name": "controle-financeiro-casal-backend",
-  "version": "1.0.0",
-  "description": "Robô de Finanças do Casal no Telegram (100% Grátis na Nuvem)",
+  "name": "controle-financeiro-casal",
+  "version": "2.0.0",
+  "description": "Controle Financeiro Familiar do Casal com Bot Telegram",
   "main": "robo_telegram.js",
   "scripts": {
     "start": "node robo_telegram.js",
-    "test-robo": "node robo_mensagens.js"
+    "dev": "node robo_telegram.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "node-telegram-bot-api": "^0.66.0"
+    "node-cron": "^3.0.3",
+    "node-telegram-bot-api": "^0.64.0"
   }
 }
