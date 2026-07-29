@@ -1,6 +1,6 @@
 // ===================================================
-// ROBÔ DE MENSAGENS TELEGRAM - COM APRENDIZADO DE REGRAS
-// Estrutura 1.0 (Macro) -> 1.1 (Micro) + Regras Personalizadas
+// ROBÔ DE MENSAGENS TELEGRAM - SUPORTE A LANÇAMENTO RETROATIVO
+// Suporta datas: DD/MM, DD/MM/YYYY, YYYY-MM-DD no final da mensagem!
 // ===================================================
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
@@ -56,7 +56,7 @@ const CENTROS_CUSTO_PADRAO = {
 };
 
 /**
- * Processador com Aprendizado de Regras do Supabase
+ * Processador de Mensagens com Data Retroativa
  */
 async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'Ele') {
   if (!texto || typeof texto !== 'string') return null;
@@ -67,36 +67,51 @@ async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'El
   const palavrasIgnorar = ['salmos', 'bom dia', 'boa tarde', 'boa noite', 'amém', 'oração', 'versículo'];
   if (palavrasIgnorar.some(p => textoLimpo.toLowerCase().includes(p))) return null;
 
-  const palavras = textoLimpo.split(/\s+/);
+  let palavras = textoLimpo.split(/\s+/);
   if (palavras.length < 2) return null;
 
+  // 1. Verificar QUEM PAGOU (ele/ela) no final
   let pagoPor = remetentePadrao;
-  let palavrasFiltradas = [...palavras];
-
-  const ultimaPalavra = palavrasFiltradas[palavrasFiltradas.length - 1].toLowerCase();
+  const ultimaPalavra = palavras[palavras.length - 1].toLowerCase();
   if (['ela', 'esposa', 'giu'].includes(ultimaPalavra)) {
     pagoPor = 'Ela';
-    palavrasFiltradas.pop();
+    palavras.pop();
   } else if (['ele', 'marido', 'leo'].includes(ultimaPalavra)) {
     pagoPor = 'Ele';
-    palavrasFiltradas.pop();
+    palavras.pop();
   }
 
-  if (palavrasFiltradas.length < 2) return null;
+  // 2. Extrair DATA RETROATIVA se informada no final (ex: 25/07, 25/07/2026, 2026-07-25)
+  let dataGasto = new Date().toISOString().split('T')[0]; // Padrão: hoje
+  const tokenData = palavras[palavras.length - 1];
 
-  const tokenValor = palavrasFiltradas.pop();
+  // Regex para formato DD/MM ou DD/MM/YYYY ou YYYY-MM-DD
+  const matchData = tokenData.match(/^(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?$/);
+  if (matchData) {
+    const dia = matchData[1].padStart(2, '0');
+    const mes = matchData[2].padStart(2, '0');
+    let ano = matchData[3] || new Date().getFullYear().toString();
+    if (ano.length === 2) ano = '20' + ano;
+
+    dataGasto = `${ano}-${mes}-${dia}`;
+    palavras.pop(); // Remove o token da data
+  }
+
+  if (palavras.length < 2) return null;
+
+  // 3. Extrair VALOR da última palavra restante
+  const tokenValor = palavras.pop();
   const matchValor = tokenValor.match(/(?:R\$\s*)?(\d{1,6}(?:[.,]\d{1,2})?)/i);
   if (!matchValor) return null;
 
   const valor = parseFloat(matchValor[1].replace(',', '.'));
   if (isNaN(valor) || valor <= 0) return null;
 
-  const palavraChave = palavrasFiltradas[0].toLowerCase();
-
+  // 4. Categoria e Subcategoria
+  const palavraChave = palavras[0].toLowerCase();
   let macro = null;
   let micro = null;
 
-  // 1. Procurar em Regras Aprendidas no Supabase
   if (supabase) {
     try {
       const { data: regra } = await supabase
@@ -114,21 +129,19 @@ async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'El
     }
   }
 
-  // 2. Se não encontrou nas regras aprendidas, buscar no dicionário padrão
   if (!macro && CENTROS_CUSTO_PADRAO[palavraChave]) {
     macro = CENTROS_CUSTO_PADRAO[palavraChave].macro;
     micro = CENTROS_CUSTO_PADRAO[palavraChave].micro;
   }
 
-  // 3. Fallback inteligente: se não souber o centro de custo, envia para "9.0 Outros"
   if (!macro) {
     macro = '9.0 Outros';
     micro = '9.1 Diversos';
   }
 
-  let estabelecimento = palavrasFiltradas.slice(1).join(' ');
+  let estabelecimento = palavras.slice(1).join(' ');
   if (!estabelecimento) {
-    estabelecimento = palavrasFiltradas[0].charAt(0).toUpperCase() + palavrasFiltradas[0].slice(1);
+    estabelecimento = palavras[0].charAt(0).toUpperCase() + palavras[0].slice(1);
   } else {
     estabelecimento = estabelecimento.charAt(0).toUpperCase() + estabelecimento.slice(1);
   }
@@ -140,12 +153,12 @@ async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'El
     descricao: estabelecimento,
     valor,
     pago_por: pagoPor,
-    data: new Date().toISOString().split('T')[0]
+    data: dataGasto
   };
 }
 
 /**
- * Registra gasto e adiciona categoria
+ * Registra o gasto retroativo no Supabase
  */
 async function registrarGastoNoSupabase(gasto) {
   if (!supabase) return { success: true, mode: 'demo' };
@@ -184,6 +197,13 @@ async function registrarGastoNoSupabase(gasto) {
     console.error('Erro ao salvar no Supabase:', err.message);
     return { success: false, error: err.message };
   }
+}
+
+// Testes locais do leitor retroativo
+if (require.main === module) {
+  console.log('🤖 Testando Leitor Retroativo:');
+  console.log('"Oficina sóbreque 250 25/07" ->', processarTextoMensagemComAprendizado("Oficina sóbreque 250 25/07"));
+  console.log('"Mercado Savenago 150 18/07 ela" ->', processarTextoMensagemComAprendizado("Mercado Savenago 150 18/07 ela"));
 }
 
 module.exports = {

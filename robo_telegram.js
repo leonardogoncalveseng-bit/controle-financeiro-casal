@@ -1,5 +1,5 @@
 // ===================================================
-// ROBÔ TELEGRAM - Casal v2.0 (Hierarquia & Alertas)
+// ROBÔ TELEGRAM - Casal v2.0 (Com Lançamento Retroativo)
 // ===================================================
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
@@ -36,7 +36,6 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
 console.log('🚀 Robô Financeiro do Casal v2.0 (Telegram) iniciado!');
 
-// Guardar chat_id do grupo ativo
 let grupoChatId = null;
 
 bot.on('message', async (msg) => {
@@ -45,7 +44,8 @@ bot.on('message', async (msg) => {
     const texto = msg.text || '';
     if (!texto || texto.startsWith('/')) return;
 
-    const gasto = processarTextoMensagem(texto);
+    // Await processarTextoMensagem para consultar regras e extrair data retroativa
+    const gasto = await processarTextoMensagem(texto);
     if (!gasto) return;
 
     const nomeUsuario = (msg.from?.first_name || '').toLowerCase();
@@ -60,15 +60,19 @@ bot.on('message', async (msg) => {
     const resultado = await registrarGastoNoSupabase(gasto);
 
     if (resultado.success) {
+      // Formatar data em PT-BR para a mensagem de confirmação
+      const dataFormatada = gasto.data ? gasto.data.split('-').reverse().join('/') : 'Hoje';
+
       bot.sendMessage(
         msg.chat.id,
         `✅ *Gasto Registrado!*\n\n` +
+        `📅 *Data:* ${dataFormatada}\n` +
         `📁 *Centro de Custo:* ${gasto.macro}\n` +
         `  └ 🏷️ *Subcategoria:* ${gasto.micro}\n` +
         `🏪 *Lugar:* ${gasto.descricao}\n` +
         `💰 *Valor:* R$ ${gasto.valor.toFixed(2)}\n` +
         `👤 *Pago por:* ${gasto.pago_por === 'Ele' ? 'Leo 👨' : 'Giu 👩'}\n\n` +
-        `_Já disponível no aplicativo!_ 📊`,
+        `_Disponível no aplicativo!_ 📊`,
         { parse_mode: 'Markdown' }
       );
     }
@@ -77,7 +81,7 @@ bot.on('message', async (msg) => {
   }
 });
 
-// Verificação de contas recorrentes a vencer (KPI #26)
+// Verificação de contas recorrentes a vencer
 async function verificarContasAVencer() {
   if (!supabase || !grupoChatId) return;
 
@@ -109,7 +113,6 @@ async function verificarContasAVencer() {
   }
 }
 
-// Rodar verificação diária às 09:00 da manhã
 cron.schedule('0 9 * * *', () => {
   verificarContasAVencer();
 });
@@ -119,9 +122,9 @@ bot.onText(/\/start|\/inicio/i, (msg) => {
     msg.chat.id,
     `👋 *Olá! Sou o Robô Financeiro do Casal v2.0!*\n\n` +
     `Mande gastos no formato:\n` +
-    `• \`Açai do Parque 25\` (1.0 Alimentação ➔ 1.3 Restaurante/Açaí)\n` +
-    `• \`Padaria Real 35\` (1.0 Alimentação ➔ 1.2 Padaria)\n` +
-    `• \`Posto Shell 90\` (2.0 Transporte ➔ 2.1 Combustível)\n`,
+    `• \`Açai do Parque 25\` (Registra para Hoje)\n` +
+    `• \`Oficina sóbreque 250 25/07\` (Lançamento Retroativo)\n` +
+    `• \`Mercado Savenago 150 18/07 ela\` (Retroativo da Giu)\n`,
     { parse_mode: 'Markdown' }
   );
 });
