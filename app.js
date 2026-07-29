@@ -170,7 +170,6 @@ function obterTransacoesFiltradas() {
   let res = estado.transacoes;
   const hoje = new Date();
 
-  // Filtro de Período Personalizado ou Pré-definido
   if (estado.filtroPeriodo === 'custom' && estado.dataInicio && estado.dataFim) {
     const dIni = new Date(estado.dataInicio);
     const dFim = new Date(estado.dataFim);
@@ -199,7 +198,6 @@ function obterTransacoesFiltradas() {
     res = res.filter(t => new Date(t.data) >= limite3M);
   }
 
-  // Filtro de Centro de Custo Macro
   if (estado.filtroMacro !== 'todas') {
     res = res.filter(t => t.categoria && t.categoria.nome.toLowerCase().includes(estado.filtroMacro.toLowerCase()));
   }
@@ -461,7 +459,6 @@ function configurarEventos() {
     });
   });
 
-  // Filtros de Período Pré-definidos
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
@@ -471,7 +468,6 @@ function configurarEventos() {
     });
   });
 
-  // Aplicar Datas Personalizadas
   document.getElementById('btn-aplicar-datas').addEventListener('click', () => {
     const dIni = document.getElementById('filtro-data-inicio').value;
     const dFim = document.getElementById('filtro-data-fim').value;
@@ -486,7 +482,6 @@ function configurarEventos() {
     atualizarUI();
   });
 
-  // Botão Filtrar Pendentes (9.0 Outros)
   const btnPendentes = document.getElementById('btn-filtrar-pendentes');
   if (btnPendentes) {
     btnPendentes.addEventListener('click', () => {
@@ -496,18 +491,15 @@ function configurarEventos() {
     });
   }
 
-  // Filtro Macro
   document.getElementById('filtro-categoria-macro').addEventListener('change', (e) => {
     estado.filtroMacro = e.target.value;
     atualizarUI();
   });
 
-  // Atualizar Investimentos ao alterar campos
   document.getElementById('inv-input-sobra').addEventListener('input', atualizarInvestimentos);
   document.getElementById('inv-input-taxa').addEventListener('input', atualizarInvestimentos);
   document.getElementById('inv-input-prazo').addEventListener('input', atualizarInvestimentos);
 
-  // Salvar Edição e Ensinar Regra ao Robô
   document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
     const id = document.getElementById('edit-id').value;
     const descricao = document.getElementById('edit-descricao').value.trim();
@@ -560,7 +552,6 @@ function configurarEventos() {
     document.getElementById('modal-editar').classList.add('hidden');
   });
 
-  // Cadastrar Novo Gasto Manual
   document.getElementById('form-novo-gasto').addEventListener('submit', async (e) => {
     e.preventDefault();
     const catTexto = document.getElementById('gasto-categoria-texto').value.trim();
@@ -589,7 +580,6 @@ function configurarEventos() {
     document.getElementById('form-novo-gasto').reset();
   });
 
-  // Cadastrar Conta Recorrente
   document.getElementById('form-nova-recorrente').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nome = document.getElementById('rec-nome').value.trim();
@@ -607,7 +597,6 @@ function configurarEventos() {
     document.getElementById('form-nova-recorrente').reset();
   });
 
-  // Calcular Financiamento
   document.getElementById('btn-calcular-financiamento').addEventListener('click', () => {
     const total = parseFloat(document.getElementById('fin-valor-total').value) || 0;
     const entrada = parseFloat(document.getElementById('fin-entrada').value) || 0;
@@ -636,7 +625,6 @@ function configurarEventos() {
     atualizarInvestimentos();
   });
 
-  // Configuração Supabase
   document.getElementById('btn-config').addEventListener('click', () => {
     document.getElementById('cfg-url').value = localStorage.getItem('SUPABASE_URL') || '';
     document.getElementById('cfg-key').value = localStorage.getItem('SUPABASE_ANON_KEY') || '';
@@ -653,6 +641,5 @@ function configurarEventos() {
     if (url && key) { conectarSupabase(url, key); document.getElementById('modal-config').classList.add('hidden'); }
   });
 
-  // Atualizar
   document.getElementById('btn-atualizar').addEventListener('click', carregarDados);
 }
