@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle Financeiro Familiar 3D 💰💑</title>
-  <!-- Google Fonts: Outfit -->
+  <title>Finanças do Casal v2.0 — Leo & Giu</title>
+  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Three.js CDN para fundo 3D Interativo -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Chart.js para Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Supabase JS Client -->
+  <!-- Three.js CDN para Gráfico 3D de Barras -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -20,241 +20,397 @@
 </head>
 <body>
 
-  <!-- CANVAS 3D INTERATIVO (THREE.JS) -->
-  <canvas id="canvas-3d-bg"></canvas>
+  <div class="app-shell">
 
-  <div class="app-container">
-
-    <!-- CABEÇALHO COM ESTILO PREMIUM 3D -->
-    <header class="main-header glass-card-hero">
-      <div class="brand">
-        <div class="avatar-pair-3d">
-          <span class="avatar ele">👨</span>
-          <span class="avatar ela">👩</span>
-        </div>
-        <div>
-          <h1 class="glow-title">Finanças do Casal <span class="badge-3d">3D</span></h1>
-          <p class="subtitle">Gestão Inteligente por Centro de Custo, Categorias e Projeção de Investimento</p>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button id="btn-config" class="btn btn-secondary glass-btn">
-          <i data-lucide="settings"></i> Conectar Supabase
-        </button>
-      </div>
-    </header>
-
-    <!-- CARDS DE RESUMO DO MÊS (KPIs) -->
-    <section class="kpi-grid">
-      <!-- Total Gastos Familiares -->
-      <div class="kpi-card glass-card">
-        <div class="kpi-header">
-          <span class="kpi-icon expense"><i data-lucide="shopping-bag"></i></span>
-          <span class="kpi-title">Gastos Familiares no Mês</span>
-        </div>
-        <div class="kpi-value expense-text" id="val-gastos-totais">R$ 0,00</div>
-        <small class="kpi-subtext" id="subtext-qtd-compras">0 compras registradas</small>
+    <!-- TOPBAR COM NAVEGAÇÃO POR ABAS -->
+    <nav class="topbar">
+      <div class="topbar-brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">Finanças do Casal <span class="version-tag">v2.0</span></span>
       </div>
 
-      <!-- Categoria Campeã de Gastos -->
-      <div class="kpi-card glass-card">
-        <div class="kpi-header">
-          <span class="kpi-icon user-split"><i data-lucide="pie-chart"></i></span>
-          <span class="kpi-title">Maior Centro de Custo</span>
-        </div>
-        <div class="kpi-value" id="val-maior-categoria" style="color: var(--accent-income); font-size: 22px;">Nenhum</div>
-        <small class="kpi-subtext" id="subtext-maior-categoria">Mês em análise</small>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="tab-dashboard"><i data-lucide="bar-chart-2"></i> Dashboard</button>
+        <button class="nav-tab" data-tab="tab-recorrentes"><i data-lucide="repeat"></i> Contas Fixas</button>
+        <button class="nav-tab" data-tab="tab-financiamento"><i data-lucide="home"></i> Financiamento</button>
+        <button class="nav-tab" data-tab="tab-investimentos"><i data-lucide="trending-up"></i> Investimentos</button>
+        <button class="nav-tab" data-tab="tab-fechamento"><i data-lucide="calendar"></i> Fechamento</button>
       </div>
 
-      <!-- Sobra Real Guardada (para Projeções) -->
-      <div class="kpi-card glass-card highlight-card">
-        <div class="kpi-header">
-          <span class="kpi-icon savings"><i data-lucide="piggy-bank"></i></span>
-          <span class="kpi-title">Sobra Real da Conta (Investimento)</span>
+      <div class="topbar-actions">
+        <button id="btn-config" class="topbar-btn"><i data-lucide="database"></i> Banco</button>
+        <button id="btn-atualizar" class="topbar-btn"><i data-lucide="refresh-cw"></i></button>
+      </div>
+    </nav>
+
+    <!-- BARRA DE FILTROS GLOBAIS DE PERÍODO & CATEGORIA -->
+    <section class="filter-bar">
+      <div class="filter-group">
+        <label>Período:</label>
+        <div class="btn-group-period">
+          <button class="period-btn active" data-period="mes-atual">Este Mês</button>
+          <button class="period-btn" data-period="mes-passado">Mês Passado</button>
+          <button class="period-btn" data-period="3-meses">Últimos 3 Meses</button>
+          <button class="period-btn" data-period="tudo">Tudo</button>
         </div>
-        <div class="kpi-value-container">
-          <span class="currency">R$</span>
-          <input type="number" id="input-sobra-real" class="kpi-input" value="3000" step="100">
-        </div>
-        <small class="kpi-subtext">Valor exato para calcular acúmulo futuro</small>
+      </div>
+
+      <div class="filter-group">
+        <label>Centro de Custo:</label>
+        <select id="filtro-categoria-macro">
+          <option value="todas">Todos os Centros de Custo</option>
+          <option value="1.0 Alimentação">1.0 Alimentação</option>
+          <option value="2.0 Transporte">2.0 Transporte</option>
+          <option value="3.0 Moradia">3.0 Moradia</option>
+          <option value="4.0 Saúde">4.0 Saúde</option>
+          <option value="5.0 Lazer">5.0 Lazer</option>
+          <option value="6.0 Educação">6.0 Educação</option>
+          <option value="9.0 Outros">9.0 Outros</option>
+        </select>
       </div>
     </section>
 
-    <!-- PAINEL PRINCIPAL: GRÁFICO E PROJEÇÕES -->
-    <main class="dashboard-grid">
+    <!-- ABA 1: DASHBOARD DE ANÁLISE COMPLETA -->
+    <div id="tab-dashboard" class="tab-content active">
 
-      <!-- GRÁFICO DE CENTROS DE CUSTO COM PORCENTAGEM -->
-      <section class="glass-card chart-section">
-        <div class="card-header">
-          <h2><i data-lucide="pie-chart"></i> Gastos por Centro de Custo (%)</h2>
-          <span class="badge-tag">Análise Inteligente</span>
+      <!-- GRID DE KPIS ESCOLHIDOS (#1, #4, #6, #7, #8, #9, #21) -->
+      <section class="kpi-grid-v2">
+        
+        <!-- KPI #1 & #6: Total de Gastos & Média Diária -->
+        <div class="kpi-card-v2">
+          <span class="kpi-title-v2">Total de Gastos no Período</span>
+          <div class="kpi-number-v2 expense" id="val-gastos-totais">R$ 0,00</div>
+          <span class="kpi-sub-v2" id="val-media-diaria">Média: R$ 0,00/dia</span>
         </div>
-        <div class="chart-wrapper">
-          <canvas id="chart-categorias"></canvas>
+
+        <!-- KPI #4: Maior Gasto Individual -->
+        <div class="kpi-card-v2">
+          <span class="kpi-title-v2">Maior Gasto Individual</span>
+          <div class="kpi-highlight-text" id="val-maior-gasto-item">—</div>
+          <span class="kpi-sub-v2" id="val-maior-gasto-detalhe">Nenhum lançamento no período</span>
         </div>
-        <div id="dicas-economia" class="dicas-box">
-          <i data-lucide="lightbulb" style="color: #f59e0b;"></i>
-          <span id="texto-dica-economia">Carregando sugestões de economia...</span>
+
+        <!-- KPI #7: Dia da Semana que Mais Gasta -->
+        <div class="kpi-card-v2">
+          <span class="kpi-title-v2">Dia da Semana que Mais Gasta</span>
+          <div class="kpi-number-v2" id="val-dia-mais-gasta">—</div>
+          <span class="kpi-sub-v2" id="val-dia-mais-gasta-sub">Análise de comportamento</span>
         </div>
+
+        <!-- KPI #8 & #9: Maior vs Menor Centro de Custo -->
+        <div class="kpi-card-v2">
+          <span class="kpi-title-v2">Maior vs Menor Centro de Custo</span>
+          <div class="split-kpi">
+            <div><span>Maior:</span> <strong id="val-maior-macro">—</strong></div>
+            <div><span>Menor:</span> <strong id="val-menor-macro">—</strong></div>
+          </div>
+        </div>
+
       </section>
 
-      <!-- PROJEÇÃO DE INVESTIMENTOS & SIMULADOR DE VIDA -->
-      <section class="glass-card projection-section">
-        <div class="card-header">
-          <h2><i data-lucide="sparkles"></i> Projeção de Investimentos do Casal</h2>
+      <!-- SEÇÃO DO GRÁFICO 3D E DICAS DE ECONOMIA -->
+      <main class="main-grid">
+
+        <!-- GRÁFICO 3D DE BARRAS POR CATEGORIA (THREE.JS - KPI #10) -->
+        <section class="card">
+          <div class="card-top">
+            <h2>Gastos por Centro de Custo (Visão 3D)</h2>
+            <span class="tag">Three.js 3D</span>
+          </div>
+          <div class="chart-3d-wrapper">
+            <canvas id="canvas-bars-3d"></canvas>
+          </div>
+          <!-- KPI #21: Dica de Economia Potencial -->
+          <div id="dicas-economia" class="tip-bar">
+            <span id="texto-dica-economia">Carregando sugestão de economia...</span>
+          </div>
+        </section>
+
+        <!-- LANÇAMENTO MANUAL DE GASTO -->
+        <section class="card">
+          <div class="card-top">
+            <h2>Registrar Gasto Familiar</h2>
+          </div>
+          <form id="form-novo-gasto">
+            <div class="field">
+              <label>Palavra-Chave / Categoria (ex: Padaria, Açai, Oficina, Mercado)</label>
+              <input type="text" id="gasto-categoria-texto" placeholder="Ex: Açai do Parque, Padaria Real" required>
+            </div>
+            <div class="field">
+              <label>Nome do Estabelecimento / Lugar</label>
+              <input type="text" id="gasto-descricao" placeholder="Ex: Savenago, Drogasil, Shell" required>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Valor (R$)</label>
+                <input type="number" step="0.01" id="gasto-valor" placeholder="0,00" required>
+              </div>
+              <div class="field">
+                <label>Quem Pagou?</label>
+                <select id="gasto-pago-por">
+                  <option value="Ele">Leo 👨</option>
+                  <option value="Ela">Giu 👩</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">Cadastrar Gasto</button>
+          </form>
+        </section>
+
+      </main>
+
+      <!-- EXTRATO COMPLETO DE GASTOS -->
+      <section class="card full-card">
+        <div class="card-top">
+          <h2>Extrato de Gastos da Família</h2>
+          <input type="text" id="input-busca-extrato" placeholder="🔍 Buscar lançamento..." class="search-input">
         </div>
-
-        <div class="projection-box">
-          <p class="projection-description">
-            Mantendo a <strong>Sobra Real Guardada</strong> neste mês, vejam a projeção de patrimônio acumulado:
-          </p>
-
-          <div class="projection-cards">
-            <div class="mini-projection">
-              <span class="proj-time">Em 3 Meses</span>
-              <strong id="proj-3-meses">R$ 0,00</strong>
-            </div>
-            <div class="mini-projection">
-              <span class="proj-time">Em 6 Meses</span>
-              <strong id="proj-6-meses">R$ 0,00</strong>
-            </div>
-            <div class="mini-projection highlight">
-              <span class="proj-time">Em 1 Ano (12M)</span>
-              <strong id="proj-12-meses">R$ 0,00</strong>
-            </div>
-          </div>
-
-          <!-- SIMULADOR DE PLANEJAMENTO FUTURO -->
-          <div class="planning-simulator">
-            <h3><i data-lucide="calculator"></i> Simulador de Compra / Financiamento</h3>
-            <div class="sim-inputs">
-              <input type="text" id="sim-nome" placeholder="Ex: Viagem, Carro, Entrada do Apê">
-              <input type="number" id="sim-valor" placeholder="Valor Alvo (R$)">
-            </div>
-            <button id="btn-simular" class="btn btn-primary full-width">
-              <i data-lucide="clock"></i> Em quantos meses atingimos este objetivo?
-            </button>
-            <div id="sim-resultado" class="sim-result-box hidden"></div>
-          </div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- EXTRATO COM EDIÇÃO E EXCLUSÃO -->
-    <section class="dashboard-grid bottom-grid">
-      
-      <!-- FORMULÁRIO DE NOVO GASTO MANUAL -->
-      <div class="glass-card form-card">
-        <div class="card-header">
-          <h2><i data-lucide="plus-circle"></i> Lançar Gasto Familiar</h2>
-        </div>
-        <form id="form-novo-gasto">
-          <div class="form-group">
-            <label>Categoria (ex: Alimentação, Transporte, Lazer, Saúde)</label>
-            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Padaria, Mercado, Oficina" required>
-          </div>
-          <div class="form-group">
-            <label>Nome do Estabelecimento / Lugar</label>
-            <input type="text" id="gasto-descricao" placeholder="Ex: Real, Savenago, Drogasil" required>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Valor (R$)</label>
-              <input type="number" step="0.01" id="gasto-valor" placeholder="0,00" required>
-            </div>
-            <div class="form-group">
-              <label>Quem Pagou?</label>
-              <select id="gasto-pago-por" required>
-                <option value="Ele">Leo 👨</option>
-                <option value="Ela">Giu 👩</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-success full-width">
-            <i data-lucide="check"></i> Cadastrar Gasto
-          </button>
-        </form>
-      </div>
-
-      <!-- TABELA DE EXTRATO DE GASTOS DA FAMÍLIA COM BOTÕES EDITAR E EXCLUIR -->
-      <div class="glass-card table-card">
-        <div class="card-header">
-          <h2><i data-lucide="list"></i> Extrato de Gastos da Família</h2>
-          <div class="table-actions-header">
-            <input type="text" id="input-busca-extrato" placeholder="🔍 Buscar gasto..." class="input-search-sm">
-            <button id="btn-atualizar" class="btn btn-ghost btn-sm"><i data-lucide="refresh-cw"></i></button>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="data-table">
+        <div class="table-scroll">
+          <table>
             <thead>
               <tr>
                 <th>Data</th>
-                <th>Categoria</th>
-                <th>Estabelecimento</th>
+                <th>Centro de Custo (Macro -> Micro)</th>
+                <th>Lugar / Descrição</th>
                 <th>Quem Pagou</th>
                 <th>Valor</th>
                 <th style="text-align: center;">Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-transacoes">
-              <tr>
-                <td colspan="6" class="empty-state">Carregando extrato do Supabase...</td>
-              </tr>
+              <tr><td colspan="6" class="empty">Carregando extrato...</td></tr>
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-    </section>
+    </div>
+
+    <!-- ABA 2: MÓDULO DE GASTOS RECORRENTES (CONTAS FIXAS - KPI #25, #26, #27) -->
+    <div id="tab-recorrentes" class="tab-content">
+      <div class="main-grid">
+
+        <!-- FORMULÁRIO DE NOVA CONTA FIXA -->
+        <section class="card">
+          <div class="card-top">
+            <h2>Cadastrar Conta Fixa Recorrente</h2>
+          </div>
+          <form id="form-nova-recorrente">
+            <div class="field">
+              <label>Nome da Conta</label>
+              <input type="text" id="rec-nome" placeholder="Ex: Internet Claro, Aluguel, Netflix" required>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Valor Mensal (R$)</label>
+                <input type="number" step="0.01" id="rec-valor" placeholder="0,00" required>
+              </div>
+              <div class="field">
+                <label>Dia do Vencimento</label>
+                <input type="number" id="rec-dia" min="1" max="31" placeholder="Ex: 10" required>
+              </div>
+            </div>
+            <div class="field">
+              <label>Centro de Custo Macro</label>
+              <select id="rec-macro">
+                <option value="3.0 Moradia">3.0 Moradia</option>
+                <option value="1.0 Alimentação">1.0 Alimentação</option>
+                <option value="4.0 Saúde">4.0 Saúde</option>
+                <option value="5.0 Lazer">5.0 Lazer</option>
+                <option value="6.0 Educação">6.0 Educação</option>
+                <option value="9.0 Outros">9.0 Outros</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary">Adicionar Conta Fixa</button>
+          </form>
+        </section>
+
+        <!-- KPI E TABELA DE CONTAS FIXAS -->
+        <section class="card">
+          <div class="card-top">
+            <h2>Resumo de Comprometimento Fixo</h2>
+          </div>
+
+          <div class="kpi-row-mini">
+            <div class="mini-kpi">
+              <span>KPI #25 — Total Fixo Mensal</span>
+              <strong id="val-total-recorrente">R$ 0,00</strong>
+            </div>
+            <div class="mini-kpi">
+              <span>KPI #27 — Comprometimento</span>
+              <strong id="val-pct-comprometido" style="color: var(--accent);">0% da Renda</strong>
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vencimento</th>
+                  <th>Conta</th>
+                  <th>Categoria</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-recorrentes">
+                <tr><td colspan="6" class="empty">Nenhuma conta fixa cadastrada.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ABA 3: SIMULADOR DE FINANCIAMENTO (KPI #28, #29) -->
+    <div id="tab-financiamento" class="tab-content">
+      <div class="main-grid">
+
+        <section class="card">
+          <div class="card-top">
+            <h2>Simulador de Financiamento Completo</h2>
+          </div>
+          <div class="field">
+            <label>Nome do Bem (Imóvel, Carro, etc.)</label>
+            <input type="text" id="fin-nome" placeholder="Ex: Apartamento, Carro Novo">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Valor Total do Bem (R$)</label>
+              <input type="number" id="fin-valor-total" placeholder="300000">
+            </div>
+            <div class="field">
+              <label>Valor da Entrada (R$)</label>
+              <input type="number" id="fin-entrada" placeholder="60000">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Taxa de Juros Anual (%)</label>
+              <input type="number" step="0.1" id="fin-juros" placeholder="10.5">
+            </div>
+            <div class="field">
+              <label>Prazo (Meses)</label>
+              <input type="number" id="fin-prazo" placeholder="360">
+            </div>
+          </div>
+          <button id="btn-calcular-financiamento" class="btn-primary">Calcular Financiamento</button>
+        </section>
+
+        <section class="card">
+          <div class="card-top">
+            <h2>Resultado da Simulação</h2>
+          </div>
+          <div id="fin-resultado-box" class="sim-result-grid">
+            <div class="result-card">
+              <span>Parcela Mensal Estimada:</span>
+              <strong id="fin-res-parcela">R$ 0,00</strong>
+            </div>
+            <div class="result-card">
+              <span>Total de Juros Pagos:</span>
+              <strong id="fin-res-juros" style="color: var(--red);">R$ 0,00</strong>
+            </div>
+            <div class="result-card full">
+              <span>KPI #29 — Impacto na Sobra Real do Casal:</span>
+              <p id="fin-res-impacto">Simule um financiamento para ver o impacto no orçamento.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ABA 4: SIMULADOR DE INVESTIMENTOS PARA A SOBRA GUARDADA -->
+    <div id="tab-investimentos" class="tab-content">
+      <section class="card full-card">
+        <div class="card-top">
+          <h2>Simulador de Investimentos para a Sobra Guardada</h2>
+          <div class="input-inline">
+            <label>Sombra Guardada/mês (R$):</label>
+            <input type="number" id="inv-input-sobra" value="3000" class="input-sm">
+          </div>
+        </div>
+
+        <p class="card-desc">Vejam quanto a sobra mensal do casal rende em cada modalidade ao longo do tempo (com juros compostos):</p>
+
+        <div class="proj-row-invest">
+          <div class="invest-card">
+            <h3>Poupança (7.5% a.a.)</h3>
+            <div class="inv-val"><span>1 Ano:</span> <strong id="inv-poup-12m">R$ 0</strong></div>
+            <div class="inv-val"><span>3 Anos:</span> <strong id="inv-poup-36m">R$ 0</strong></div>
+            <div class="inv-val"><span>5 Anos:</span> <strong id="inv-poup-60m">R$ 0</strong></div>
+          </div>
+
+          <div class="invest-card highlight">
+            <h3>CDB 100% CDI (~13.65% a.a.)</h3>
+            <div class="inv-val"><span>1 Ano:</span> <strong id="inv-cdb100-12m">R$ 0</strong></div>
+            <div class="inv-val"><span>3 Anos:</span> <strong id="inv-cdb100-36m">R$ 0</strong></div>
+            <div class="inv-val"><span>5 Anos:</span> <strong id="inv-cdb100-60m">R$ 0</strong></div>
+          </div>
+
+          <div class="invest-card highlight-super">
+            <h3>LCI / LCA (Isento de IR ~11% a.a.)</h3>
+            <div class="inv-val"><span>1 Ano:</span> <strong id="inv-lci-12m">R$ 0</strong></div>
+            <div class="inv-val"><span>3 Anos:</span> <strong id="inv-lci-36m">R$ 0</strong></div>
+            <div class="inv-val"><span>5 Anos:</span> <strong id="inv-lci-60m">R$ 0</strong></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ABA 5: FECHAMENTO MENSAL + COMPARATIVO (KPI #14, #15) -->
+    <div id="tab-fechamento" class="tab-content">
+      <section class="card full-card">
+        <div class="card-top">
+          <h2>Fechamento do Mês & Comparativo</h2>
+          <button id="btn-fechar-mes-acao" class="btn-primary-sm">Salvar Fechamento deste Mês</button>
+        </div>
+
+        <div class="fechamento-grid">
+          <div class="fechamento-box">
+            <h3>KPI #14 — Centro de Custo que MAIS CRESCEU</h3>
+            <p id="fech-maior-crescimento">Comparando com o mês anterior...</p>
+          </div>
+          <div class="fechamento-box success">
+            <h3>KPI #15 — Centro de Custo que MAIS REDUZIU</h3>
+            <p id="fech-maior-reducao">Comparando com o mês anterior...</p>
+          </div>
+        </div>
+      </section>
+    </div>
 
   </div>
 
-  <!-- MODAL DE EDIÇÃO DE GASTO -->
-  <div id="modal-editar" class="modal hidden">
-    <div class="modal-content glass-card">
-      <h2><i data-lucide="edit-3"></i> Editar Gasto</h2>
+  <!-- MODAL DE EDIÇÃO -->
+  <div id="modal-editar" class="overlay hidden">
+    <div class="modal">
+      <h2>Editar Gasto</h2>
       <input type="hidden" id="edit-id">
-      <div class="form-group">
-        <label>Descrição / Estabelecimento</label>
-        <input type="text" id="edit-descricao">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Valor (R$)</label>
-          <input type="number" step="0.01" id="edit-valor">
-        </div>
-        <div class="form-group">
-          <label>Quem Pagou?</label>
-          <select id="edit-pago-por">
-            <option value="Ele">Leo 👨</option>
-            <option value="Ela">Giu 👩</option>
-          </select>
+      <div class="field"><label>Descrição / Estabelecimento</label><input type="text" id="edit-descricao"></div>
+      <div class="field-row">
+        <div class="field"><label>Valor R$</label><input type="number" step="0.01" id="edit-valor"></div>
+        <div class="field"><label>Quem Pagou?</label>
+          <select id="edit-pago-por"><option value="Ele">Leo 👨</option><option value="Ela">Giu 👩</option></select>
         </div>
       </div>
-      <div class="modal-actions">
-        <button id="btn-salvar-edicao" class="btn btn-primary">Salvar Alterações</button>
-        <button id="btn-cancelar-edicao" class="btn btn-ghost">Cancelar</button>
+      <div class="modal-btns">
+        <button id="btn-salvar-edicao" class="btn-primary">Salvar</button>
+        <button id="btn-cancelar-edicao" class="btn-ghost">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL DE CONFIGURAÇÃO SUPABASE -->
-  <div id="modal-config" class="modal hidden">
-    <div class="modal-content glass-card">
-      <h2><i data-lucide="key"></i> Configuração do Supabase</h2>
-      <div class="form-group">
-        <label>SUPABASE URL</label>
-        <input type="text" id="cfg-url" placeholder="https://seu-projeto.supabase.co">
-      </div>
-      <div class="form-group">
-        <label>SUPABASE ANON KEY</label>
-        <input type="password" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
-      </div>
-      <div class="modal-actions">
-        <button id="btn-salvar-config" class="btn btn-primary">Salvar e Conectar</button>
-        <button id="btn-fechar-config" class="btn btn-ghost">Cancelar</button>
+  <!-- MODAL CONFIG SUPABASE -->
+  <div id="modal-config" class="overlay hidden">
+    <div class="modal">
+      <h2>Conectar Supabase</h2>
+      <div class="field"><label>URL</label><input type="text" id="cfg-url" placeholder="https://xxx.supabase.co"></div>
+      <div class="field"><label>Anon Key</label><input type="password" id="cfg-key" placeholder="eyJ..."></div>
+      <div class="modal-btns">
+        <button id="btn-salvar-config" class="btn-primary">Conectar</button>
+        <button id="btn-fechar-config" class="btn-ghost">Cancelar</button>
       </div>
     </div>
   </div>

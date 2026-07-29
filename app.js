@@ -1,29 +1,27 @@
 // ===================================================
-// APLICATIVO FINANCEIRO DO CASAL 3D (LÓGICA PRINCIPAL)
+// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA COMPLETA)
 // ===================================================
 
 let supabaseClient = null;
-let chartCategoriasInstance = null;
 
-// Estado local da aplicação
+// Estado global da aplicação
 let estado = {
+  filtroPeriodo: 'mes-atual',
+  filtroMacro: 'todas',
   sobraReal: 3000,
+  rendaCasal: 8000,
   transacoes: [],
-  categorias: []
+  categorias: [],
+  recorrentes: [],
+  fechamentos: []
 };
 
 // ===================================================
-// INICIALIZAÇÃO DA APLICAÇÃO & THREE.JS
+// INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.lucide) {
-    lucide.createIcons();
-  }
+  if (window.lucide) lucide.createIcons();
 
-  // Inicializar o fundo 3D com Three.js
-  inicializarFundo3D();
-
-  // Credenciais reais do Supabase do usuário
   const defaultUrl = 'https://bsrcbtgdayqsggcijxfu.supabase.co';
   const defaultKey = 'sb_publishable_PEVDs7pauyzHqBRiZNMuLg_tXFhfw0v';
 
@@ -35,85 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===================================================
-// THREE.JS: CANVAS 3D INTERATIVO EM SEGUNDO PLANO
-// ===================================================
-function inicializarFundo3D() {
-  const canvas = document.getElementById('canvas-3d-bg');
-  if (!canvas || !window.THREE) return;
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 30;
-
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  // Criar 120 partículas geométricas 3D flutuantes
-  const geometry = new THREE.IcosahedronGeometry(0.8, 0);
-  const material = new THREE.MeshBasicMaterial({
-    color: 0x38bdf8,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.25
-  });
-
-  const particles = [];
-  const count = 100;
-
-  for (let i = 0; i < count; i++) {
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.x = (Math.random() - 0.5) * 80;
-    mesh.position.y = (Math.random() - 0.5) * 80;
-    mesh.position.z = (Math.random() - 0.5) * 40;
-
-    mesh.rotation.x = Math.random() * Math.PI;
-    mesh.rotation.y = Math.random() * Math.PI;
-
-    mesh.userData = {
-      rotX: (Math.random() - 0.5) * 0.01,
-      rotY: (Math.random() - 0.5) * 0.01
-    };
-
-    scene.add(mesh);
-    particles.push(mesh);
-  }
-
-  // Interatividade com o mouse
-  let mouseX = 0;
-  let mouseY = 0;
-
-  window.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-  });
-
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-
-  // Loop de animação contínua 3D
-  function animate() {
-    requestAnimationFrame(animate);
-
-    particles.forEach(p => {
-      p.rotation.x += p.userData.rotX;
-      p.rotation.y += p.userData.rotY;
-    });
-
-    camera.position.x += (mouseX * 5 - camera.position.x) * 0.05;
-    camera.position.y += (-mouseY * 5 - camera.position.y) * 0.05;
-    camera.lookAt(scene.position);
-
-    renderer.render(scene, camera);
-  }
-
-  animate();
-}
-
-// ===================================================
 // CONEXÃO COM SUPABASE
 // ===================================================
 function conectarSupabase(url, key) {
@@ -121,306 +40,399 @@ function conectarSupabase(url, key) {
     supabaseClient = supabase.createClient(url, key);
     localStorage.setItem('SUPABASE_URL', url);
     localStorage.setItem('SUPABASE_ANON_KEY', key);
-    carregarDadosDoSupabase();
+    carregarDados();
   } catch (err) {
-    console.error('Erro ao conectar ao Supabase:', err.message);
+    console.error('Erro ao conectar:', err.message);
   }
 }
 
-async function carregarDadosDoSupabase() {
+async function carregarDados() {
   if (!supabaseClient) return;
 
   try {
-    const { data: categorias, error: errCat } = await supabaseClient
-      .from('categorias')
-      .select('*');
+    const { data: cat } = await supabaseClient.from('categorias').select('*');
+    estado.categorias = cat || [];
 
-    if (errCat) throw errCat;
-    estado.categorias = categorias || [];
+    const { data: trans } = await supabaseClient.from('transacoes').select('*, categoria:categorias(nome)');
+    estado.transacoes = trans || [];
 
-    const { data: transacoes, error: errTrans } = await supabaseClient
-      .from('transacoes')
-      .select('*, categoria:categorias(nome)');
+    const { data: rec } = await supabaseClient.from('gastos_recorrentes').select('*');
+    estado.recorrentes = rec || [];
 
-    if (errTrans) throw errTrans;
-    estado.transacoes = transacoes || [];
-
-    atualizarInterface();
-  } catch (error) {
-    console.warn('Erro ao carregar dados do Supabase:', error.message);
-    atualizarInterface();
+    atualizarUI();
+  } catch (e) {
+    console.warn('Erro ao carregar dados:', e.message);
+    atualizarUI();
   }
 }
 
 // ===================================================
-// ATUALIZAÇÃO DA INTERFACE & CÁLCULOS
+// ATUALIZAÇÃO DA INTERFACE & FILTROS GLOBAIS
 // ===================================================
-function atualizarInterface() {
-  preencherTabelaTransacoes();
+function atualizarUI() {
+  const filtradas = obterTransacoesFiltradas();
 
-  // 1. Gastos Familiares Totais
-  const totalGastos = estado.transacoes.reduce((acc, t) => acc + Number(t.valor), 0);
-  document.getElementById('val-gastos-totais').textContent = formatarMoeda(totalGastos);
-  document.getElementById('subtext-qtd-compras').textContent = `${estado.transacoes.length} compra(s) registrada(s) este mês`;
+  // 1. KPI #1 & #6: Total e Média Diária
+  const total = filtradas.reduce((s, t) => s + Number(t.valor), 0);
+  document.getElementById('val-gastos-totais').textContent = fmt(total);
 
-  // 2. Maior Categoria de Gasto
-  const mapaCategorias = {};
-  estado.transacoes.forEach(t => {
-    const nomeCat = t.categoria ? t.categoria.nome : 'Outros';
-    mapaCategorias[nomeCat] = (mapaCategorias[nomeCat] || 0) + Number(t.valor);
-  });
+  const diasNoMes = new Date().getDate();
+  const mediaDiaria = total > 0 ? (total / diasNoMes) : 0;
+  document.getElementById('val-media-diaria').textContent = `Média: ${fmt(mediaDiaria)}/dia (${filtradas.length} compras)`;
 
-  let maiorCatNome = 'Nenhuma';
-  let maiorCatValor = 0;
-
-  Object.entries(mapaCategorias).forEach(([nome, val]) => {
-    if (val > maiorCatValor) {
-      maiorCatValor = val;
-      maiorCatNome = nome;
+  // 2. KPI #4: Maior Gasto Individual
+  let maiorGasto = null;
+  filtradas.forEach(t => {
+    if (!maiorGasto || Number(t.valor) > Number(maiorGasto.valor)) {
+      maiorGasto = t;
     }
   });
 
-  const elMaiorCat = document.getElementById('val-maior-categoria');
-  if (elMaiorCat) {
-    elMaiorCat.textContent = maiorCatValor > 0 ? `${maiorCatNome} (${formatarMoeda(maiorCatValor)})` : 'Nenhum';
+  if (maiorGasto) {
+    document.getElementById('val-maior-gasto-item').textContent = `${fmt(maiorGasto.valor)}`;
+    document.getElementById('val-maior-gasto-detalhe').textContent = `${maiorGasto.descricao} (${maiorGasto.pago_por})`;
+  } else {
+    document.getElementById('val-maior-gasto-item').textContent = '—';
+    document.getElementById('val-maior-gasto-detalhe').textContent = 'Nenhum lançamento';
   }
 
-  // 3. Sobra Real e Projeções de Vida
-  const sobraReal = parseFloat(document.getElementById('input-sobra-real').value) || 0;
-  estado.sobraReal = sobraReal;
+  // 3. KPI #7: Dia da Semana que Mais Gasta
+  const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  const somaPorDia = [0, 0, 0, 0, 0, 0, 0];
 
-  const proj3 = sobraReal > 0 ? sobraReal * 3 : 0;
-  const proj6 = sobraReal > 0 ? sobraReal * 6 : 0;
-  const proj12 = sobraReal > 0 ? sobraReal * 12 : 0;
+  filtradas.forEach(t => {
+    if (t.data) {
+      const d = new Date(t.data).getDay();
+      somaPorDia[d] += Number(t.valor);
+    }
+  });
 
-  document.getElementById('proj-3-meses').textContent = formatarMoeda(proj3);
-  document.getElementById('proj-6-meses').textContent = formatarMoeda(proj6);
-  document.getElementById('proj-12-meses').textContent = formatarMoeda(proj12);
+  let maxDiaIndex = 0;
+  somaPorDia.forEach((val, idx) => {
+    if (val > somaPorDia[maxDiaIndex]) maxDiaIndex = idx;
+  });
 
-  // 4. Renderizar Gráfico de Centros de Custo com %
-  renderizarGraficoCategorias(mapaCategorias, totalGastos);
+  const diaNome = somaPorDia[maxDiaIndex] > 0 ? diasSemana[maxDiaIndex] : '—';
+  const pctDia = total > 0 ? ((somaPorDia[maxDiaIndex] / total) * 100).toFixed(0) : 0;
+  document.getElementById('val-dia-mais-gasta').textContent = diaNome;
+  document.getElementById('val-dia-mais-gasta-sub').textContent = somaPorDia[maxDiaIndex] > 0 ? `${pctDia}% dos gastos (${fmt(somaPorDia[maxDiaIndex])})` : 'Sem dados';
 
-  // 5. Sugestão Inteligente de Economia
-  gerarDicaEconomia(maiorCatNome, maiorCatValor, totalGastos);
+  // 4. KPI #8 & #9: Maior vs Menor Centro de Custo Macro
+  const mapaMacro = {};
+  filtradas.forEach(t => {
+    const nomeCat = t.categoria ? t.categoria.nome : '9.0 Outros';
+    mapaMacro[nomeCat] = (mapaMacro[nomeCat] || 0) + Number(t.valor);
+  });
+
+  let maiorMacro = '—', maiorVal = 0;
+  let menorMacro = '—', menorVal = Infinity;
+
+  Object.entries(mapaMacro).forEach(([nome, val]) => {
+    if (val > maiorVal) { maiorVal = val; maiorMacro = nome; }
+    if (val < menorVal) { menorVal = val; menorMacro = nome; }
+  });
+
+  if (menorVal === Infinity) menorVal = 0;
+
+  document.getElementById('val-maior-macro').textContent = maiorVal > 0 ? `${maiorMacro} (${fmt(maiorVal)})` : '—';
+  document.getElementById('val-menor-macro').textContent = menorVal > 0 ? `${menorMacro} (${fmt(menorVal)})` : '—';
+
+  // 5. KPI #21: Dica de Economia Potencial
+  gerarDica(maiorMacro, maiorVal, total);
+
+  // 6. Preencher Extrato e Gráfico 3D de Barras
+  preencherTabelaExtrato(filtradas);
+  renderizarGrafico3DBarras(mapaMacro);
+
+  // 7. Atualizar Módulos Adicionais
+  atualizarRecorrentes();
+  atualizarInvestimentos();
 }
 
-function gerarDicaEconomia(maiorCat, maiorVal, totalGastos) {
-  const elDica = document.getElementById('texto-dica-economia');
-  if (!elDica) return;
+function obterTransacoesFiltradas() {
+  let res = estado.transacoes;
+  const hoje = new Date();
 
-  if (totalGastos === 0) {
-    elDica.textContent = 'Lancem gastos pelo Telegram para ver análises e sugestões de corte de custos!';
-    return;
+  // Filtro de Período
+  if (estado.filtroPeriodo === 'mes-atual') {
+    const anoAtual = hoje.getFullYear();
+    const mesAtual = hoje.getMonth();
+    res = res.filter(t => {
+      const d = new Date(t.data);
+      return d.getFullYear() === anoAtual && d.getMonth() === mesAtual;
+    });
+  } else if (estado.filtroPeriodo === 'mes-passado') {
+    const mesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+    res = res.filter(t => {
+      const d = new Date(t.data);
+      return d.getFullYear() === mesPassado.getFullYear() && d.getMonth() === mesPassado.getMonth();
+    });
+  } else if (estado.filtroPeriodo === '3-meses') {
+    const limite3M = new Date();
+    limite3M.setMonth(limite3M.getMonth() - 3);
+    res = res.filter(t => new Date(t.data) >= limite3M);
   }
 
-  const pct = ((maiorVal / totalGastos) * 100).toFixed(0);
-  elDica.innerHTML = `<strong>Dica de Economia:</strong> A categoria <strong>${maiorCat}</strong> representa <strong>${pct}%</strong> dos gastos da família este mês (${formatarMoeda(maiorVal)}). Reduzir 15% aqui libera <strong>${formatarMoeda(maiorVal * 0.15)}</strong> adicionais para investimentos!`;
+  // Filtro de Centro de Custo Macro
+  if (estado.filtroMacro !== 'todas') {
+    res = res.filter(t => t.categoria && t.categoria.nome.toLowerCase().includes(estado.filtroMacro.toLowerCase()));
+  }
+
+  return res;
 }
 
-function formatarMoeda(valor) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+function gerarDica(cat, val, total) {
+  const el = document.getElementById('texto-dica-economia');
+  if (!el) return;
+  if (total === 0) { el.textContent = 'Mande lançamentos no Telegram para ver análises aqui.'; return; }
+  const pct = ((val / total) * 100).toFixed(0);
+  el.innerHTML = `💡 <strong>Dica de Economia:</strong> A categoria <strong>${cat}</strong> representa <strong>${pct}%</strong> dos gastos da família (${fmt(val)}). Reduzir 15% aqui economiza <strong>${fmt(val * 0.15)}/mês</strong>!`;
+}
+
+function fmt(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 }
 
 // ===================================================
-// PREENCHIMENTO DA TABELA COM BOTÕES EDITAR E EXCLUIR
+// THREE.JS: GRÁFICO 3D DE BARRAS POR CATEGORIA (KPI #10)
 // ===================================================
-function preencherTabelaTransacoes(filtroBusca = '') {
+let sceneBars, cameraBars, rendererBars, barGroup;
+
+function renderizarGrafico3DBarras(mapaMacro) {
+  const canvas = document.getElementById('canvas-bars-3d');
+  if (!canvas || !window.THREE) return;
+
+  const width = canvas.parentElement.clientWidth;
+  const height = 240;
+
+  if (!rendererBars) {
+    sceneBars = new THREE.Scene();
+    cameraBars = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    cameraBars.position.set(0, 10, 18);
+    cameraBars.lookAt(0, 2, 0);
+
+    rendererBars = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    rendererBars.setSize(width, height);
+    rendererBars.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const light1 = new THREE.DirectionalLight(0xffffff, 1.2);
+    light1.position.set(5, 10, 7);
+    sceneBars.add(light1);
+
+    const light2 = new THREE.AmbientLight(0xffffff, 0.4);
+    sceneBars.add(light2);
+
+    barGroup = new THREE.Group();
+    sceneBars.add(barGroup);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (barGroup) barGroup.rotation.y += 0.005;
+      rendererBars.render(sceneBars, cameraBars);
+    }
+    animate();
+  }
+
+  // Limpar barras anteriores
+  while (barGroup.children.length > 0) {
+    barGroup.remove(barGroup.children[0]);
+  }
+
+  const entries = Object.entries(mapaMacro);
+  if (entries.length === 0) return;
+
+  const maxVal = Math.max(...entries.map(e => e[1]));
+  const colors = [0x38bdf8, 0xf43f5e, 0x10b981, 0xa855f7, 0xf59e0b, 0x6366f1, 0xec4899];
+
+  entries.forEach(([nome, val], i) => {
+    const altura = maxVal > 0 ? (val / maxVal) * 6 + 0.5 : 0.5;
+    const geometry = new THREE.BoxGeometry(0.9, altura, 0.9);
+    const material = new THREE.MeshStandardMaterial({
+      color: colors[i % colors.length],
+      roughness: 0.3,
+      metalness: 0.2
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    const x = (i - entries.length / 2) * 1.4;
+    mesh.position.set(x, altura / 2, 0);
+    barGroup.add(mesh);
+  });
+}
+
+// ===================================================
+// TABELA DE EXTRATO (COM EDITAR & EXCLUIR)
+// ===================================================
+function preencherTabelaExtrato(lista, filtroBusca = '') {
   const tbody = document.getElementById('tbody-transacoes');
   tbody.innerHTML = '';
 
-  let filtradas = estado.transacoes;
+  let filtradas = lista;
   if (filtroBusca) {
-    const termo = filtroBusca.toLowerCase();
-    filtradas = estado.transacoes.filter(t => 
-      t.descricao.toLowerCase().includes(termo) ||
-      (t.categoria && t.categoria.nome.toLowerCase().includes(termo)) ||
-      t.pago_por.toLowerCase().includes(termo)
+    const t = filtroBusca.toLowerCase();
+    filtradas = lista.filter(r =>
+      r.descricao.toLowerCase().includes(t) ||
+      (r.categoria && r.categoria.nome.toLowerCase().includes(t)) ||
+      r.pago_por.toLowerCase().includes(t)
     );
   }
 
   if (filtradas.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum gasto encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum gasto encontrado.</td></tr>';
     return;
   }
 
-  const ordenadas = [...filtradas].sort((a, b) => new Date(b.data) - new Date(a.data));
-
-  ordenadas.forEach(t => {
+  [...filtradas].sort((a, b) => new Date(b.data) - new Date(a.data)).forEach(t => {
+    const cat = t.categoria ? t.categoria.nome : '9.0 Outros';
+    const quem = t.pago_por === 'Ele' ? '👨 Leo' : '👩 Giu';
     const tr = document.createElement('tr');
-    const nomeCategoria = t.categoria ? t.categoria.nome : 'Outros';
-    const tagPessoa = t.pago_por === 'Ele' ? '👨 Leo' : '👩 Giu';
-
     tr.innerHTML = `
       <td>${t.data ? new Date(t.data).toLocaleDateString('pt-BR') : '-'}</td>
-      <td><span class="badge-tag">${nomeCategoria}</span></td>
+      <td><span class="tag">${cat}</span></td>
       <td><strong>${t.descricao}</strong></td>
-      <td>${tagPessoa}</td>
-      <td style="color: var(--accent-expense); font-weight: 600;">${formatarMoeda(t.valor)}</td>
-      <td style="text-align: center;">
-        <div class="action-buttons">
-          <button class="btn-action-edit" onclick="abrirModalEdicao('${t.id}')" title="Editar Gasto">✏️</button>
-          <button class="btn-action-delete" onclick="excluirGasto('${t.id}')" title="Excluir Gasto">🗑️</button>
-        </div>
+      <td>${quem}</td>
+      <td style="color:var(--red);font-weight:700">${fmt(t.valor)}</td>
+      <td style="text-align:center;">
+        <button onclick="abrirEdicao('${t.id}')" style="background:none;border:none;cursor:pointer;">✏️</button>
+        <button onclick="excluirTransacao('${t.id}')" style="background:none;border:none;cursor:pointer;">🗑️</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// ===================================================
-// LÓGICA DE EXCLUSÃO E EDIÇÃO
-// ===================================================
-async function excluirGasto(id) {
-  if (!confirm('Deseja realmente excluir este gasto?')) return;
-
+window.excluirTransacao = async function(id) {
+  if (!confirm('Excluir este lançamento?')) return;
   if (supabaseClient) {
-    const { error } = await supabaseClient.from('transacoes').delete().eq('id', id);
-    if (error) {
-      alert('Erro ao excluir do Supabase: ' + error.message);
-      return;
-    }
-    carregarDadosDoSupabase();
-  } else {
-    estado.transacoes = estado.transacoes.filter(t => t.id !== id);
-    atualizarInterface();
+    await supabaseClient.from('transacoes').delete().eq('id', id);
+    carregarDados();
   }
-}
+};
 
-function abrirModalEdicao(id) {
-  const transacao = estado.transacoes.find(t => t.id === id);
-  if (!transacao) return;
-
-  document.getElementById('edit-id').value = transacao.id;
-  document.getElementById('edit-descricao').value = transacao.descricao;
-  document.getElementById('edit-valor').value = transacao.valor;
-  document.getElementById('edit-pago-por').value = transacao.pago_por;
-
+window.abrirEdicao = function(id) {
+  const t = estado.transacoes.find(r => r.id == id);
+  if (!t) return;
+  document.getElementById('edit-id').value = t.id;
+  document.getElementById('edit-descricao').value = t.descricao;
+  document.getElementById('edit-valor').value = t.valor;
+  document.getElementById('edit-pago-por').value = t.pago_por;
   document.getElementById('modal-editar').classList.remove('hidden');
-}
+};
 
 // ===================================================
-// GRÁFICO DE CENTROS DE CUSTO (CHART.JS)
+// MÓDULO 2: GASTOS RECORRENTES (KPI #25, #26, #27)
 // ===================================================
-function renderizarGraficoCategorias(mapaCategorias, totalGastos) {
-  const ctx = document.getElementById('chart-categorias').getContext('2d');
+function atualizarRecorrentes() {
+  const tbody = document.getElementById('tbody-recorrentes');
+  if (!tbody) return;
+  tbody.innerHTML = '';
 
-  const labels = Object.keys(mapaCategorias);
-  const valores = Object.values(mapaCategorias);
+  const total = estado.recorrentes.reduce((s, r) => s + Number(r.valor), 0);
+  document.getElementById('val-total-recorrente').textContent = fmt(total);
 
-  const cores = [
-    '#38bdf8', '#f43f5e', '#10b981', '#a855f7',
-    '#f59e0b', '#6366f1', '#ec4899', '#14b8a6'
-  ];
+  const pctRenda = ((total / estado.rendaCasal) * 100).toFixed(0);
+  document.getElementById('val-pct-comprometido').textContent = `${pctRenda}% da renda comprometida`;
 
-  if (chartCategoriasInstance) {
-    chartCategoriasInstance.destroy();
+  if (estado.recorrentes.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma conta fixa cadastrada.</td></tr>';
+    return;
   }
 
-  chartCategoriasInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels.length > 0 ? labels : ['Nenhum gasto'],
-      datasets: [{
-        data: valores.length > 0 ? valores : [1],
-        backgroundColor: valores.length > 0 ? cores.slice(0, labels.length) : ['#334155'],
-        borderWidth: 0,
-        hoverOffset: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#94a3b8',
-            font: { family: 'Outfit', size: 12 }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const val = context.raw;
-              const pct = totalGastos > 0 ? ((val / totalGastos) * 100).toFixed(1) : 0;
-              return ` ${context.label}: ${formatarMoeda(val)} (${pct}%)`;
-            }
-          }
-        }
-      },
-      cutout: '70%'
-    }
+  const hoje = new Date().getDate();
+
+  estado.recorrentes.forEach(r => {
+    const tr = document.createElement('tr');
+    const dias = r.dia_vencimento - hoje;
+    let statusText = dias === 0 ? '🚨 Vence Hoje' : (dias > 0 && dias <= 3 ? `⏰ Em ${dias} dia(s)` : '✅ Ok');
+
+    tr.innerHTML = `
+      <td>Dia ${r.dia_vencimento}</td>
+      <td><strong>${r.nome}</strong></td>
+      <td>${r.categoria_macro || '3.0 Moradia'}</td>
+      <td style="color:var(--red); font-weight:600">${fmt(r.valor)}</td>
+      <td><span class="tag">${statusText}</span></td>
+      <td><button onclick="excluirRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;">🗑️</button></td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
+window.excluirRecorrente = async function(id) {
+  if (supabaseClient) {
+    await supabaseClient.from('gastos_recorrentes').delete().eq('id', id);
+    carregarDados();
+  }
+};
+
 // ===================================================
-// EVENTOS & INTERAÇÕES
+// MÓDULO 3: SIMULADOR DE INVESTIMENTOS PARA SOBRA
+// ===================================================
+function atualizarInvestimentos() {
+  const sobra = parseFloat(document.getElementById('inv-input-sobra').value) || estado.sobraReal;
+
+  function calcFuturo(taxaAnual, meses) {
+    const i = Math.pow(1 + taxaAnual, 1 / 12) - 1;
+    let acum = 0;
+    for (let m = 0; m < meses; m++) {
+      acum = (acum + sobra) * (1 + i);
+    }
+    return fmt(acum);
+  }
+
+  // Poupança 7.5% a.a.
+  document.getElementById('inv-poup-12m').textContent = calcFuturo(0.075, 12);
+  document.getElementById('inv-poup-36m').textContent = calcFuturo(0.075, 36);
+  document.getElementById('inv-poup-60m').textContent = calcFuturo(0.075, 60);
+
+  // CDB 100% CDI 13.65% a.a.
+  document.getElementById('inv-cdb100-12m').textContent = calcFuturo(0.1365, 12);
+  document.getElementById('inv-cdb100-36m').textContent = calcFuturo(0.1365, 36);
+  document.getElementById('inv-cdb100-60m').textContent = calcFuturo(0.1365, 60);
+
+  // LCI/LCA Isento IR 11% a.a.
+  document.getElementById('inv-lci-12m').textContent = calcFuturo(0.11, 12);
+  document.getElementById('inv-lci-36m').textContent = calcFuturo(0.11, 36);
+  document.getElementById('inv-lci-60m').textContent = calcFuturo(0.11, 60);
+}
+
+// ===================================================
+// EVENTOS & NAVEGAÇÃO POR ABAS
 // ===================================================
 function configurarEventos() {
-  document.getElementById('input-sobra-real').addEventListener('input', atualizarInterface);
+  // Troca de Abas
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-  // Busca em tempo real no extrato
-  document.getElementById('input-busca-extrato').addEventListener('input', (e) => {
-    preencherTabelaTransacoes(e.target.value);
+      tab.classList.add('active');
+      const target = tab.getAttribute('data-tab');
+      document.getElementById(target).classList.add('active');
+    });
   });
 
-  // Salvar Edição
-  document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
-    const id = document.getElementById('edit-id').value;
-    const descricao = document.getElementById('edit-descricao').value.trim();
-    const valor = parseFloat(document.getElementById('edit-valor').value);
-    const pago_por = document.getElementById('edit-pago-por').value;
-
-    if (!descricao || !valor) {
-      alert('Preencha a descrição e o valor!');
-      return;
-    }
-
-    if (supabaseClient) {
-      const { error } = await supabaseClient
-        .from('transacoes')
-        .update({ descricao, valor, pago_por })
-        .eq('id', id);
-
-      if (error) {
-        alert('Erro ao atualizar no Supabase: ' + error.message);
-        return;
-      }
-      document.getElementById('modal-editar').classList.add('hidden');
-      carregarDadosDoSupabase();
-    }
+  // Filtros de Período
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      estado.filtroPeriodo = btn.getAttribute('data-period');
+      atualizarUI();
+    });
   });
 
-  document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
-    document.getElementById('modal-editar').classList.add('hidden');
+  // Filtro Macro
+  document.getElementById('filtro-categoria-macro').addEventListener('change', (e) => {
+    estado.filtroMacro = e.target.value;
+    atualizarUI();
   });
 
-  // Configuração Supabase
-  const modalConfig = document.getElementById('modal-config');
-  document.getElementById('btn-config').addEventListener('click', () => {
-    document.getElementById('cfg-url').value = localStorage.getItem('SUPABASE_URL') || '';
-    document.getElementById('cfg-key').value = localStorage.getItem('SUPABASE_ANON_KEY') || '';
-    modalConfig.classList.remove('hidden');
-  });
-
-  document.getElementById('btn-fechar-config').addEventListener('click', () => {
-    modalConfig.classList.add('hidden');
-  });
-
-  document.getElementById('btn-salvar-config').addEventListener('click', () => {
-    const url = document.getElementById('cfg-url').value.trim();
-    const key = document.getElementById('cfg-key').value.trim();
-
-    if (url && key) {
-      conectarSupabase(url, key);
-      modalConfig.classList.add('hidden');
-    }
-  });
+  // Atualizar Investimentos ao mudar sobra
+  document.getElementById('inv-input-sobra').addEventListener('input', atualizarInvestimentos);
 
   // Cadastrar Novo Gasto Manual
   document.getElementById('form-novo-gasto').addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const catTexto = document.getElementById('gasto-categoria-texto').value.trim();
     const descricao = document.getElementById('gasto-descricao').value.trim();
     const valor = parseFloat(document.getElementById('gasto-valor').value);
@@ -429,75 +441,85 @@ function configurarEventos() {
     if (supabaseClient) {
       let catId = null;
       if (catTexto) {
-        const catFormatada = catTexto.charAt(0).toUpperCase() + catTexto.slice(1).toLowerCase();
-        const { data: catExistente } = await supabaseClient
-          .from('categorias')
-          .select('id')
-          .ilike('nome', catFormatada)
-          .maybeSingle();
-
-        if (catExistente) {
-          catId = catExistente.id;
-        } else {
-          const { data: novaCat } = await supabaseClient
-            .from('categorias')
-            .insert([{ nome: catFormatada, icone: '📌' }])
-            .select('id')
-            .single();
-
-          if (novaCat) catId = novaCat.id;
+        const nome = catTexto.charAt(0).toUpperCase() + catTexto.slice(1).toLowerCase();
+        const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', nome).maybeSingle();
+        if (ex) { catId = ex.id; }
+        else {
+          const { data: nv } = await supabaseClient.from('categorias').insert([{ nome, icone: '📌' }]).select('id').single();
+          if (nv) catId = nv.id;
         }
       }
 
-      const { error } = await supabaseClient.from('transacoes').insert([{
-        descricao,
-        valor,
-        pago_por,
-        categoria_id: catId,
-        data: new Date().toISOString().split('T')[0]
+      await supabaseClient.from('transacoes').insert([{
+        descricao, valor, pago_por, categoria_id: catId, data: new Date().toISOString().split('T')[0]
       }]);
 
-      if (error) {
-        alert('Erro ao salvar no Supabase: ' + error.message);
-        return;
-      }
-
-      carregarDadosDoSupabase();
+      carregarDados();
     }
-
     document.getElementById('form-novo-gasto').reset();
   });
 
-  // Simulador de Planejamento Futuro
-  document.getElementById('btn-simular').addEventListener('click', () => {
-    const nome = document.getElementById('sim-nome').value || 'Seu objetivo';
-    const valorAlvo = parseFloat(document.getElementById('sim-valor').value);
-    const sobraReal = parseFloat(document.getElementById('input-sobra-real').value) || 0;
+  // Cadastrar Conta Recorrente
+  document.getElementById('form-nova-recorrente').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('rec-nome').value.trim();
+    const valor = parseFloat(document.getElementById('rec-valor').value);
+    const dia_vencimento = parseInt(document.getElementById('rec-dia').value);
+    const categoria_macro = document.getElementById('rec-macro').value;
 
-    const resBox = document.getElementById('sim-resultado');
-
-    if (!valorAlvo || valorAlvo <= 0) {
-      alert('Informe um valor de objetivo válido!');
-      return;
-    }
-
-    if (sobraReal <= 0) {
-      resBox.innerHTML = `⚠️ No momento não há sobra informada. Digitem o valor da sobra real para calcular o plano de <strong>${nome}</strong>!`;
-      resBox.classList.remove('hidden');
-      return;
-    }
-
-    const mesesNecessarios = Math.ceil(valorAlvo / sobraReal);
-    resBox.innerHTML = `🎯 Guardando a sobra real de <strong>${formatarMoeda(sobraReal)}/mês</strong>, vocês conquistarão <strong>${nome}</strong> em aproximadamente <strong>${mesesNecessarios} mês(es)</strong>!`;
-    resBox.classList.remove('hidden');
-  });
-
-  // Botão Atualizar
-  document.getElementById('btn-atualizar').addEventListener('click', () => {
     if (supabaseClient) {
-      carregarDadosDoSupabase();
+      await supabaseClient.from('gastos_recorrentes').insert([{
+        nome, valor, dia_vencimento, categoria_macro, ativo: true
+      }]);
+      carregarDados();
+    }
+    document.getElementById('form-nova-recorrente').reset();
+  });
+
+  // Calcular Financiamento
+  document.getElementById('btn-calcular-financiamento').addEventListener('click', () => {
+    const total = parseFloat(document.getElementById('fin-valor-total').value) || 0;
+    const entrada = parseFloat(document.getElementById('fin-entrada').value) || 0;
+    const taxaAnual = parseFloat(document.getElementById('fin-juros').value) || 0;
+    const prazo = parseInt(document.getElementById('fin-prazo').value) || 1;
+
+    const financiado = total - entrada;
+    const i = (taxaAnual / 100) / 12;
+
+    const parcela = i > 0 ? (financiado * (i * Math.pow(1 + i, prazo))) / (Math.pow(1 + i, prazo) - 1) : financiado / prazo;
+    const totalPago = parcela * prazo;
+    const jurosPagos = totalPago - financiado;
+
+    document.getElementById('fin-res-parcela').textContent = fmt(parcela);
+    document.getElementById('fin-res-juros').textContent = fmt(jurosPagos);
+
+    const sobraAtual = estado.sobraReal;
+    const novaSobra = sobraAtual - parcela;
+
+    if (novaSobra >= 0) {
+      document.getElementById('fin-res-impacto').innerHTML = `✅ Com essa parcela de <strong>${fmt(parcela)}</strong>, ainda sobram <strong>${fmt(novaSobra)}/mês</strong> do orçamento do casal para poupar!`;
     } else {
-      atualizarInterface();
+      document.getElementById('fin-res-impacto').innerHTML = `⚠️ <strong>ALERTA DE ORÇAMENTO!</strong> Essa parcela de <strong>${fmt(parcela)}</strong> ultrapassa a sobra atual do casal em <strong>${fmt(Math.abs(novaSobra))}</strong>. É necessário reduzir custos antes.`;
     }
   });
+
+  // Configuração Supabase
+  document.getElementById('btn-config').addEventListener('click', () => {
+    document.getElementById('cfg-url').value = localStorage.getItem('SUPABASE_URL') || '';
+    document.getElementById('cfg-key').value = localStorage.getItem('SUPABASE_ANON_KEY') || '';
+    document.getElementById('modal-config').classList.remove('hidden');
+  });
+
+  document.getElementById('btn-fechar-config').addEventListener('click', () => {
+    document.getElementById('modal-config').classList.add('hidden');
+  });
+
+  document.getElementById('btn-salvar-config').addEventListener('click', () => {
+    const url = document.getElementById('cfg-url').value.trim();
+    const key = document.getElementById('cfg-key').value.trim();
+    if (url && key) { conectarSupabase(url, key); document.getElementById('modal-config').classList.add('hidden'); }
+  });
+
+  // Atualizar
+  document.getElementById('btn-atualizar').addEventListener('click', carregarDados);
 }
