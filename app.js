@@ -1,8 +1,10 @@
 // ===================================================
-// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA AVANÇADA)
+// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA GRÁFICOS 2D)
 // ===================================================
 
 let supabaseClient = null;
+let chartPieInstance = null;
+let chartLineInstance = null;
 
 // Estado global da aplicação
 let estado = {
@@ -157,9 +159,10 @@ function atualizarUI() {
   // 5. Dica de Economia Potencial
   gerarDica(maiorMacro, maiorVal, total);
 
-  // 6. Preencher Extrato e Gráfico 3D de Barras
+  // 6. Preencher Extrato e Gráficos 2D (Pizza + Linha)
   preencherTabelaExtrato(filtradas);
-  renderizarGrafico3DBarras(mapaMacro);
+  renderizarGraficoPie(mapaMacro, total);
+  renderizarGraficoLinhaEvolucao();
 
   // 7. Atualizar Módulos Adicionais
   atualizarRecorrentes();
@@ -218,68 +221,115 @@ function fmt(v) {
 }
 
 // ===================================================
-// THREE.JS: GRÁFICO 3D DE BARRAS POR CATEGORIA
+// GRÁFICO CIRCULAR DE PIZZA / DONUT (CHART.JS)
 // ===================================================
-let sceneBars, cameraBars, rendererBars, barGroup;
+function renderizarGraficoPie(mapaMacro, total) {
+  const canvas = document.getElementById('chart-pie-categorias');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
 
-function renderizarGrafico3DBarras(mapaMacro) {
-  const canvas = document.getElementById('canvas-bars-3d');
-  if (!canvas || !window.THREE) return;
+  const labels = Object.keys(mapaMacro);
+  const valores = Object.values(mapaMacro);
+  const cores = ['#38bdf8', '#f43f5e', '#10b981', '#a855f7', '#f59e0b', '#6366f1', '#ec4899', '#14b8a6'];
 
-  const width = canvas.parentElement.clientWidth;
-  const height = 240;
+  if (chartPieInstance) chartPieInstance.destroy();
 
-  if (!rendererBars) {
-    sceneBars = new THREE.Scene();
-    cameraBars = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    cameraBars.position.set(0, 10, 18);
-    cameraBars.lookAt(0, 2, 0);
-
-    rendererBars = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    rendererBars.setSize(width, height);
-    rendererBars.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    const light1 = new THREE.DirectionalLight(0xffffff, 1.2);
-    light1.position.set(5, 10, 7);
-    sceneBars.add(light1);
-
-    const light2 = new THREE.AmbientLight(0xffffff, 0.4);
-    sceneBars.add(light2);
-
-    barGroup = new THREE.Group();
-    sceneBars.add(barGroup);
-
-    function animate() {
-      requestAnimationFrame(animate);
-      if (barGroup) barGroup.rotation.y += 0.005;
-      rendererBars.render(sceneBars, cameraBars);
+  chartPieInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels.length > 0 ? labels : ['Nenhum gasto'],
+      datasets: [{
+        data: valores.length > 0 ? valores : [1],
+        backgroundColor: valores.length > 0 ? cores.slice(0, labels.length) : ['#1e293b'],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+              return ` ${ctx.label}: ${fmt(ctx.raw)} (${pct}%)`;
+            }
+          }
+        }
+      },
+      cutout: '70%'
     }
-    animate();
+  });
+}
+
+// ===================================================
+// GRÁFICO DE LINHA: EVOLUÇÃO DE GASTOS MÊS A MÊS
+// ===================================================
+function renderizarGraficoLinhaEvolucao() {
+  const canvas = document.getElementById('chart-line-evolucao');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const mapaMeses = {};
+
+  // Agrupar transações pelos últimos 6 meses
+  const hoje = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const chave = `${mesesNomes[d.getMonth()]}/${d.getFullYear().toString().slice(2)}`;
+    mapaMeses[chave] = 0;
   }
 
-  while (barGroup.children.length > 0) {
-    barGroup.remove(barGroup.children[0]);
-  }
+  estado.transacoes.forEach(t => {
+    if (t.data) {
+      const d = new Date(t.data);
+      const chave = `${mesesNomes[d.getMonth()]}/${d.getFullYear().toString().slice(2)}`;
+      if (mapaMeses[chave] !== undefined) {
+        mapaMeses[chave] += Number(t.valor);
+      }
+    }
+  });
 
-  const entries = Object.entries(mapaMacro);
-  if (entries.length === 0) return;
+  const labels = Object.keys(mapaMeses);
+  const valores = Object.values(mapaMeses);
 
-  const maxVal = Math.max(...entries.map(e => e[1]));
-  const colors = [0x38bdf8, 0xf43f5e, 0x10b981, 0xa855f7, 0xf59e0b, 0x6366f1, 0xec4899];
+  if (chartLineInstance) chartLineInstance.destroy();
 
-  entries.forEach(([nome, val], i) => {
-    const altura = maxVal > 0 ? (val / maxVal) * 6 + 0.5 : 0.5;
-    const geometry = new THREE.BoxGeometry(0.9, altura, 0.9);
-    const material = new THREE.MeshStandardMaterial({
-      color: colors[i % colors.length],
-      roughness: 0.3,
-      metalness: 0.2
-    });
-
-    const mesh = new THREE.Mesh(geometry, material);
-    const x = (i - entries.length / 2) * 1.4;
-    mesh.position.set(x, altura / 2, 0);
-    barGroup.add(mesh);
+  chartLineInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Gastos Totais (R$)',
+        data: valores,
+        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#38bdf8',
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` Total: ${fmt(ctx.raw)}`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+      }
+    }
   });
 }
 

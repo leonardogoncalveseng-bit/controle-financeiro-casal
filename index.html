@@ -10,8 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Chart.js para Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Three.js CDN para Gráfico 3D de Barras -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Lucide Icons -->
@@ -123,17 +121,17 @@
 
       </section>
 
-      <!-- SEÇÃO DO GRÁFICO 3D E DICAS DE ECONOMIA -->
+      <!-- SEÇÃO DE GRÁFICOS: PIZZA POR CATEGORIA + EVOLUÇÃO MESES -->
       <main class="main-grid">
 
-        <!-- GRÁFICO 3D DE BARRAS POR CATEGORIA (THREE.JS) -->
+        <!-- GRÁFICO CIRCULAR DE PIZZA / DONUT -->
         <section class="card">
           <div class="card-top">
-            <h2>Gastos por Centro de Custo (Visão 3D)</h2>
-            <span class="tag">Three.js 3D</span>
+            <h2>Gastos por Centro de Custo (%)</h2>
+            <span class="tag">Divisão Percentual</span>
           </div>
-          <div class="chart-3d-wrapper">
-            <canvas id="canvas-bars-3d"></canvas>
+          <div class="chart-wrapper">
+            <canvas id="chart-pie-categorias"></canvas>
           </div>
           <!-- Dica de Economia Potencial -->
           <div id="dicas-economia" class="tip-bar">
@@ -141,38 +139,49 @@
           </div>
         </section>
 
-        <!-- LANÇAMENTO MANUAL DE GASTO -->
+        <!-- GRÁFICO DE LINHA: EVOLUÇÃO MÊS A MÊS -->
         <section class="card">
           <div class="card-top">
-            <h2>Registrar Gasto Familiar</h2>
+            <h2>Evolução de Gastos Mês a Mês</h2>
+            <span class="tag">Histórico Mensal</span>
           </div>
-          <form id="form-novo-gasto">
-            <div class="field">
-              <label>Palavra-Chave / Categoria (ex: Padaria, Açai, Oficina, Mercado)</label>
-              <input type="text" id="gasto-categoria-texto" placeholder="Ex: Açai do Parque, Padaria Real" required>
-            </div>
-            <div class="field">
-              <label>Nome do Estabelecimento / Lugar</label>
-              <input type="text" id="gasto-descricao" placeholder="Ex: Savenago, Drogasil, Shell" required>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <label>Valor (R$)</label>
-                <input type="number" step="0.01" id="gasto-valor" placeholder="0,00" required>
-              </div>
-              <div class="field">
-                <label>Quem Pagou?</label>
-                <select id="gasto-pago-por">
-                  <option value="Ele">Leo 👨</option>
-                  <option value="Ela">Giu 👩</option>
-                </select>
-              </div>
-            </div>
-            <button type="submit" class="btn-primary">Cadastrar Gasto</button>
-          </form>
+          <div class="chart-wrapper">
+            <canvas id="chart-line-evolucao"></canvas>
+          </div>
         </section>
 
       </main>
+
+      <!-- LANÇAMENTO MANUAL DE GASTO -->
+      <section class="card full-card">
+        <div class="card-top">
+          <h2>Registrar Gasto Familiar Manualmente</h2>
+        </div>
+        <form id="form-novo-gasto" class="form-row-three">
+          <div class="field">
+            <label>Palavra-Chave / Categoria (ex: Padaria, Açai, Oficina)</label>
+            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Açai do Parque, Padaria Real" required>
+          </div>
+          <div class="field">
+            <label>Nome do Estabelecimento / Lugar</label>
+            <input type="text" id="gasto-descricao" placeholder="Ex: Savenago, Drogasil, Shell" required>
+          </div>
+          <div class="field">
+            <label>Valor (R$)</label>
+            <input type="number" step="0.01" id="gasto-valor" placeholder="0,00" required>
+          </div>
+          <div class="field">
+            <label>Quem Pagou?</label>
+            <select id="gasto-pago-por">
+              <option value="Ele">Leo 👨</option>
+              <option value="Ela">Giu 👩</option>
+            </select>
+          </div>
+          <div class="field" style="justify-content: flex-end;">
+            <button type="submit" class="btn-primary">Cadastrar</button>
+          </div>
+        </form>
+      </section>
 
       <!-- EXTRATO COMPLETO DE GASTOS -->
       <section class="card full-card">
