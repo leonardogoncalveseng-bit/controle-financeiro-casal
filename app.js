@@ -1,5 +1,5 @@
 // ===================================================
-// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA COMPLETA)
+// APLICATIVO FINANCEIRO DO CASAL v2.0 (COM APRENDIZADO DO ROBÔ)
 // ===================================================
 
 let supabaseClient = null;
@@ -13,7 +13,7 @@ let estado = {
   transacoes: [],
   categorias: [],
   recorrentes: [],
-  fechamentos: []
+  regras: []
 };
 
 // ===================================================
@@ -59,6 +59,9 @@ async function carregarDados() {
     const { data: rec } = await supabaseClient.from('gastos_recorrentes').select('*');
     estado.recorrentes = rec || [];
 
+    const { data: reg } = await supabaseClient.from('regras_mapeamento').select('*');
+    estado.regras = reg || [];
+
     atualizarUI();
   } catch (e) {
     console.warn('Erro ao carregar dados:', e.message);
@@ -93,7 +96,7 @@ function atualizarUI() {
     document.getElementById('val-maior-gasto-detalhe').textContent = `${maiorGasto.descricao} (${maiorGasto.pago_por})`;
   } else {
     document.getElementById('val-maior-gasto-item').textContent = '—';
-    document.getElementById('val-maior-gasto-detalhe').textContent = 'Nenhum lançamento';
+    document.getElementById('val-maior-gasto-detalhe').textContent = 'Nenhum lançamento no período';
   }
 
   // 3. KPI #7: Dia da Semana que Mais Gasta
@@ -153,7 +156,6 @@ function obterTransacoesFiltradas() {
   let res = estado.transacoes;
   const hoje = new Date();
 
-  // Filtro de Período
   if (estado.filtroPeriodo === 'mes-atual') {
     const anoAtual = hoje.getFullYear();
     const mesAtual = hoje.getMonth();
@@ -173,7 +175,6 @@ function obterTransacoesFiltradas() {
     res = res.filter(t => new Date(t.data) >= limite3M);
   }
 
-  // Filtro de Centro de Custo Macro
   if (estado.filtroMacro !== 'todas') {
     res = res.filter(t => t.categoria && t.categoria.nome.toLowerCase().includes(estado.filtroMacro.toLowerCase()));
   }
@@ -233,7 +234,6 @@ function renderizarGrafico3DBarras(mapaMacro) {
     animate();
   }
 
-  // Limpar barras anteriores
   while (barGroup.children.length > 0) {
     barGroup.remove(barGroup.children[0]);
   }
@@ -261,7 +261,7 @@ function renderizarGrafico3DBarras(mapaMacro) {
 }
 
 // ===================================================
-// TABELA DE EXTRATO (COM EDITAR & EXCLUIR)
+// TABELA DE EXTRATO COM EDIÇÃO E ENSINO DO ROBÔ
 // ===================================================
 function preencherTabelaExtrato(lista, filtroBusca = '') {
   const tbody = document.getElementById('tbody-transacoes');
@@ -293,8 +293,8 @@ function preencherTabelaExtrato(lista, filtroBusca = '') {
       <td>${quem}</td>
       <td style="color:var(--red);font-weight:700">${fmt(t.valor)}</td>
       <td style="text-align:center;">
-        <button onclick="abrirEdicao('${t.id}')" style="background:none;border:none;cursor:pointer;">✏️</button>
-        <button onclick="excluirTransacao('${t.id}')" style="background:none;border:none;cursor:pointer;">🗑️</button>
+        <button onclick="abrirEdicao('${t.id}')" style="background:none;border:none;cursor:pointer;" title="Editar e Reordenar">✏️</button>
+        <button onclick="excluirTransacao('${t.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">🗑️</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -316,6 +316,17 @@ window.abrirEdicao = function(id) {
   document.getElementById('edit-descricao').value = t.descricao;
   document.getElementById('edit-valor').value = t.valor;
   document.getElementById('edit-pago-por').value = t.pago_por;
+
+  if (t.categoria && t.categoria.nome) {
+    const sel = document.getElementById('edit-categoria-macro');
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value.includes(t.categoria.nome)) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
   document.getElementById('modal-editar').classList.remove('hidden');
 };
 
@@ -379,17 +390,14 @@ function atualizarInvestimentos() {
     return fmt(acum);
   }
 
-  // Poupança 7.5% a.a.
   document.getElementById('inv-poup-12m').textContent = calcFuturo(0.075, 12);
   document.getElementById('inv-poup-36m').textContent = calcFuturo(0.075, 36);
   document.getElementById('inv-poup-60m').textContent = calcFuturo(0.075, 60);
 
-  // CDB 100% CDI 13.65% a.a.
   document.getElementById('inv-cdb100-12m').textContent = calcFuturo(0.1365, 12);
   document.getElementById('inv-cdb100-36m').textContent = calcFuturo(0.1365, 36);
   document.getElementById('inv-cdb100-60m').textContent = calcFuturo(0.1365, 60);
 
-  // LCI/LCA Isento IR 11% a.a.
   document.getElementById('inv-lci-12m').textContent = calcFuturo(0.11, 12);
   document.getElementById('inv-lci-36m').textContent = calcFuturo(0.11, 36);
   document.getElementById('inv-lci-60m').textContent = calcFuturo(0.11, 60);
@@ -399,7 +407,6 @@ function atualizarInvestimentos() {
 // EVENTOS & NAVEGAÇÃO POR ABAS
 // ===================================================
 function configurarEventos() {
-  // Troca de Abas
   document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -411,7 +418,6 @@ function configurarEventos() {
     });
   });
 
-  // Filtros de Período
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
@@ -421,14 +427,68 @@ function configurarEventos() {
     });
   });
 
-  // Filtro Macro
   document.getElementById('filtro-categoria-macro').addEventListener('change', (e) => {
     estado.filtroMacro = e.target.value;
     atualizarUI();
   });
 
-  // Atualizar Investimentos ao mudar sobra
   document.getElementById('inv-input-sobra').addEventListener('input', atualizarInvestimentos);
+
+  // Salvar Edição e Ensinar Regra ao Robô
+  document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
+    const id = document.getElementById('edit-id').value;
+    const descricao = document.getElementById('edit-descricao').value.trim();
+    const novaMacro = document.getElementById('edit-categoria-macro').value;
+    const valor = parseFloat(document.getElementById('edit-valor').value);
+    const pago_por = document.getElementById('edit-pago-por').value;
+
+    if (!descricao || !valor) return alert('Preencha os campos!');
+
+    if (supabaseClient) {
+      // 1. Procurar ou criar a nova categoria
+      let catId = null;
+      const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', novaMacro).maybeSingle();
+      if (ex) {
+        catId = ex.id;
+      } else {
+        const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: novaMacro, icone: '📌' }]).select('id').single();
+        if (nv) catId = nv.id;
+      }
+
+      // 2. Atualizar a transação
+      await supabaseClient.from('transacoes').update({ descricao, valor, pago_por, categoria_id: catId }).eq('id', id);
+
+      // 3. ENSINAR O ROBÔ: Criar/Atualizar a Regra de Mapeamento
+      const primeiraPalavra = descricao.split(/\s+/)[0].toLowerCase();
+      if (primeiraPalavra && primeiraPalavra.length > 2) {
+        const { data: regraEx } = await supabaseClient
+          .from('regras_mapeamento')
+          .select('id')
+          .ilike('palavra_chave', primeiraPalavra)
+          .maybeSingle();
+
+        if (regraEx) {
+          await supabaseClient.from('regras_mapeamento').update({
+            categoria_macro: novaMacro,
+            subcategoria_micro: novaMacro
+          }).eq('id', regraEx.id);
+        } else {
+          await supabaseClient.from('regras_mapeamento').insert([{
+            palavra_chave: primeiraPalavra,
+            categoria_macro: novaMacro,
+            subcategoria_micro: novaMacro
+          }]);
+        }
+      }
+
+      document.getElementById('modal-editar').classList.add('hidden');
+      carregarDados();
+    }
+  });
+
+  document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
+    document.getElementById('modal-editar').classList.add('hidden');
+  });
 
   // Cadastrar Novo Gasto Manual
   document.getElementById('form-novo-gasto').addEventListener('submit', async (e) => {

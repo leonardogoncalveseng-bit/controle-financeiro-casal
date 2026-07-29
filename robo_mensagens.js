@@ -1,6 +1,6 @@
 // ===================================================
-// ROBÔ DE MENSAGENS TELEGRAM - HIERARQUIA & MAPEAMENTO
-// Estrutura 1.0 (Macro) -> 1.1 (Micro / Subcategoria)
+// ROBÔ DE MENSAGENS TELEGRAM - COM APRENDIZADO DE REGRAS
+// Estrutura 1.0 (Macro) -> 1.1 (Micro) + Regras Personalizadas
 // ===================================================
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
@@ -14,52 +14,51 @@ if (supabaseUrl && supabaseKey) {
 }
 
 /**
- * Tabela de Centros de Custo Hierárquicos (Macro -> Micro)
+ * Tabela de Centros de Custo Hierárquicos (Padrão)
  */
-const CENTROS_CUSTO = {
+const CENTROS_CUSTO_PADRAO = {
   // 1.0 ALIMENTAÇÃO
-  'padaria': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.2', micro: 'Padaria' },
-  'mercado': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.1', micro: 'Supermercado' },
-  'supermercado': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.1', micro: 'Supermercado' },
-  'açougue': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.1', micro: 'Açougue' },
-  'acougue': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.1', micro: 'Açougue' },
-  'restaurante': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.3', micro: 'Restaurante / Açaí' },
-  'açai': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.3', micro: 'Restaurante / Açaí' },
-  'acai': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.3', micro: 'Restaurante / Açaí' },
-  'delivery': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.4', micro: 'Delivery / iFood' },
-  'ifood': { codigo_macro: '1.0', macro: 'Alimentação', codigo_micro: '1.4', micro: 'Delivery / iFood' },
+  'padaria': { macro: '1.0 Alimentação', micro: '1.2 Padaria' },
+  'mercado': { macro: '1.0 Alimentação', micro: '1.1 Supermercado' },
+  'supermercado': { macro: '1.0 Alimentação', micro: '1.1 Supermercado' },
+  'açougue': { macro: '1.0 Alimentação', micro: '1.1 Açougue' },
+  'acougue': { macro: '1.0 Alimentação', micro: '1.1 Açougue' },
+  'restaurante': { macro: '1.0 Alimentação', micro: '1.3 Restaurante / Açaí' },
+  'açai': { macro: '1.0 Alimentação', micro: '1.3 Restaurante / Açaí' },
+  'acai': { macro: '1.0 Alimentação', micro: '1.3 Restaurante / Açaí' },
+  'delivery': { macro: '1.0 Alimentação', micro: '1.4 Delivery / iFood' },
+  'ifood': { macro: '1.0 Alimentação', micro: '1.4 Delivery / iFood' },
 
   // 2.0 TRANSPORTE
-  'posto': { codigo_macro: '2.0', macro: 'Transporte', codigo_micro: '2.1', micro: 'Combustível' },
-  'gasolina': { codigo_macro: '2.0', macro: 'Transporte', codigo_micro: '2.1', micro: 'Combustível' },
-  'oficina': { codigo_macro: '2.0', macro: 'Transporte', codigo_micro: '2.2', micro: 'Manutenção Veicular' },
-  'mecanico': { codigo_macro: '2.0', macro: 'Transporte', codigo_micro: '2.2', micro: 'Manutenção Veicular' },
-  'uber': { codigo_macro: '2.0', macro: 'Transporte', codigo_micro: '2.3', micro: 'Aplicativo de Transporte' },
-  '99': { codigo_macro: '2.0', macro: 'Transporte', codigo_micro: '2.3', micro: 'Aplicativo de Transporte' },
+  'posto': { macro: '2.0 Transporte', micro: '2.1 Combustível' },
+  'gasolina': { macro: '2.0 Transporte', micro: '2.1 Combustível' },
+  'oficina': { macro: '2.0 Transporte', micro: '2.2 Manutenção Veicular' },
+  'mecanico': { macro: '2.0 Transporte', micro: '2.2 Manutenção Veicular' },
+  'uber': { macro: '2.0 Transporte', micro: '2.3 Aplicativo de Transporte' },
+  '99': { macro: '2.0 Transporte', micro: '2.3 Aplicativo de Transporte' },
 
   // 3.0 MORADIA
-  'aluguel': { codigo_macro: '3.0', macro: 'Moradia', codigo_micro: '3.1', micro: 'Aluguel' },
-  'condominio': { codigo_macro: '3.0', macro: 'Moradia', codigo_micro: '3.2', micro: 'Condomínio' },
-  'luz': { codigo_macro: '3.0', macro: 'Moradia', codigo_micro: '3.3', micro: 'Energia / Luz' },
-  'energia': { codigo_macro: '3.0', macro: 'Moradia', codigo_micro: '3.3', micro: 'Energia / Luz' },
-  'agua': { codigo_macro: '3.0', macro: 'Moradia', codigo_micro: '3.3', micro: 'Água' },
-  'internet': { codigo_macro: '3.0', macro: 'Moradia', codigo_micro: '3.4', micro: 'Internet / Telefone' },
+  'aluguel': { macro: '3.0 Moradia', micro: '3.1 Aluguel' },
+  'condominio': { macro: '3.0 Moradia', micro: '3.2 Condomínio' },
+  'luz': { macro: '3.0 Moradia', micro: '3.3 Energia / Luz' },
+  'energia': { macro: '3.0 Moradia', micro: '3.3 Energia / Luz' },
+  'agua': { macro: '3.0 Moradia', micro: '3.3 Água' },
+  'internet': { macro: '3.0 Moradia', micro: '3.4 Internet / Telefone' },
 
   // 4.0 SAÚDE
-  'farmacia': { codigo_macro: '4.0', macro: 'Saúde', codigo_micro: '4.1', micro: 'Farmácia / Remédios' },
-  'drogaria': { codigo_macro: '4.0', macro: 'Saúde', codigo_micro: '4.1', micro: 'Farmácia / Remédios' },
-  'consulta': { codigo_macro: '4.0', macro: 'Saúde', codigo_micro: '4.2', micro: 'Consultas / Exames' },
+  'farmacia': { macro: '4.0 Saúde', micro: '4.1 Farmácia / Remédios' },
+  'drogaria': { macro: '4.0 Saúde', micro: '4.1 Farmácia / Remédios' },
 
   // 5.0 LAZER
-  'cinema': { codigo_macro: '5.0', macro: 'Lazer', codigo_micro: '5.2', micro: 'Cinema / Shows' },
-  'viagem': { codigo_macro: '5.0', macro: 'Lazer', codigo_micro: '5.3', micro: 'Viagens' },
-  'netflix': { codigo_macro: '5.0', macro: 'Lazer', codigo_micro: '5.1', micro: 'Streaming' }
+  'cinema': { macro: '5.0 Lazer', micro: '5.2 Cinema / Shows' },
+  'viagem': { macro: '5.0 Lazer', micro: '5.3 Viagens' },
+  'netflix': { macro: '5.0 Lazer', micro: '5.1 Streaming' }
 };
 
 /**
- * Leitor Inteligente de Mensagens com Hierarquia
+ * Processador com Aprendizado de Regras do Supabase
  */
-function processarTextoMensagem(texto, remetentePadrao = 'Ele') {
+async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'Ele') {
   if (!texto || typeof texto !== 'string') return null;
 
   const textoLimpo = texto.trim();
@@ -85,7 +84,6 @@ function processarTextoMensagem(texto, remetentePadrao = 'Ele') {
 
   if (palavrasFiltradas.length < 2) return null;
 
-  // Extrair valor da última palavra
   const tokenValor = palavrasFiltradas.pop();
   const matchValor = tokenValor.match(/(?:R\$\s*)?(\d{1,6}(?:[.,]\d{1,2})?)/i);
   if (!matchValor) return null;
@@ -93,26 +91,50 @@ function processarTextoMensagem(texto, remetentePadrao = 'Ele') {
   const valor = parseFloat(matchValor[1].replace(',', '.'));
   if (isNaN(valor) || valor <= 0) return null;
 
-  // Palavra-chave inicial
   const palavraChave = palavrasFiltradas[0].toLowerCase();
-  const mapeado = CENTROS_CUSTO[palavraChave];
 
-  let macro = '9.0 Outros';
-  let micro = palavrasFiltradas[0].charAt(0).toUpperCase() + palavrasFiltradas[0].slice(1).toLowerCase();
+  let macro = null;
+  let micro = null;
 
-  if (mapeado) {
-    macro = `${mapeado.codigo_macro} ${mapeado.macro}`;
-    micro = `${mapeado.codigo_micro} ${mapeado.micro}`;
+  // 1. Procurar em Regras Aprendidas no Supabase
+  if (supabase) {
+    try {
+      const { data: regra } = await supabase
+        .from('regras_mapeamento')
+        .select('*')
+        .ilike('palavra_chave', palavraChave)
+        .maybeSingle();
+
+      if (regra) {
+        macro = regra.categoria_macro;
+        micro = regra.subcategoria_micro;
+      }
+    } catch (e) {
+      console.warn('Busca de regras falhou:', e.message);
+    }
+  }
+
+  // 2. Se não encontrou nas regras aprendidas, buscar no dicionário padrão
+  if (!macro && CENTROS_CUSTO_PADRAO[palavraChave]) {
+    macro = CENTROS_CUSTO_PADRAO[palavraChave].macro;
+    micro = CENTROS_CUSTO_PADRAO[palavraChave].micro;
+  }
+
+  // 3. Fallback inteligente: se não souber o centro de custo, envia para "9.0 Outros"
+  if (!macro) {
+    macro = '9.0 Outros';
+    micro = '9.1 Diversos';
   }
 
   let estabelecimento = palavrasFiltradas.slice(1).join(' ');
   if (!estabelecimento) {
-    estabelecimento = micro;
+    estabelecimento = palavrasFiltradas[0].charAt(0).toUpperCase() + palavrasFiltradas[0].slice(1);
   } else {
     estabelecimento = estabelecimento.charAt(0).toUpperCase() + estabelecimento.slice(1);
   }
 
   return {
+    palavra_chave: palavraChave,
     macro,
     micro,
     descricao: estabelecimento,
@@ -123,13 +145,12 @@ function processarTextoMensagem(texto, remetentePadrao = 'Ele') {
 }
 
 /**
- * Registra o gasto no Supabase
+ * Registra gasto e adiciona categoria
  */
 async function registrarGastoNoSupabase(gasto) {
   if (!supabase) return { success: true, mode: 'demo' };
 
   try {
-    // 1. Categoria
     let catId = null;
     const { data: catExistente } = await supabase
       .from('categorias')
@@ -148,7 +169,6 @@ async function registrarGastoNoSupabase(gasto) {
       if (novaCat) catId = novaCat.id;
     }
 
-    // 2. Transação
     const descFinal = `[${gasto.micro}] ${gasto.descricao}`;
     const { data, error } = await supabase.from('transacoes').insert([{
       descricao: descFinal,
@@ -166,4 +186,7 @@ async function registrarGastoNoSupabase(gasto) {
   }
 }
 
-module.exports = { processarTextoMensagem, registrarGastoNoSupabase };
+module.exports = {
+  processarTextoMensagem: processarTextoMensagemComAprendizado,
+  registrarGastoNoSupabase
+};

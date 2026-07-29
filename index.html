@@ -65,6 +65,8 @@
           <option value="4.0 Saúde">4.0 Saúde</option>
           <option value="5.0 Lazer">5.0 Lazer</option>
           <option value="6.0 Educação">6.0 Educação</option>
+          <option value="7.0 Roupas">7.0 Roupas & Compras</option>
+          <option value="8.0 Investimentos">8.0 Investimentos</option>
           <option value="9.0 Outros">9.0 Outros</option>
         </select>
       </div>
@@ -383,20 +385,44 @@
 
   </div>
 
-  <!-- MODAL DE EDIÇÃO -->
+  <!-- MODAL DE EDIÇÃO COM REORDENAÇÃO & APRENDIZADO -->
   <div id="modal-editar" class="overlay hidden">
     <div class="modal">
-      <h2>Editar Gasto</h2>
+      <h2>Editar & Reordenar Centro de Custo</h2>
       <input type="hidden" id="edit-id">
-      <div class="field"><label>Descrição / Estabelecimento</label><input type="text" id="edit-descricao"></div>
+      <div class="field">
+        <label>Descrição / Estabelecimento</label>
+        <input type="text" id="edit-descricao">
+      </div>
+      <div class="field">
+        <label>Reordenar Centro de Custo (Cria Regra para o Robô 🤖)</label>
+        <select id="edit-categoria-macro">
+          <option value="1.0 Alimentação">1.0 Alimentação</option>
+          <option value="2.0 Transporte">2.0 Transporte</option>
+          <option value="3.0 Moradia">3.0 Moradia</option>
+          <option value="4.0 Saúde">4.0 Saúde</option>
+          <option value="5.0 Lazer">5.0 Lazer</option>
+          <option value="6.0 Educação">6.0 Educação</option>
+          <option value="7.0 Roupas">7.0 Roupas & Compras</option>
+          <option value="8.0 Investimentos">8.0 Investimentos</option>
+          <option value="9.0 Outros">9.0 Outros</option>
+        </select>
+      </div>
       <div class="field-row">
-        <div class="field"><label>Valor R$</label><input type="number" step="0.01" id="edit-valor"></div>
-        <div class="field"><label>Quem Pagou?</label>
-          <select id="edit-pago-por"><option value="Ele">Leo 👨</option><option value="Ela">Giu 👩</option></select>
+        <div class="field">
+          <label>Valor (R$)</label>
+          <input type="number" step="0.01" id="edit-valor">
+        </div>
+        <div class="field">
+          <label>Quem Pagou?</label>
+          <select id="edit-pago-por">
+            <option value="Ele">Leo 👨</option>
+            <option value="Ela">Giu 👩</option>
+          </select>
         </div>
       </div>
       <div class="modal-btns">
-        <button id="btn-salvar-edicao" class="btn-primary">Salvar</button>
+        <button id="btn-salvar-edicao" class="btn-primary">Salvar & Ensinar Robô 🎓</button>
         <button id="btn-cancelar-edicao" class="btn-ghost">Cancelar</button>
       </div>
     </div>
