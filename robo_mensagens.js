@@ -1,6 +1,6 @@
 // ===================================================
 // ROBÔ DE MENSAGENS TELEGRAM - HIERARQUIA COMPLETA & FUZZY MATCH
-// Suporta datas retroativas, aproximação de digitação e ~40 categorias!
+// Suporta datas retroativas, aproximação de digitação e ~50 categorias!
 // ===================================================
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
@@ -21,8 +21,8 @@ const CENTROS_CUSTO_PADRAO = {
   'padaria': { macro: '1.0 Alimentação', micro: '1.2 Padaria' },
   'mercado': { macro: '1.0 Alimentação', micro: '1.1 Supermercado' },
   'supermercado': { macro: '1.0 Alimentação', micro: '1.1 Supermercado' },
-  'açougue': { macro: '1.0 Alimentação', micro: '1.1 Açougue' },
-  'acougue': { macro: '1.0 Alimentação', micro: '1.1 Açougue' },
+  'açougue': { macro: '1.0 Alimentação', micro: '1.6 Açougue' },
+  'acougue': { macro: '1.0 Alimentação', micro: '1.6 Açougue' },
   'restaurante': { macro: '1.0 Alimentação', micro: '1.3 Restaurante' },
   'lanchonete': { macro: '1.0 Alimentação', micro: '1.3 Restaurante' },
   'açai': { macro: '1.0 Alimentação', micro: '1.5 Açaí' },
@@ -81,7 +81,30 @@ const CENTROS_CUSTO_PADRAO = {
   // 7.0 ROUPAS & COMPRAS
   'roupa': { macro: '7.0 Roupas & Compras', micro: '7.1 Vestuário' },
   'sapato': { macro: '7.0 Roupas & Compras', micro: '7.1 Vestuário' },
-  'shopping': { macro: '7.0 Roupas & Compras', micro: '7.2 Eletrônicos / Presentes' }
+  'shopping': { macro: '7.0 Roupas & Compras', micro: '7.2 Eletrônicos / Presentes' },
+
+  // 9.0 EMPRESA / NEGÓCIOS
+  'empresa': { macro: '9.0 Empresa / Negócios', micro: '9.1 Contabilidade / Contador' },
+  'contador': { macro: '9.0 Empresa / Negócios', micro: '9.1 Contabilidade / Contador' },
+  'contabilidade': { macro: '9.0 Empresa / Negócios', micro: '9.1 Contabilidade / Contador' },
+  'theos': { macro: '9.0 Empresa / Negócios', micro: '9.1 Contabilidade / Contador' },
+  'sistema': { macro: '9.0 Empresa / Negócios', micro: '9.2 Sistemas / Software' },
+  'software': { macro: '9.0 Empresa / Negócios', micro: '9.2 Sistemas / Software' },
+  'hospedagem': { macro: '9.0 Empresa / Negócios', micro: '9.2 Sistemas / Software' },
+  'das': { macro: '9.0 Empresa / Negócios', micro: '9.3 Impostos / DAS / Taxas' },
+  'cnpj': { macro: '9.0 Empresa / Negócios', micro: '9.3 Impostos / DAS / Taxas' },
+
+  // 11.0 PETS
+  'pet': { macro: '11.0 Pets & Animais', micro: '11.1 Ração / Alimentação Pet' },
+  'racao': { macro: '11.0 Pets & Animais', micro: '11.1 Ração / Alimentação Pet' },
+  'ração': { macro: '11.0 Pets & Animais', micro: '11.1 Ração / Alimentação Pet' },
+  'veterinario': { macro: '11.0 Pets & Animais', micro: '11.2 Veterinário / Remédios' },
+
+  // 12.0 CUIDADOS PESSOAIS
+  'barbeiro': { macro: '12.0 Cuidados Pessoais', micro: '12.1 Salão / Barbeiro' },
+  'salao': { macro: '12.0 Cuidados Pessoais', micro: '12.1 Salão / Barbeiro' },
+  'salão': { macro: '12.0 Cuidados Pessoais', micro: '12.1 Salão / Barbeiro' },
+  'cabeleireiro': { macro: '12.0 Cuidados Pessoais', micro: '12.1 Salão / Barbeiro' }
 };
 
 /**
@@ -106,7 +129,7 @@ function calcularLevenshtein(str1, str2) {
 }
 
 /**
- * Busca por palavra similar caso haja erro de digitação (ex: gasoina -> gasolina)
+ * Busca por palavra similar caso haja erro de digitação
  */
 function buscarPalavraSimilar(palavraDigitada) {
   if (palavraDigitada.length < 3) return null;
@@ -178,7 +201,7 @@ async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'El
   const valor = parseFloat(matchValor[1].replace(',', '.'));
   if (isNaN(valor) || valor <= 0) return null;
 
-  // 4. Categoria e Subcategoria (Com aprendizado + Fuzzy Match para erro de digitação)
+  // 4. Categoria e Subcategoria
   const palavraChaveOrig = palavras[0].toLowerCase();
   let palavraChaveUsada = palavraChaveOrig;
   let erroDigitacaoCorrigido = null;
@@ -203,13 +226,13 @@ async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'El
     }
   }
 
-  // 4b. Consultar Tabela Padrão se não achou regra personalizada
+  // 4b. Consultar Tabela Padrão
   if (!macro && CENTROS_CUSTO_PADRAO[palavraChaveOrig]) {
     macro = CENTROS_CUSTO_PADRAO[palavraChaveOrig].macro;
     micro = CENTROS_CUSTO_PADRAO[palavraChaveOrig].micro;
   }
 
-  // 4c. Tentar Fuzzy Match (tolerância a erros de digitação como "gasoina")
+  // 4c. Tentar Fuzzy Match
   if (!macro) {
     const similar = buscarPalavraSimilar(palavraChaveOrig);
     if (similar) {
@@ -220,10 +243,10 @@ async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'El
     }
   }
 
-  // 4d. Fallback para 9.0 Outros caso não encontre nenhuma categoria
+  // 4d. Fallback para 15.0 Outros
   if (!macro) {
-    macro = '9.0 Outros';
-    micro = '9.1 Diversos';
+    macro = '15.0 Outros';
+    micro = '15.1 Diversos';
   }
 
   let estabelecimento = palavras.slice(1).join(' ');

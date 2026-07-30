@@ -1,5 +1,5 @@
 // ===================================================
-// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA EXPANDIDA E CORRIGIDA)
+// APLICATIVO FINANCEIRO DO CASAL v2.0 (15 CENTROS DE CUSTO EXPANDIDOS)
 // ===================================================
 
 let supabaseClient = null;
@@ -16,7 +16,13 @@ const SUBCATEGORIAS_MAP = {
   '6.0 Educação': ['6.1 Mensalidade Escolar', '6.2 Cursos / Treinamentos', '6.3 Material / Livros'],
   '7.0 Roupas & Compras': ['7.1 Vestuário', '7.2 Eletrônicos / Presentes'],
   '8.0 Investimentos': ['8.1 Renda Fixa / CDB', '8.2 Ações / FIIs', '8.3 Reserva de Emergência'],
-  '9.0 Outros': ['9.1 Diversos', '9.2 Transferências']
+  '9.0 Empresa / Negócios': ['9.1 Contabilidade / Contador', '9.2 Sistemas / Software', '9.3 Impostos / DAS / Taxas', '9.4 Marketing / Anúncios', '9.5 Equipamentos / Suprimentos'],
+  '10.0 Impostos & Taxas': ['10.1 Impostos Federais / Estaduais', '10.2 Tarifas Bancárias / Anuidade'],
+  '11.0 Pets & Animais': ['11.1 Ração / Alimentação Pet', '11.2 Veterinário / Remédios', '11.3 Banho & Tosa'],
+  '12.0 Cuidados Pessoais': ['12.1 Salão / Barbeiro', '12.2 Estética / Cosméticos'],
+  '13.0 Assinaturas & Serviços': ['13.1 Apps / Softwares', '13.2 Serviços Recorrentes'],
+  '14.0 Doações & Presentes': ['14.1 Presentes / Aniversários', '14.2 Caridade / Doações'],
+  '15.0 Outros': ['15.1 Diversos', '15.2 Transferências']
 };
 
 // Estado global da aplicação
@@ -92,7 +98,7 @@ async function carregarDados() {
 
 // Resolver chave exata do mapa a partir de qualquer string de categoria
 function resolverChaveMacro(str) {
-  if (!str) return '9.0 Outros';
+  if (!str) return '15.0 Outros';
   const s = str.toLowerCase();
   if (s.includes('1.0') || s.includes('alimen')) return '1.0 Alimentação';
   if (s.includes('2.0') || s.includes('transp')) return '2.0 Transporte';
@@ -102,7 +108,13 @@ function resolverChaveMacro(str) {
   if (s.includes('6.0') || s.includes('educa')) return '6.0 Educação';
   if (s.includes('7.0') || s.includes('roupa') || s.includes('compra')) return '7.0 Roupas & Compras';
   if (s.includes('8.0') || s.includes('invest')) return '8.0 Investimentos';
-  return '9.0 Outros';
+  if (s.includes('9.0') || s.includes('empresa') || s.includes('negocio') || s.includes('negócio') || s.includes('theos') || s.includes('contador')) return '9.0 Empresa / Negócios';
+  if (s.includes('10.0') || s.includes('imposto') || s.includes('taxa')) return '10.0 Impostos & Taxas';
+  if (s.includes('11.0') || s.includes('pet')) return '11.0 Pets & Animais';
+  if (s.includes('12.0') || s.includes('cuidado') || s.includes('beleza') || s.includes('barbeiro')) return '12.0 Cuidados Pessoais';
+  if (s.includes('13.0') || s.includes('assinatura') || s.includes('serviço')) return '13.0 Assinaturas & Serviços';
+  if (s.includes('14.0') || s.includes('doacao') || s.includes('doação') || s.includes('presente')) return '14.0 Doações & Presentes';
+  return '15.0 Outros';
 }
 
 function atualizarOptionsMicro(macroVal, microSelecionado = '') {
@@ -111,7 +123,7 @@ function atualizarOptionsMicro(macroVal, microSelecionado = '') {
   selectMicro.innerHTML = '';
 
   const chaveFinal = resolverChaveMacro(macroVal);
-  const listaMicros = SUBCATEGORIAS_MAP[chaveFinal] || ['9.1 Diversos'];
+  const listaMicros = SUBCATEGORIAS_MAP[chaveFinal] || ['15.1 Diversos'];
 
   listaMicros.forEach(micro => {
     const opt = document.createElement('option');
@@ -135,8 +147,8 @@ function atualizarOptionsMicro(macroVal, microSelecionado = '') {
 function atualizarUI() {
   const filtradas = obterTransacoesFiltradas();
 
-  // 0. NOTIFICAÇÃO DE PENDENTES DE AJUSTE (9.0 OUTROS)
-  const pendentes = estado.transacoes.filter(t => t.categoria && t.categoria.nome.includes('9.0 Outros'));
+  // 0. NOTIFICAÇÃO DE PENDENTES DE AJUSTE (15.0 OUTROS)
+  const pendentes = estado.transacoes.filter(t => t.categoria && (t.categoria.nome.includes('15.0 Outros') || t.categoria.nome.includes('9.0 Outros')));
   const alertBox = document.getElementById('alert-pendentes-box');
   if (alertBox) {
     if (pendentes.length > 0) {
@@ -195,7 +207,7 @@ function atualizarUI() {
   // 4. Maior vs Menor Centro de Custo Macro
   const mapaMacro = {};
   filtradas.forEach(t => {
-    const nomeCat = t.categoria ? t.categoria.nome : '9.0 Outros';
+    const nomeCat = t.categoria ? t.categoria.nome : '15.0 Outros';
     mapaMacro[nomeCat] = (mapaMacro[nomeCat] || 0) + Number(t.valor);
   });
 
@@ -287,7 +299,7 @@ function renderizarGraficoPie(mapaMacro, total) {
 
   const labels = Object.keys(mapaMacro);
   const valores = Object.values(mapaMacro);
-  const cores = ['#38bdf8', '#f43f5e', '#10b981', '#a855f7', '#f59e0b', '#6366f1', '#ec4899', '#14b8a6'];
+  const cores = ['#38bdf8', '#f43f5e', '#10b981', '#a855f7', '#f59e0b', '#6366f1', '#ec4899', '#14b8a6', '#eab308', '#8b5cf6', '#06b6d4', '#f97316'];
 
   if (chartPieInstance) chartPieInstance.destroy();
 
@@ -412,7 +424,7 @@ function preencherTabelaExtrato(lista, filtroBusca = '') {
   }
 
   [...filtradas].sort((a, b) => new Date(b.data) - new Date(a.data)).forEach(t => {
-    const cat = t.categoria ? t.categoria.nome : '9.0 Outros';
+    const cat = t.categoria ? t.categoria.nome : '15.0 Outros';
     const quem = t.pago_por === 'Ele' ? '👨 Leo' : '👩 Giu';
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -444,14 +456,14 @@ window.abrirEdicao = function(id) {
 
   document.getElementById('edit-id').value = t.id;
 
-  // Limpar a tag [Micro] da descrição para a caixa de texto ficar limpa
+  // Limpar a tag [Micro] da descrição
   let descLimpa = t.descricao.replace(/^\[.*?\]\s*/, '');
   document.getElementById('edit-descricao').value = descLimpa;
   document.getElementById('edit-valor').value = t.valor;
   document.getElementById('edit-pago-por').value = t.pago_por;
 
   const macroSel = document.getElementById('edit-categoria-macro');
-  const nomeCatOriginal = t.categoria ? t.categoria.nome : '9.0 Outros';
+  const nomeCatOriginal = t.categoria ? t.categoria.nome : '15.0 Outros';
   const chaveMacro = resolverChaveMacro(nomeCatOriginal);
 
   for (let i = 0; i < macroSel.options.length; i++) {
@@ -461,7 +473,7 @@ window.abrirEdicao = function(id) {
     }
   }
 
-  // Extrair subcategoria micro da descrição [1.5 Açaí]
+  // Extrair subcategoria micro da descrição
   let microAtual = '';
   const matchMicro = t.descricao.match(/^\[(.*?)\]/);
   if (matchMicro) {
@@ -505,7 +517,7 @@ function atualizarRecorrentes() {
       <td>Dia ${r.dia_vencimento}</td>
       <td><strong>${r.nome}</strong>${empresaStr}</td>
       <td>${respTag}</td>
-      <td>${r.categoria_macro || '3.0 Moradia'}</td>
+      <td>${r.categoria_macro || '9.0 Empresa / Negócios'}</td>
       <td><span class="tag">${r.dias_alerta || 3} dias antes</span></td>
       <td style="color:var(--red); font-weight:600">${fmt(r.valor)}</td>
       <td style="text-align:center;">
@@ -528,7 +540,7 @@ window.abrirEdicaoRecorrente = function(id) {
   document.getElementById('edit-rec-dia').value = r.dia_vencimento;
   document.getElementById('edit-rec-dias-alerta').value = r.dias_alerta || 3;
   document.getElementById('edit-rec-responsavel').value = r.responsavel || 'Casal';
-  document.getElementById('edit-rec-macro').value = r.categoria_macro || '3.0 Moradia';
+  document.getElementById('edit-rec-macro').value = r.categoria_macro || '9.0 Empresa / Negócios';
 
   document.getElementById('modal-editar-recorrente').classList.remove('hidden');
 };
@@ -666,8 +678,8 @@ function configurarEventos() {
   const btnPendentes = document.getElementById('btn-filtrar-pendentes');
   if (btnPendentes) {
     btnPendentes.addEventListener('click', () => {
-      estado.filtroMacro = '9.0 Outros';
-      document.getElementById('filtro-categoria-macro').value = '9.0 Outros';
+      estado.filtroMacro = '15.0 Outros';
+      document.getElementById('filtro-categoria-macro').value = '15.0 Outros';
       atualizarUI();
     });
   }

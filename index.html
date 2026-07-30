@@ -63,15 +63,22 @@
         <label>Centro de Custo:</label>
         <select id="filtro-categoria-macro">
           <option value="todas">Todos os Centros de Custo</option>
-          <option value="9.0 Outros">⚠️ Pendentes de Ajuste (Outros)</option>
+          <option value="15.0 Outros">⚠️ Pendentes de Ajuste (Outros)</option>
           <option value="1.0 Alimentação">1.0 Alimentação</option>
           <option value="2.0 Transporte">2.0 Transporte</option>
           <option value="3.0 Moradia">3.0 Moradia</option>
           <option value="4.0 Saúde">4.0 Saúde</option>
           <option value="5.0 Lazer">5.0 Lazer</option>
           <option value="6.0 Educação">6.0 Educação</option>
-          <option value="7.0 Roupas">7.0 Roupas & Compras</option>
+          <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
           <option value="8.0 Investimentos">8.0 Investimentos</option>
+          <option value="9.0 Empresa / Negócios">9.0 Empresa / Negócios</option>
+          <option value="10.0 Impostos & Taxas">10.0 Impostos & Taxas</option>
+          <option value="11.0 Pets & Animais">11.0 Pets & Animais</option>
+          <option value="12.0 Cuidados Pessoais">12.0 Cuidados Pessoais</option>
+          <option value="13.0 Assinaturas & Serviços">13.0 Assinaturas & Serviços</option>
+          <option value="14.0 Doações & Presentes">14.0 Doações & Presentes</option>
+          <option value="15.0 Outros">15.0 Outros</option>
         </select>
       </div>
     </section>
@@ -159,12 +166,12 @@
         </div>
         <form id="form-novo-gasto" class="form-row-three">
           <div class="field">
-            <label>Palavra-Chave / Categoria (ex: Padaria, Açai, Combustivel)</label>
-            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Açai do Parque, Padaria Real, Posto Shell" required>
+            <label>Palavra-Chave / Categoria (ex: Padaria, Açai, Contador, Combustivel)</label>
+            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Contador, Açai do Parque, Posto Shell" required>
           </div>
           <div class="field">
             <label>Nome do Estabelecimento / Lugar</label>
-            <input type="text" id="gasto-descricao" placeholder="Ex: Savenago, Drogasil, Shell" required>
+            <input type="text" id="gasto-descricao" placeholder="Ex: Contador LG, Savenago, Drogasil" required>
           </div>
           <div class="field">
             <label>Valor (R$)</label>
@@ -222,11 +229,11 @@
           <form id="form-nova-recorrente">
             <div class="field">
               <label>Nome da Conta</label>
-              <input type="text" id="rec-nome" placeholder="Ex: Contador, Internet, Aluguel" required>
+              <input type="text" id="rec-nome" placeholder="Ex: Contador LG, Internet Claro, Aluguel" required>
             </div>
             <div class="field">
               <label>Empresa / Fornecedor (opcional)</label>
-              <input type="text" id="rec-empresa" placeholder="Ex: Contador LG, Claro, CPFL">
+              <input type="text" id="rec-empresa" placeholder="Ex: THEOS, Claro, CPFL">
             </div>
             <div class="field-row">
               <div class="field">
@@ -254,13 +261,21 @@
               <div class="field">
                 <label>Centro de Custo Macro</label>
                 <select id="rec-macro">
+                  <option value="9.0 Empresa / Negócios">9.0 Empresa / Negócios</option>
                   <option value="3.0 Moradia">3.0 Moradia</option>
                   <option value="1.0 Alimentação">1.0 Alimentação</option>
                   <option value="2.0 Transporte">2.0 Transporte</option>
                   <option value="4.0 Saúde">4.0 Saúde</option>
                   <option value="5.0 Lazer">5.0 Lazer</option>
                   <option value="6.0 Educação">6.0 Educação</option>
-                  <option value="9.0 Outros">9.0 Outros</option>
+                  <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
+                  <option value="8.0 Investimentos">8.0 Investimentos</option>
+                  <option value="10.0 Impostos & Taxas">10.0 Impostos & Taxas</option>
+                  <option value="11.0 Pets & Animais">11.0 Pets & Animais</option>
+                  <option value="12.0 Cuidados Pessoais">12.0 Cuidados Pessoais</option>
+                  <option value="13.0 Assinaturas & Serviços">13.0 Assinaturas & Serviços</option>
+                  <option value="14.0 Doações & Presentes">14.0 Doações & Presentes</option>
+                  <option value="15.0 Outros">15.0 Outros</option>
                 </select>
               </div>
             </div>
@@ -475,7 +490,13 @@
             <option value="6.0 Educação">6.0 Educação</option>
             <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
             <option value="8.0 Investimentos">8.0 Investimentos</option>
-            <option value="9.0 Outros">9.0 Outros</option>
+            <option value="9.0 Empresa / Negócios">9.0 Empresa / Negócios</option>
+            <option value="10.0 Impostos & Taxas">10.0 Impostos & Taxas</option>
+            <option value="11.0 Pets & Animais">11.0 Pets & Animais</option>
+            <option value="12.0 Cuidados Pessoais">12.0 Cuidados Pessoais</option>
+            <option value="13.0 Assinaturas & Serviços">13.0 Assinaturas & Serviços</option>
+            <option value="14.0 Doações & Presentes">14.0 Doações & Presentes</option>
+            <option value="15.0 Outros">15.0 Outros</option>
           </select>
         </div>
         <div class="field">
@@ -544,13 +565,21 @@
         <div class="field">
           <label>Centro de Custo Macro</label>
           <select id="edit-rec-macro">
+            <option value="9.0 Empresa / Negócios">9.0 Empresa / Negócios</option>
             <option value="3.0 Moradia">3.0 Moradia</option>
             <option value="1.0 Alimentação">1.0 Alimentação</option>
             <option value="2.0 Transporte">2.0 Transporte</option>
             <option value="4.0 Saúde">4.0 Saúde</option>
             <option value="5.0 Lazer">5.0 Lazer</option>
             <option value="6.0 Educação">6.0 Educação</option>
-            <option value="9.0 Outros">9.0 Outros</option>
+            <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
+            <option value="8.0 Investimentos">8.0 Investimentos</option>
+            <option value="10.0 Impostos & Taxas">10.0 Impostos & Taxas</option>
+            <option value="11.0 Pets & Animais">11.0 Pets & Animais</option>
+            <option value="12.0 Cuidados Pessoais">12.0 Cuidados Pessoais</option>
+            <option value="13.0 Assinaturas & Serviços">13.0 Assinaturas & Serviços</option>
+            <option value="14.0 Doações & Presentes">14.0 Doações & Presentes</option>
+            <option value="15.0 Outros">15.0 Outros</option>
           </select>
         </div>
       </div>
