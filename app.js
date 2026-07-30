@@ -1,5 +1,5 @@
 // ===================================================
-// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA EXPANDIDA)
+// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA EXPANDIDA E CORRIGIDA)
 // ===================================================
 
 let supabaseClient = null;
@@ -88,6 +88,45 @@ async function carregarDados() {
     console.warn('Erro ao carregar dados:', e.message);
     atualizarUI();
   }
+}
+
+// Resolver chave exata do mapa a partir de qualquer string de categoria
+function resolverChaveMacro(str) {
+  if (!str) return '9.0 Outros';
+  const s = str.toLowerCase();
+  if (s.includes('1.0') || s.includes('alimen')) return '1.0 Alimentação';
+  if (s.includes('2.0') || s.includes('transp')) return '2.0 Transporte';
+  if (s.includes('3.0') || s.includes('mora')) return '3.0 Moradia';
+  if (s.includes('4.0') || s.includes('saud') || s.includes('saúd')) return '4.0 Saúde';
+  if (s.includes('5.0') || s.includes('lazer')) return '5.0 Lazer';
+  if (s.includes('6.0') || s.includes('educa')) return '6.0 Educação';
+  if (s.includes('7.0') || s.includes('roupa') || s.includes('compra')) return '7.0 Roupas & Compras';
+  if (s.includes('8.0') || s.includes('invest')) return '8.0 Investimentos';
+  return '9.0 Outros';
+}
+
+function atualizarOptionsMicro(macroVal, microSelecionado = '') {
+  const selectMicro = document.getElementById('edit-categoria-micro');
+  if (!selectMicro) return;
+  selectMicro.innerHTML = '';
+
+  const chaveFinal = resolverChaveMacro(macroVal);
+  const listaMicros = SUBCATEGORIAS_MAP[chaveFinal] || ['9.1 Diversos'];
+
+  listaMicros.forEach(micro => {
+    const opt = document.createElement('option');
+    opt.value = micro;
+    opt.textContent = micro;
+
+    if (microSelecionado) {
+      const microNorm = micro.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const selNorm = microSelecionado.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      if (microNorm.includes(selNorm) || selNorm.includes(microNorm)) {
+        opt.selected = true;
+      }
+    }
+    selectMicro.appendChild(opt);
+  });
 }
 
 // ===================================================
@@ -399,56 +438,37 @@ window.excluirTransacao = async function(id) {
   }
 };
 
-function atualizarOptionsMicro(macroVal, microSelecionado = '') {
-  const selectMicro = document.getElementById('edit-categoria-micro');
-  if (!selectMicro) return;
-  selectMicro.innerHTML = '';
-
-  // Buscar lista de micros para o macro
-  const chaveChave = Object.keys(SUBCATEGORIAS_MAP).find(k => k.toLowerCase().includes(macroVal.toLowerCase().substring(0, 3))) || macroVal;
-  const listaMicros = SUBCATEGORIAS_MAP[chaveChave] || SUBCATEGORIAS_MAP[macroVal] || ['9.1 Diversos'];
-
-  listaMicros.forEach(micro => {
-    const opt = document.createElement('option');
-    opt.value = micro;
-    opt.textContent = micro;
-    if (microSelecionado && micro.toLowerCase().includes(microSelecionado.toLowerCase())) {
-      opt.selected = true;
-    }
-    selectMicro.appendChild(opt);
-  });
-}
-
 window.abrirEdicao = function(id) {
   const t = estado.transacoes.find(r => r.id == id);
   if (!t) return;
 
   document.getElementById('edit-id').value = t.id;
-  document.getElementById('edit-descricao').value = t.descricao;
+
+  // Limpar a tag [Micro] da descrição para a caixa de texto ficar limpa
+  let descLimpa = t.descricao.replace(/^\[.*?\]\s*/, '');
+  document.getElementById('edit-descricao').value = descLimpa;
   document.getElementById('edit-valor').value = t.valor;
   document.getElementById('edit-pago-por').value = t.pago_por;
 
   const macroSel = document.getElementById('edit-categoria-macro');
-  let macroAtual = '9.0 Outros';
+  const nomeCatOriginal = t.categoria ? t.categoria.nome : '9.0 Outros';
+  const chaveMacro = resolverChaveMacro(nomeCatOriginal);
 
-  if (t.categoria && t.categoria.nome) {
-    for (let i = 0; i < macroSel.options.length; i++) {
-      if (macroSel.options[i].value.includes(t.categoria.nome)) {
-        macroSel.selectedIndex = i;
-        macroAtual = macroSel.options[i].value;
-        break;
-      }
+  for (let i = 0; i < macroSel.options.length; i++) {
+    if (resolverChaveMacro(macroSel.options[i].value) === chaveMacro) {
+      macroSel.selectedIndex = i;
+      break;
     }
   }
 
-  // Extrair micro se já estiver na descrição formatada [1.1 Supermercado]
+  // Extrair subcategoria micro da descrição [1.5 Açaí]
   let microAtual = '';
   const matchMicro = t.descricao.match(/^\[(.*?)\]/);
   if (matchMicro) {
     microAtual = matchMicro[1];
   }
 
-  atualizarOptionsMicro(macroAtual, microAtual);
+  atualizarOptionsMicro(chaveMacro, microAtual);
   document.getElementById('modal-editar').classList.remove('hidden');
 };
 
