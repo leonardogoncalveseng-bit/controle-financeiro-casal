@@ -637,6 +637,13 @@
         <label>Empresa / Fornecedor</label>
         <input type="text" id="edit-rec-empresa">
       </div>
+      <div class="field">
+        <label>Tipo de Valor</label>
+        <select id="edit-rec-tipo-valor">
+          <option value="fixo">💰 Fixo — mesmo valor todo mês</option>
+          <option value="variavel">📊 Variável — varia (ex: Água, Energia)</option>
+        </select>
+      </div>
       <div class="field-row">
         <div class="field">
           <label>Valor (R$)</label>
@@ -679,6 +686,36 @@
       <div class="modal-btns">
         <button id="btn-salvar-rec-edicao" class="btn-primary">Salvar Alterações</button>
         <button id="btn-cancelar-rec-edicao" class="btn-ghost">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PAGAR CONTA FIXA -->
+  <div id="modal-pagar-recorrente" class="overlay hidden">
+    <div class="modal">
+      <h2>💳 Registrar Pagamento de Conta</h2>
+      <input type="hidden" id="pagar-rec-id">
+      <input type="hidden" id="pagar-rec-macro">
+      <div class="field">
+        <label>Conta / Fornecedor</label>
+        <input type="text" id="pagar-rec-nome" readonly style="opacity:0.7;background:rgba(255,255,255,0.05);">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Valor Pago Neste Mês (R$)</label>
+          <input type="number" step="0.01" id="pagar-rec-valor" required>
+        </div>
+        <div class="field">
+          <label>Quem Pagou?</label>
+          <select id="pagar-rec-responsavel">
+            <option value="Ele">Leo 👨</option>
+            <option value="Ela">Giu 👩</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button id="btn-confirmar-pagamento-rec" class="btn-primary">✅ Confirmar &amp; Lançar no Extrato</button>
+        <button id="btn-cancelar-pagamento-rec" class="btn-ghost">Cancelar</button>
       </div>
     </div>
   </div>

@@ -558,6 +558,7 @@ function atualizarRecorrentes() {
       <td><small>${r.dias_alerta || 3}d antes</small><br>${statusText}</td>
       <td>${valorStr}</td>
       <td style="text-align:center;white-space:nowrap;">
+        <button onclick="abrirPagamentoRecorrente('${r.id}')" class="btn-primary-sm" style="padding:4px 8px;font-size:11px;margin-right:4px;" title="Registrar Pagamento do Mês">💳 Pagar</button>
         <button onclick="abrirEdicaoRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Editar">✏️</button>
         <button onclick="excluirRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">🗑️</button>
       </td>`;
@@ -588,12 +589,25 @@ window.abrirEdicaoRecorrente = function(id) {
   document.getElementById('edit-rec-id').value = r.id;
   document.getElementById('edit-rec-nome').value = r.nome;
   document.getElementById('edit-rec-empresa').value = r.empresa || '';
+  document.getElementById('edit-rec-tipo-valor').value = r.tipo_valor || 'fixo';
   document.getElementById('edit-rec-valor').value = r.valor;
   document.getElementById('edit-rec-dia').value = r.dia_vencimento;
   document.getElementById('edit-rec-dias-alerta').value = r.dias_alerta || 3;
   document.getElementById('edit-rec-responsavel').value = r.responsavel || 'Casal';
   document.getElementById('edit-rec-macro').value = r.categoria_macro || '8.0 Empresa / Negócios';
   document.getElementById('modal-editar-recorrente').classList.remove('hidden');
+};
+
+// Baixar/Pagar Conta Recorrente
+window.abrirPagamentoRecorrente = function(id) {
+  const r = estado.recorrentes.find(rec => rec.id == id);
+  if (!r) return;
+  document.getElementById('pagar-rec-id').value = r.id;
+  document.getElementById('pagar-rec-macro').value = r.categoria_macro || '3.0 Moradia';
+  document.getElementById('pagar-rec-nome').value = r.empresa ? `${r.nome} (${r.empresa})` : r.nome;
+  document.getElementById('pagar-rec-valor').value = r.valor || '';
+  document.getElementById('pagar-rec-responsavel').value = (r.responsavel === 'Ela') ? 'Ela' : 'Ele';
+  document.getElementById('modal-pagar-recorrente').classList.remove('hidden');
 };
 
 window.excluirRecorrente = async function(id) {
@@ -835,14 +849,15 @@ function configurarEventos() {
     const id = document.getElementById('edit-rec-id').value;
     const nome = document.getElementById('edit-rec-nome').value.trim();
     const empresa = document.getElementById('edit-rec-empresa').value.trim();
+    const tipo_valor = document.getElementById('edit-rec-tipo-valor').value;
     const valor = parseFloat(document.getElementById('edit-rec-valor').value);
     const dia_vencimento = parseInt(document.getElementById('edit-rec-dia').value);
     const dias_alerta = parseInt(document.getElementById('edit-rec-dias-alerta').value) || 3;
     const responsavel = document.getElementById('edit-rec-responsavel').value;
     const categoria_macro = document.getElementById('edit-rec-macro').value;
-    if (!nome || !valor || !dia_vencimento) return alert('Preencha os campos!');
+    if (!nome || !dia_vencimento) return alert('Preencha os campos!');
     if (supabaseClient) {
-      await supabaseClient.from('gastos_recorrentes').update({ nome, empresa, valor, dia_vencimento, dias_alerta, responsavel, categoria_macro }).eq('id', id);
+      await supabaseClient.from('gastos_recorrentes').update({ nome, empresa, tipo_valor, valor, dia_vencimento, dias_alerta, responsavel, categoria_macro }).eq('id', id);
       document.getElementById('modal-editar-recorrente').classList.add('hidden');
       carregarDados();
     }
@@ -850,6 +865,39 @@ function configurarEventos() {
 
   document.getElementById('btn-cancelar-rec-edicao').addEventListener('click', () => {
     document.getElementById('modal-editar-recorrente').classList.add('hidden');
+  });
+
+  // Confirmar pagamento de conta fixa
+  document.getElementById('btn-confirmar-pagamento-rec')?.addEventListener('click', async () => {
+    const nomeConta = document.getElementById('pagar-rec-nome').value;
+    const macro     = document.getElementById('pagar-rec-macro').value;
+    const valor     = parseFloat(document.getElementById('pagar-rec-valor').value);
+    const pago_por  = document.getElementById('pagar-rec-responsavel').value;
+    if (!valor || valor <= 0) return alert('Informe o valor pago!');
+
+    if (supabaseClient) {
+      let catId = null;
+      const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', macro).maybeSingle();
+      if (ex) { catId = ex.id; }
+      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macro, icone: '📌' }]).select('id').single(); if (nv) catId = nv.id; }
+
+      const descFinal = `[Conta Fixa] ${nomeConta}`;
+      await supabaseClient.from('transacoes').insert([{
+        descricao: descFinal,
+        valor: valor,
+        pago_por: pago_por,
+        categoria_id: catId,
+        data: new Date().toISOString().split('T')[0]
+      }]);
+
+      document.getElementById('modal-pagar-recorrente').classList.add('hidden');
+      alert(`✅ Pagamento de ${fmt(valor)} registrado com sucesso no Extrato!`);
+      carregarDados();
+    }
+  });
+
+  document.getElementById('btn-cancelar-pagamento-rec')?.addEventListener('click', () => {
+    document.getElementById('modal-pagar-recorrente').classList.add('hidden');
   });
 
   // Formulário: Novo Gasto Manual (usa macro + micro)
