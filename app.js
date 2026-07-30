@@ -517,8 +517,8 @@ function atualizarRecorrentes() {
 
   const total = estado.recorrentes.reduce((s, r) => s + Number(r.valor), 0);
   document.getElementById('val-total-recorrente').textContent = fmt(total);
-  const pctRenda = ((total / estado.rendaCasal) * 100).toFixed(0);
-  document.getElementById('val-pct-comprometido').textContent = `${pctRenda}% da renda comprometida`;
+  // Comprometimento de renda removido: renda mensal não foi configurada pelo usuário
+  document.getElementById('val-pct-comprometido').textContent = '';
 
   if (estado.recorrentes.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhuma conta fixa cadastrada. Preencha o formulário ao lado.</td></tr>';

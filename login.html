@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finanças Leo & Giu — Acesso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0f1e;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Fundo com gradiente animado */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(56, 189, 248, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(168, 85, 247, 0.10) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Partículas de fundo */
+    .bg-dots {
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      z-index: 0;
+    }
+
+    .login-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+    }
+
+    /* Logo / cabeçalho */
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .logo-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.8); }
+      50% { box-shadow: 0 0 35px rgba(56, 189, 248, 1), 0 0 60px rgba(56, 189, 248, 0.4); }
+    }
+
+    .logo-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      letter-spacing: -0.3px;
+    }
+
+    .login-subtitle {
+      font-size: 0.85rem;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .heart {
+      color: #f43f5e;
+      font-style: normal;
+    }
+
+    /* Card de login */
+    .login-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 36px 32px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow:
+        0 0 0 1px rgba(56,189,248,0.06),
+        0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .login-card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #f1f5f9;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+    }
+
+    .field input::placeholder {
+      color: #475569;
+    }
+
+    /* Toggle senha */
+    .field-password {
+      position: relative;
+    }
+
+    .field-password input {
+      padding-right: 44px;
+    }
+
+    .toggle-senha {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 1rem;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+
+    .toggle-senha:hover { color: #94a3b8; }
+
+    /* Mensagem de erro */
+    .erro-login {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #fca5a5;
+      font-size: 0.82rem;
+      margin-bottom: 16px;
+      display: none;
+      text-align: center;
+    }
+
+    .erro-login.visible { display: block; }
+
+    /* Botão de entrar */
+    .btn-entrar {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      letter-spacing: 0.02em;
+      margin-top: 6px;
+      box-shadow: 0 4px 20px rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-entrar:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(14, 165, 233, 0.4);
+    }
+
+    .btn-entrar:active { transform: translateY(0); }
+
+    .btn-entrar:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Loading spinner no botão */
+    .btn-entrar.loading::after {
+      content: ' ⏳';
+    }
+
+    /* Rodapé */
+    .login-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.76rem;
+      color: #334155;
+    }
+
+    /* Animação de entrada */
+    .login-wrapper {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Shake ao errar */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-dots"></div>
+
+  <div class="login-wrapper">
+
+    <div class="login-header">
+      <div class="login-logo">
+        <span class="logo-dot"></span>
+        <span class="logo-text">Finanças do Casal</span>
+      </div>
+      <p class="login-subtitle">
+        Área restrita <i class="heart">♥</i> Leo & Giu<br>
+        Acesso exclusivo da família
+      </p>
+    </div>
+
+    <div class="login-card">
+      <h2>🔐 Entrar na sua conta</h2>
+
+      <div id="erro-login" class="erro-login">
+        ❌ Usuário ou senha incorretos. Tente novamente.
+      </div>
+
+      <form id="form-login" onsubmit="fazerLogin(event)">
+        <div class="field">
+          <label>Usuário</label>
+          <input
+            type="text"
+            id="input-usuario"
+            placeholder="seu usuário"
+            autocomplete="username"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label>Senha</label>
+          <div class="field-password">
+            <input
+              type="password"
+              id="input-senha"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            >
+            <button type="button" class="toggle-senha" onclick="toggleSenha()" title="Mostrar/ocultar senha">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-entrar" id="btn-entrar">
+          Entrar no App
+        </button>
+      </form>
+    </div>
+
+    <p class="login-footer">Finanças do Casal v2.0 • Área privada</p>
+
+  </div>
+
+  <script>
+    // Credenciais fixas (app familiar — sem cadastro aberto)
+    const USUARIO_VALIDO = 'goncalves';
+    const SENHA_VALIDA   = 'giuleo17082024';
+
+    // Se já estiver logado, redireciona direto
+    if (sessionStorage.getItem('fc_logado') === 'sim') {
+      window.location.replace('index.html');
+    }
+
+    function fazerLogin(e) {
+      e.preventDefault();
+
+      const usuario = document.getElementById('input-usuario').value.trim();
+      const senha   = document.getElementById('input-senha').value;
+      const erroEl  = document.getElementById('erro-login');
+      const btn     = document.getElementById('btn-entrar');
+
+      btn.disabled = true;
+      btn.classList.add('loading');
+      btn.textContent = 'Verificando...';
+
+      // Pequeno delay para parecer mais real
+      setTimeout(() => {
+        if (usuario === USUARIO_VALIDO && senha === SENHA_VALIDA) {
+          sessionStorage.setItem('fc_logado', 'sim');
+          btn.textContent = '✅ Acesso liberado! Entrando...';
+          setTimeout(() => {
+            window.location.replace('index.html');
+          }, 700);
+        } else {
+          erroEl.classList.add('visible');
+          btn.disabled = false;
+          btn.classList.remove('loading');
+          btn.textContent = 'Entrar no App';
+          // Anima o card para indicar erro
+          const card = document.querySelector('.login-card');
+          card.classList.remove('shake');
+          void card.offsetWidth; // reset
+          card.classList.add('shake');
+          // Limpa a senha
+          document.getElementById('input-senha').value = '';
+          document.getElementById('input-senha').focus();
+        }
+      }, 600);
+    }
+
+    function toggleSenha() {
+      const input = document.getElementById('input-senha');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+  </script>
+
+</body>
+</html>

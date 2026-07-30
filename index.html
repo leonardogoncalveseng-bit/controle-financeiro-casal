@@ -11,6 +11,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="style.css">
+  <!-- Proteção de sessão: redireciona para login se não autenticado -->
+  <script>
+    if (sessionStorage.getItem('fc_logado') !== 'sim') {
+      window.location.replace('login.html');
+    }
+  </script>
 </head>
 <body>
 
@@ -32,6 +38,7 @@
       <div class="topbar-actions">
         <button id="btn-config" class="topbar-btn"><i data-lucide="database"></i> Banco</button>
         <button id="btn-atualizar" class="topbar-btn"><i data-lucide="refresh-cw"></i></button>
+        <button onclick="sessionStorage.removeItem('fc_logado'); window.location.replace('login.html');" class="topbar-btn" title="Sair" style="color:#f43f5e;"><i data-lucide="log-out"></i></button>
       </div>
     </nav>
 
@@ -256,10 +263,6 @@
             <div class="mini-kpi">
               <span>Total Fixo Mensal:</span>
               <strong id="val-total-recorrente">R$ 0,00</strong>
-            </div>
-            <div class="mini-kpi">
-              <span>Comprometimento da Renda:</span>
-              <strong id="val-pct-comprometido" style="color:var(--accent);">0% da Renda</strong>
             </div>
           </div>
           <div class="table-scroll">
