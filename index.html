@@ -4,15 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Finanças do Casal v2.0 — Leo & Giu</title>
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Chart.js para Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -20,13 +16,12 @@
 
   <div class="app-shell">
 
-    <!-- TOPBAR COM NAVEGAÇÃO POR ABAS -->
+    <!-- TOPBAR -->
     <nav class="topbar">
       <div class="topbar-brand">
         <span class="brand-dot"></span>
         <span class="brand-name">Finanças do Casal <span class="version-tag">v2.0</span></span>
       </div>
-
       <div class="nav-tabs">
         <button class="nav-tab active" data-tab="tab-dashboard"><i data-lucide="bar-chart-2"></i> Dashboard</button>
         <button class="nav-tab" data-tab="tab-recorrentes"><i data-lucide="repeat"></i> Contas Fixas</button>
@@ -34,14 +29,13 @@
         <button class="nav-tab" data-tab="tab-investimentos"><i data-lucide="trending-up"></i> Investimentos</button>
         <button class="nav-tab" data-tab="tab-fechamento"><i data-lucide="calendar"></i> Fechamento</button>
       </div>
-
       <div class="topbar-actions">
         <button id="btn-config" class="topbar-btn"><i data-lucide="database"></i> Banco</button>
         <button id="btn-atualizar" class="topbar-btn"><i data-lucide="refresh-cw"></i></button>
       </div>
     </nav>
 
-    <!-- BARRA DE FILTROS GLOBAIS DE PERÍODO & CATEGORIA -->
+    <!-- FILTROS GLOBAIS -->
     <section class="filter-bar">
       <div class="filter-group">
         <label>Período:</label>
@@ -49,7 +43,6 @@
           <button class="period-btn active" data-period="mes-atual">Este Mês</button>
           <button class="period-btn" data-period="mes-passado">Mês Passado</button>
           <button class="period-btn" data-period="3-meses">Últimos 3 Meses</button>
-
           <div class="custom-date-container">
             <input type="date" id="filtro-data-inicio" title="Data de Início">
             <span>até</span>
@@ -58,66 +51,50 @@
           </div>
         </div>
       </div>
-
       <div class="filter-group">
         <label>Centro de Custo:</label>
         <select id="filtro-categoria-macro">
           <option value="todas">Todos os Centros de Custo</option>
-          <option value="15.0 Outros">⚠️ Pendentes de Ajuste (Outros)</option>
+          <option value="10.0 Outros">⚠️ Pendentes de Ajuste (Outros)</option>
           <option value="1.0 Alimentação">1.0 Alimentação</option>
           <option value="2.0 Transporte">2.0 Transporte</option>
           <option value="3.0 Moradia">3.0 Moradia</option>
           <option value="4.0 Saúde">4.0 Saúde</option>
           <option value="5.0 Lazer">5.0 Lazer</option>
           <option value="6.0 Educação">6.0 Educação</option>
-          <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
-          <option value="8.0 Investimentos">8.0 Investimentos</option>
-          <option value="9.0 Empresa / Negócios">9.0 Empresa / Negócios</option>
-          <option value="10.0 Impostos & Taxas">10.0 Impostos & Taxas</option>
-          <option value="11.0 Pets & Animais">11.0 Pets & Animais</option>
-          <option value="12.0 Cuidados Pessoais">12.0 Cuidados Pessoais</option>
-          <option value="13.0 Assinaturas & Serviços">13.0 Assinaturas & Serviços</option>
-          <option value="14.0 Doações & Presentes">14.0 Doações & Presentes</option>
-          <option value="15.0 Outros">15.0 Outros</option>
+          <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
+          <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+          <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
+          <option value="10.0 Outros">10.0 Outros</option>
         </select>
       </div>
     </section>
 
-    <!-- ABA 1: DASHBOARD DE ANÁLISE COMPLETA -->
+    <!-- ABA 1: DASHBOARD -->
     <div id="tab-dashboard" class="tab-content active">
 
-      <!-- BADGE NOTIFICAÇÃO DE PENDENTES DE AJUSTE -->
       <div id="alert-pendentes-box" class="alert-pendentes hidden">
         <i data-lucide="alert-triangle"></i>
         <span id="alert-pendentes-texto">Existem lançamentos sem categoria definida!</span>
         <button id="btn-filtrar-pendentes" class="btn-sm-alert">Filtrar Pendentes</button>
       </div>
 
-      <!-- GRID DE RESUMO FINANCEIRO -->
       <section class="kpi-grid-v2">
-        
-        <!-- Total de Gastos & Média Diária -->
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Total de Gastos no Período</span>
           <div class="kpi-number-v2 expense" id="val-gastos-totais">R$ 0,00</div>
           <span class="kpi-sub-v2" id="val-media-diaria">Média: R$ 0,00/dia</span>
         </div>
-
-        <!-- Maior Gasto Individual -->
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Maior Gasto Individual</span>
           <div class="kpi-highlight-text" id="val-maior-gasto-item">—</div>
           <span class="kpi-sub-v2" id="val-maior-gasto-detalhe">Nenhum lançamento no período</span>
         </div>
-
-        <!-- Dia da Semana que Mais Gasta -->
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Dia da Semana que Mais Gasta</span>
           <div class="kpi-number-v2" id="val-dia-mais-gasta">—</div>
           <span class="kpi-sub-v2" id="val-dia-mais-gasta-sub">Análise de comportamento</span>
         </div>
-
-        <!-- Maior vs Menor Centro de Custo -->
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Maior vs Menor Centro de Custo</span>
           <div class="split-kpi">
@@ -125,13 +102,9 @@
             <div><span>Menor:</span> <strong id="val-menor-macro">—</strong></div>
           </div>
         </div>
-
       </section>
 
-      <!-- SEÇÃO DE GRÁFICOS: PIZZA POR CATEGORIA + EVOLUÇÃO MESES -->
       <main class="main-grid">
-
-        <!-- GRÁFICO CIRCULAR DE PIZZA / DONUT -->
         <section class="card">
           <div class="card-top">
             <h2>Gastos por Centro de Custo (%)</h2>
@@ -140,13 +113,11 @@
           <div class="chart-wrapper">
             <canvas id="chart-pie-categorias"></canvas>
           </div>
-          <!-- Dica de Economia Potencial -->
           <div id="dicas-economia" class="tip-bar">
             <span id="texto-dica-economia">Carregando sugestão de economia...</span>
           </div>
         </section>
 
-        <!-- GRÁFICO DE LINHA: EVOLUÇÃO MÊS A MÊS -->
         <section class="card">
           <div class="card-top">
             <h2>Evolução de Gastos Mês a Mês</h2>
@@ -156,22 +127,21 @@
             <canvas id="chart-line-evolucao"></canvas>
           </div>
         </section>
-
       </main>
 
-      <!-- LANÇAMENTO MANUAL DE GASTO -->
+      <!-- LANÇAMENTO MANUAL -->
       <section class="card full-card">
         <div class="card-top">
-          <h2>Registrar Gasto Familiar Manualmente</h2>
+          <h2>Registrar Gasto Manualmente</h2>
         </div>
         <form id="form-novo-gasto" class="form-row-three">
           <div class="field">
-            <label>Palavra-Chave / Categoria (ex: Padaria, Açai, Contador, Combustivel)</label>
-            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Contador, Açai do Parque, Posto Shell" required>
+            <label>Palavra-Chave / Categoria</label>
+            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Contador, Açaí, Posto Shell" required>
           </div>
           <div class="field">
-            <label>Nome do Estabelecimento / Lugar</label>
-            <input type="text" id="gasto-descricao" placeholder="Ex: Contador LG, Savenago, Drogasil" required>
+            <label>Nome do Estabelecimento</label>
+            <input type="text" id="gasto-descricao" placeholder="Ex: Contador LG, Savenago" required>
           </div>
           <div class="field">
             <label>Valor (R$)</label>
@@ -190,7 +160,7 @@
         </form>
       </section>
 
-      <!-- EXTRATO COMPLETO DE GASTOS -->
+      <!-- EXTRATO -->
       <section class="card full-card">
         <div class="card-top">
           <h2>Extrato de Gastos da Família</h2>
@@ -201,11 +171,11 @@
             <thead>
               <tr>
                 <th>Data</th>
-                <th>Centro de Custo (Macro -> Micro)</th>
-                <th>Lugar / Descrição</th>
+                <th>Centro de Custo</th>
+                <th>Descrição</th>
                 <th>Quem Pagou</th>
                 <th>Valor</th>
-                <th style="text-align: center;">Ações</th>
+                <th style="text-align:center;">Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-transacoes">
@@ -217,15 +187,16 @@
 
     </div>
 
-    <!-- ABA 2: MÓDULO DE GASTOS RECORRENTES (CONTAS FIXAS COM EMPRESA E DIAS ALERTA) -->
+    <!-- ABA 2: CONTAS FIXAS -->
     <div id="tab-recorrentes" class="tab-content">
+      <div id="err-recorrentes" class="alert-pendentes hidden" style="background:rgba(239,68,68,0.15);border-color:#ef4444;">
+        <i data-lucide="alert-circle"></i>
+        <span id="err-recorrentes-texto">Erro ao carregar contas fixas.</span>
+      </div>
       <div class="main-grid">
-
-        <!-- FORMULÁRIO DE NOVA CONTA FIXA -->
+        <!-- FORMULÁRIO -->
         <section class="card">
-          <div class="card-top">
-            <h2>Cadastrar Conta Fixa Recorrente</h2>
-          </div>
+          <div class="card-top"><h2>Cadastrar Conta Fixa</h2></div>
           <form id="form-nova-recorrente">
             <div class="field">
               <label>Nome da Conta</label>
@@ -245,15 +216,15 @@
                 <input type="number" id="rec-dia" min="1" max="31" placeholder="Ex: 10" required>
               </div>
               <div class="field">
-                <label>Alertar Telegram X Dias Antes</label>
-                <input type="number" id="rec-dias-alerta" min="1" max="30" value="3" required>
+                <label>Alertar X Dias Antes (Telegram)</label>
+                <input type="number" id="rec-dias-alerta" min="1" max="30" value="3">
               </div>
             </div>
             <div class="field-row">
               <div class="field">
                 <label>Responsável pelo Pagamento</label>
                 <select id="rec-responsavel">
-                  <option value="Casal">Casal 💑 (Conjunto)</option>
+                  <option value="Casal">Casal 💑</option>
                   <option value="Ele">Leo 👨</option>
                   <option value="Ela">Giu 👩</option>
                 </select>
@@ -261,21 +232,16 @@
               <div class="field">
                 <label>Centro de Custo Macro</label>
                 <select id="rec-macro">
-                  <option value="9.0 Empresa / Negócios">9.0 Empresa / Negócios</option>
+                  <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
                   <option value="3.0 Moradia">3.0 Moradia</option>
                   <option value="1.0 Alimentação">1.0 Alimentação</option>
                   <option value="2.0 Transporte">2.0 Transporte</option>
                   <option value="4.0 Saúde">4.0 Saúde</option>
                   <option value="5.0 Lazer">5.0 Lazer</option>
                   <option value="6.0 Educação">6.0 Educação</option>
-                  <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
-                  <option value="8.0 Investimentos">8.0 Investimentos</option>
-                  <option value="10.0 Impostos & Taxas">10.0 Impostos & Taxas</option>
-                  <option value="11.0 Pets & Animais">11.0 Pets & Animais</option>
-                  <option value="12.0 Cuidados Pessoais">12.0 Cuidados Pessoais</option>
-                  <option value="13.0 Assinaturas & Serviços">13.0 Assinaturas & Serviços</option>
-                  <option value="14.0 Doações & Presentes">14.0 Doações & Presentes</option>
-                  <option value="15.0 Outros">15.0 Outros</option>
+                  <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
+                  <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
+                  <option value="10.0 Outros">10.0 Outros</option>
                 </select>
               </div>
             </div>
@@ -283,12 +249,9 @@
           </form>
         </section>
 
-        <!-- RESUMO E TABELA DE CONTAS FIXAS -->
+        <!-- RESUMO -->
         <section class="card">
-          <div class="card-top">
-            <h2>Resumo de Comprometimento Fixo</h2>
-          </div>
-
+          <div class="card-top"><h2>Resumo de Comprometimento Fixo</h2></div>
           <div class="kpi-row-mini">
             <div class="mini-kpi">
               <span>Total Fixo Mensal:</span>
@@ -296,10 +259,9 @@
             </div>
             <div class="mini-kpi">
               <span>Comprometimento da Renda:</span>
-              <strong id="val-pct-comprometido" style="color: var(--accent);">0% da Renda</strong>
+              <strong id="val-pct-comprometido" style="color:var(--accent);">0% da Renda</strong>
             </div>
           </div>
-
           <div class="table-scroll">
             <table>
               <thead>
@@ -308,7 +270,7 @@
                   <th>Conta / Empresa</th>
                   <th>Responsável</th>
                   <th>Categoria</th>
-                  <th>Alerta Telegram</th>
+                  <th>Alerta</th>
                   <th>Valor</th>
                   <th>Ações</th>
                 </tr>
@@ -319,20 +281,16 @@
             </table>
           </div>
         </section>
-
       </div>
     </div>
 
-    <!-- ABA 3: SIMULADOR DE FINANCIAMENTO -->
+    <!-- ABA 3: FINANCIAMENTO -->
     <div id="tab-financiamento" class="tab-content">
       <div class="main-grid">
-
         <section class="card">
-          <div class="card-top">
-            <h2>Simulador de Financiamento Completo</h2>
-          </div>
+          <div class="card-top"><h2>Simulador de Financiamento</h2></div>
           <div class="field">
-            <label>Nome do Bem (Imóvel, Carro, etc.)</label>
+            <label>Nome do Bem</label>
             <input type="text" id="fin-nome" placeholder="Ex: Apartamento, Carro Novo">
           </div>
           <div class="field-row">
@@ -359,9 +317,7 @@
         </section>
 
         <section class="card">
-          <div class="card-top">
-            <h2>Resultado da Simulação</h2>
-          </div>
+          <div class="card-top"><h2>Resultado da Simulação</h2></div>
           <div id="fin-resultado-box" class="sim-result-grid">
             <div class="result-card">
               <span>Parcela Mensal Estimada:</span>
@@ -369,35 +325,31 @@
             </div>
             <div class="result-card">
               <span>Total de Juros Pagos:</span>
-              <strong id="fin-res-juros" style="color: var(--red);">R$ 0,00</strong>
+              <strong id="fin-res-juros" style="color:var(--red);">R$ 0,00</strong>
             </div>
             <div class="result-card full">
-              <span>Impacto na Sobra Real do Casal:</span>
+              <span>Impacto na Sobra do Casal:</span>
               <p id="fin-res-impacto">Simule um financiamento para ver o impacto no orçamento.</p>
             </div>
           </div>
-          <button id="btn-salvar-financiamento" class="btn-primary-sm style-save-fin" style="margin-top:15px; width:100%;">💾 Salvar Simulação de Financiamento</button>
+          <button id="btn-salvar-financiamento" class="btn-primary-sm" style="margin-top:15px;width:100%;">💾 Salvar Simulação</button>
         </section>
-
       </div>
 
-      <!-- LISTA DE FINANCIAMENTOS REGISTRADOS -->
-      <section class="card full-card" style="margin-top: 20px;">
-        <div class="card-top">
-          <h2>Financiamentos Registrados / Em Análise</h2>
-        </div>
+      <section class="card full-card" style="margin-top:20px;">
+        <div class="card-top"><h2>Financiamentos Registrados</h2></div>
         <div class="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>Bem / Projeto</th>
-                <th>Valor do Bem</th>
+                <th>Bem</th>
+                <th>Valor Total</th>
                 <th>Entrada</th>
                 <th>Saldo Devedor</th>
-                <th>Taxa (% a.a.)</th>
+                <th>Taxa a.a.</th>
                 <th>Prazo</th>
-                <th>Parcela Mensal</th>
-                <th style="text-align: center;">Ações</th>
+                <th>Parcela</th>
+                <th style="text-align:center;">Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-financiamentos">
@@ -406,54 +358,155 @@
           </table>
         </div>
       </section>
-
     </div>
 
-    <!-- ABA 4: SIMULADOR DE INVESTIMENTOS & ANTECIPAÇÃO DE FINANCIAMENTO -->
+    <!-- ABA 4: INVESTIMENTOS (REFORMULADO) -->
     <div id="tab-investimentos" class="tab-content">
-      <section class="card full-card">
-        <div class="card-top">
-          <h2>Simulador de Investimentos Personalizado</h2>
+
+      <!-- RESUMO DO PATRIMÔNIO -->
+      <section class="kpi-grid-v2" style="margin-bottom:0;">
+        <div class="kpi-card-v2">
+          <span class="kpi-title-v2">💰 Patrimônio Total Investido</span>
+          <div class="kpi-number-v2" id="inv-total-aplicado" style="color:var(--accent);">R$ 0,00</div>
+          <span class="kpi-sub-v2" id="inv-total-sub">Soma dos valores iniciais</span>
         </div>
-
-        <div class="invest-config-bar">
-          <div class="field-inline">
-            <label>Aporte Mensal (R$):</label>
-            <input type="number" id="inv-input-sobra" value="3000">
-          </div>
-          <div class="field-inline">
-            <label>Taxa Rendimento Personalizada (% a.a.):</label>
-            <input type="number" step="0.1" id="inv-input-taxa" value="13.65">
-          </div>
-          <div class="field-inline">
-            <label>Prazo de Resgate Desejado (Meses):</label>
-            <input type="number" id="inv-input-prazo" value="24">
-          </div>
+        <div class="kpi-card-v2">
+          <span class="kpi-title-v2">📈 Saldo Atual (com Juros)</span>
+          <div class="kpi-number-v2" id="inv-saldo-atual" style="color:#10b981;">R$ 0,00</div>
+          <span class="kpi-sub-v2">Calculado até hoje</span>
         </div>
-
-        <div class="proj-row-invest">
-          <div class="invest-card highlight">
-            <h3>Saldo Acumulado no Resgate Escolhido</h3>
-            <div class="inv-val-big"><strong id="inv-resgate-calculado">R$ 0,00</strong></div>
-            <small class="kpi-sub-v2" id="inv-resgate-sub">Com juros compostos</small>
-          </div>
-
-          <div class="invest-card highlight-super">
-            <h3>Correlação com Financiamento (Quitação Antecipada)</h3>
-            <p id="inv-correlacao-financiamento">Calcule seu investimento para verificar a possibilidade de amortização ou quitação antecipada.</p>
-          </div>
+        <div class="kpi-card-v2">
+          <span class="kpi-title-v2">🎯 Saldo Total no Resgate</span>
+          <div class="kpi-number-v2" id="inv-saldo-resgate" style="color:#f59e0b;">R$ 0,00</div>
+          <span class="kpi-sub-v2" id="inv-resgate-sub">Projetado na data de resgate</span>
+        </div>
+        <div class="kpi-card-v2">
+          <span class="kpi-title-v2">🏠 Correlação com Financiamento</span>
+          <p id="inv-correlacao-mini" style="font-size:0.78rem;color:var(--text-muted);margin:6px 0 0;">Configure um financiamento para ver a correlação.</p>
         </div>
       </section>
+
+      <div class="main-grid" style="margin-top:20px;">
+
+        <!-- FORMULÁRIO DE NOVO INVESTIMENTO -->
+        <section class="card">
+          <div class="card-top"><h2>Cadastrar Investimento Real</h2></div>
+          <form id="form-novo-investimento">
+            <div class="field">
+              <label>Nome do Investimento</label>
+              <input type="text" id="inv-nome" placeholder="Ex: CDB Nubank, Tesouro Direto, Poupança" required>
+            </div>
+            <div class="field">
+              <label>Tipo de Investimento</label>
+              <select id="inv-tipo">
+                <option value="Renda Fixa / CDB">Renda Fixa / CDB</option>
+                <option value="Tesouro Direto">Tesouro Direto</option>
+                <option value="Poupança">Poupança</option>
+                <option value="LCI / LCA">LCI / LCA</option>
+                <option value="Ações / FIIs">Ações / FIIs</option>
+                <option value="Fundo de Investimento">Fundo de Investimento</option>
+                <option value="Reserva de Emergência">Reserva de Emergência</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Valor Investido (R$)</label>
+                <input type="number" step="0.01" id="inv-valor-inicial" placeholder="Ex: 50000" required>
+              </div>
+              <div class="field">
+                <label>Taxa de Rendimento (% a.a.)</label>
+                <input type="number" step="0.01" id="inv-taxa-anual" placeholder="Ex: 11.5" required>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Data que foi Investido</label>
+                <input type="date" id="inv-data-inicio" required>
+              </div>
+              <div class="field">
+                <label>Data Prevista de Resgate</label>
+                <input type="date" id="inv-data-resgate">
+              </div>
+            </div>
+            <div class="field">
+              <label>Observações (opcional)</label>
+              <input type="text" id="inv-obs" placeholder="Ex: Banco do Brasil, CDB 110% CDI">
+            </div>
+            <button type="submit" class="btn-primary">💾 Salvar Investimento</button>
+          </form>
+        </section>
+
+        <!-- SIMULADOR DE APORTE FUTURO -->
+        <section class="card">
+          <div class="card-top">
+            <h2>Simulador de Aporte Futuro</h2>
+            <span class="tag">Contribuição mensal</span>
+          </div>
+          <div class="invest-config-bar">
+            <div class="field-inline">
+              <label>Aporte Mensal (R$):</label>
+              <input type="number" id="inv-input-sobra" value="3000">
+            </div>
+            <div class="field-inline">
+              <label>Taxa (% a.a.):</label>
+              <input type="number" step="0.1" id="inv-input-taxa" value="13.65">
+            </div>
+            <div class="field-inline">
+              <label>Prazo (Meses):</label>
+              <input type="number" id="inv-input-prazo" value="24">
+            </div>
+          </div>
+          <div class="proj-row-invest" style="margin-top:16px;">
+            <div class="invest-card highlight">
+              <h3>Saldo Acumulado (Aportes + Juros)</h3>
+              <div class="inv-val-big"><strong id="inv-resgate-calculado">R$ 0,00</strong></div>
+              <small class="kpi-sub-v2" id="inv-sim-sub">Com juros compostos</small>
+            </div>
+          </div>
+          <div id="inv-correlacao-financiamento" class="tip-bar" style="margin-top:16px;">
+            Configure um financiamento e veja aqui o plano de amortização!
+          </div>
+        </section>
+
+      </div>
+
+      <!-- LISTA DE INVESTIMENTOS CADASTRADOS -->
+      <section class="card full-card" style="margin-top:20px;">
+        <div class="card-top">
+          <h2>Meus Investimentos Cadastrados</h2>
+          <span class="tag" id="inv-qtd-badge">0 investimentos</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Investimento</th>
+                <th>Tipo</th>
+                <th>Valor Inicial</th>
+                <th>Taxa a.a.</th>
+                <th>Data Início</th>
+                <th>Data Resgate</th>
+                <th>Saldo Atual 📈</th>
+                <th>Saldo no Resgate 🎯</th>
+                <th style="text-align:center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-investimentos">
+              <tr><td colspan="9" class="empty">Nenhum investimento cadastrado.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </div>
 
-    <!-- ABA 5: FECHAMENTO MENSAL + COMPARATIVO -->
+    <!-- ABA 5: FECHAMENTO MENSAL -->
     <div id="tab-fechamento" class="tab-content">
       <section class="card full-card">
         <div class="card-top">
           <h2>Fechamento do Mês & Comparativo</h2>
           <button id="btn-fechar-mes-acao" class="btn-primary-sm">Salvar Fechamento deste Mês</button>
         </div>
-
         <div class="fechamento-grid">
           <div class="fechamento-box">
             <h3>Centro de Custo que MAIS CRESCEU</h3>
@@ -469,7 +522,7 @@
 
   </div>
 
-  <!-- MODAL DE EDIÇÃO DE TRANSAÇÃO COM MACRO + MICRO SUBCATEGORIA -->
+  <!-- MODAL EDIÇÃO TRANSAÇÃO -->
   <div id="modal-editar" class="overlay hidden">
     <div class="modal">
       <h2>Editar & Reordenar Centro de Custo</h2>
@@ -488,21 +541,16 @@
             <option value="4.0 Saúde">4.0 Saúde</option>
             <option value="5.0 Lazer">5.0 Lazer</option>
             <option value="6.0 Educação">6.0 Educação</option>
-            <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
-            <option value="8.0 Investimentos">8.0 Investimentos</option>
-            <option value="9.0 Empresa / Negócios">9.0 Empresa / Negócios</option>
-            <option value="10.0 Impostos & Taxas">10.0 Impostos & Taxas</option>
-            <option value="11.0 Pets & Animais">11.0 Pets & Animais</option>
-            <option value="12.0 Cuidados Pessoais">12.0 Cuidados Pessoais</option>
-            <option value="13.0 Assinaturas & Serviços">13.0 Assinaturas & Serviços</option>
-            <option value="14.0 Doações & Presentes">14.0 Doações & Presentes</option>
-            <option value="15.0 Outros">15.0 Outros</option>
+            <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
+            <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+            <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
+            <option value="10.0 Outros">10.0 Outros</option>
           </select>
         </div>
         <div class="field">
           <label>Subcategoria (Micro)</label>
           <select id="edit-categoria-micro">
-            <!-- Preenchido dinamicamente via JS -->
+            <!-- Preenchido via JS -->
           </select>
         </div>
       </div>
@@ -529,7 +577,7 @@
   <!-- MODAL EDIÇÃO CONTA FIXA -->
   <div id="modal-editar-recorrente" class="overlay hidden">
     <div class="modal">
-      <h2>Editar Conta Fixa Recorrente</h2>
+      <h2>Editar Conta Fixa</h2>
       <input type="hidden" id="edit-rec-id">
       <div class="field">
         <label>Nome da Conta</label>
@@ -541,7 +589,7 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Valor Mensal (R$)</label>
+          <label>Valor (R$)</label>
           <input type="number" step="0.01" id="edit-rec-valor">
         </div>
         <div class="field">
@@ -549,37 +597,32 @@
           <input type="number" id="edit-rec-dia" min="1" max="31">
         </div>
         <div class="field">
-          <label>Alertar Telegram X Dias Antes</label>
+          <label>Alertar X Dias Antes</label>
           <input type="number" id="edit-rec-dias-alerta" min="1" max="30">
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Responsável pelo Pagamento</label>
+          <label>Responsável</label>
           <select id="edit-rec-responsavel">
-            <option value="Casal">Casal 💑 (Conjunto)</option>
+            <option value="Casal">Casal 💑</option>
             <option value="Ele">Leo 👨</option>
             <option value="Ela">Giu 👩</option>
           </select>
         </div>
         <div class="field">
-          <label>Centro de Custo Macro</label>
+          <label>Centro de Custo</label>
           <select id="edit-rec-macro">
-            <option value="9.0 Empresa / Negócios">9.0 Empresa / Negócios</option>
+            <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
             <option value="3.0 Moradia">3.0 Moradia</option>
             <option value="1.0 Alimentação">1.0 Alimentação</option>
             <option value="2.0 Transporte">2.0 Transporte</option>
             <option value="4.0 Saúde">4.0 Saúde</option>
             <option value="5.0 Lazer">5.0 Lazer</option>
             <option value="6.0 Educação">6.0 Educação</option>
-            <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
-            <option value="8.0 Investimentos">8.0 Investimentos</option>
-            <option value="10.0 Impostos & Taxas">10.0 Impostos & Taxas</option>
-            <option value="11.0 Pets & Animais">11.0 Pets & Animais</option>
-            <option value="12.0 Cuidados Pessoais">12.0 Cuidados Pessoais</option>
-            <option value="13.0 Assinaturas & Serviços">13.0 Assinaturas & Serviços</option>
-            <option value="14.0 Doações & Presentes">14.0 Doações & Presentes</option>
-            <option value="15.0 Outros">15.0 Outros</option>
+            <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
+            <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
+            <option value="10.0 Outros">10.0 Outros</option>
           </select>
         </div>
       </div>
