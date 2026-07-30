@@ -159,8 +159,8 @@
         </div>
         <form id="form-novo-gasto" class="form-row-three">
           <div class="field">
-            <label>Palavra-Chave / Categoria (ex: Padaria, Açai, Oficina)</label>
-            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Açai do Parque, Padaria Real" required>
+            <label>Palavra-Chave / Categoria (ex: Padaria, Açai, Combustivel)</label>
+            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Açai do Parque, Padaria Real, Posto Shell" required>
           </div>
           <div class="field">
             <label>Nome do Estabelecimento / Lugar</label>
@@ -210,7 +210,7 @@
 
     </div>
 
-    <!-- ABA 2: MÓDULO DE GASTOS RECORRENTES (CONTAS FIXAS COM RESPONSÁVEL) -->
+    <!-- ABA 2: MÓDULO DE GASTOS RECORRENTES (CONTAS FIXAS COM EMPRESA E DIAS ALERTA) -->
     <div id="tab-recorrentes" class="tab-content">
       <div class="main-grid">
 
@@ -222,7 +222,11 @@
           <form id="form-nova-recorrente">
             <div class="field">
               <label>Nome da Conta</label>
-              <input type="text" id="rec-nome" placeholder="Ex: Internet Claro, Aluguel, Netflix" required>
+              <input type="text" id="rec-nome" placeholder="Ex: Contador, Internet, Aluguel" required>
+            </div>
+            <div class="field">
+              <label>Empresa / Fornecedor (opcional)</label>
+              <input type="text" id="rec-empresa" placeholder="Ex: Contador LG, Claro, CPFL">
             </div>
             <div class="field-row">
               <div class="field">
@@ -230,8 +234,12 @@
                 <input type="number" step="0.01" id="rec-valor" placeholder="0,00" required>
               </div>
               <div class="field">
-                <label>Dia do Vencimento</label>
+                <label>Dia Vencimento</label>
                 <input type="number" id="rec-dia" min="1" max="31" placeholder="Ex: 10" required>
+              </div>
+              <div class="field">
+                <label>Alertar Telegram X Dias Antes</label>
+                <input type="number" id="rec-dias-alerta" min="1" max="30" value="3" required>
               </div>
             </div>
             <div class="field-row">
@@ -248,6 +256,7 @@
                 <select id="rec-macro">
                   <option value="3.0 Moradia">3.0 Moradia</option>
                   <option value="1.0 Alimentação">1.0 Alimentação</option>
+                  <option value="2.0 Transporte">2.0 Transporte</option>
                   <option value="4.0 Saúde">4.0 Saúde</option>
                   <option value="5.0 Lazer">5.0 Lazer</option>
                   <option value="6.0 Educação">6.0 Educação</option>
@@ -280,13 +289,13 @@
             <table>
               <thead>
                 <tr>
-                  <th>Vencimento</th>
-                  <th>Conta</th>
+                  <th>Venc.</th>
+                  <th>Conta / Empresa</th>
                   <th>Responsável</th>
                   <th>Categoria</th>
+                  <th>Alerta Telegram</th>
                   <th>Valor</th>
-                  <th>Status</th>
-                  <th></th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody id="tbody-recorrentes">
@@ -352,9 +361,37 @@
               <p id="fin-res-impacto">Simule um financiamento para ver o impacto no orçamento.</p>
             </div>
           </div>
+          <button id="btn-salvar-financiamento" class="btn-primary-sm style-save-fin" style="margin-top:15px; width:100%;">💾 Salvar Simulação de Financiamento</button>
         </section>
 
       </div>
+
+      <!-- LISTA DE FINANCIAMENTOS REGISTRADOS -->
+      <section class="card full-card" style="margin-top: 20px;">
+        <div class="card-top">
+          <h2>Financiamentos Registrados / Em Análise</h2>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Bem / Projeto</th>
+                <th>Valor do Bem</th>
+                <th>Entrada</th>
+                <th>Saldo Devedor</th>
+                <th>Taxa (% a.a.)</th>
+                <th>Prazo</th>
+                <th>Parcela Mensal</th>
+                <th style="text-align: center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-financiamentos">
+              <tr><td colspan="8" class="empty">Nenhum financiamento salvo.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </div>
 
     <!-- ABA 4: SIMULADOR DE INVESTIMENTOS & ANTECIPAÇÃO DE FINANCIAMENTO -->
@@ -417,7 +454,7 @@
 
   </div>
 
-  <!-- MODAL DE EDIÇÃO COM REORDENAÇÃO & APRENDIZADO -->
+  <!-- MODAL DE EDIÇÃO DE TRANSAÇÃO COM MACRO + MICRO SUBCATEGORIA -->
   <div id="modal-editar" class="overlay hidden">
     <div class="modal">
       <h2>Editar & Reordenar Centro de Custo</h2>
@@ -426,19 +463,27 @@
         <label>Descrição / Estabelecimento</label>
         <input type="text" id="edit-descricao">
       </div>
-      <div class="field">
-        <label>Reordenar Centro de Custo (Cria Regra para o Robô 🤖)</label>
-        <select id="edit-categoria-macro">
-          <option value="1.0 Alimentação">1.0 Alimentação</option>
-          <option value="2.0 Transporte">2.0 Transporte</option>
-          <option value="3.0 Moradia">3.0 Moradia</option>
-          <option value="4.0 Saúde">4.0 Saúde</option>
-          <option value="5.0 Lazer">5.0 Lazer</option>
-          <option value="6.0 Educação">6.0 Educação</option>
-          <option value="7.0 Roupas">7.0 Roupas & Compras</option>
-          <option value="8.0 Investimentos">8.0 Investimentos</option>
-          <option value="9.0 Outros">9.0 Outros</option>
-        </select>
+      <div class="field-row">
+        <div class="field">
+          <label>Centro de Custo (Macro)</label>
+          <select id="edit-categoria-macro">
+            <option value="1.0 Alimentação">1.0 Alimentação</option>
+            <option value="2.0 Transporte">2.0 Transporte</option>
+            <option value="3.0 Moradia">3.0 Moradia</option>
+            <option value="4.0 Saúde">4.0 Saúde</option>
+            <option value="5.0 Lazer">5.0 Lazer</option>
+            <option value="6.0 Educação">6.0 Educação</option>
+            <option value="7.0 Roupas & Compras">7.0 Roupas & Compras</option>
+            <option value="8.0 Investimentos">8.0 Investimentos</option>
+            <option value="9.0 Outros">9.0 Outros</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Subcategoria (Micro)</label>
+          <select id="edit-categoria-micro">
+            <!-- Preenchido dinamicamente via JS -->
+          </select>
+        </div>
       </div>
       <div class="field-row">
         <div class="field">
@@ -456,6 +501,62 @@
       <div class="modal-btns">
         <button id="btn-salvar-edicao" class="btn-primary">Salvar & Ensinar Robô 🎓</button>
         <button id="btn-cancelar-edicao" class="btn-ghost">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDIÇÃO CONTA FIXA -->
+  <div id="modal-editar-recorrente" class="overlay hidden">
+    <div class="modal">
+      <h2>Editar Conta Fixa Recorrente</h2>
+      <input type="hidden" id="edit-rec-id">
+      <div class="field">
+        <label>Nome da Conta</label>
+        <input type="text" id="edit-rec-nome">
+      </div>
+      <div class="field">
+        <label>Empresa / Fornecedor</label>
+        <input type="text" id="edit-rec-empresa">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Valor Mensal (R$)</label>
+          <input type="number" step="0.01" id="edit-rec-valor">
+        </div>
+        <div class="field">
+          <label>Dia Vencimento</label>
+          <input type="number" id="edit-rec-dia" min="1" max="31">
+        </div>
+        <div class="field">
+          <label>Alertar Telegram X Dias Antes</label>
+          <input type="number" id="edit-rec-dias-alerta" min="1" max="30">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Responsável pelo Pagamento</label>
+          <select id="edit-rec-responsavel">
+            <option value="Casal">Casal 💑 (Conjunto)</option>
+            <option value="Ele">Leo 👨</option>
+            <option value="Ela">Giu 👩</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Centro de Custo Macro</label>
+          <select id="edit-rec-macro">
+            <option value="3.0 Moradia">3.0 Moradia</option>
+            <option value="1.0 Alimentação">1.0 Alimentação</option>
+            <option value="2.0 Transporte">2.0 Transporte</option>
+            <option value="4.0 Saúde">4.0 Saúde</option>
+            <option value="5.0 Lazer">5.0 Lazer</option>
+            <option value="6.0 Educação">6.0 Educação</option>
+            <option value="9.0 Outros">9.0 Outros</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button id="btn-salvar-rec-edicao" class="btn-primary">Salvar Alterações</button>
+        <button id="btn-cancelar-rec-edicao" class="btn-ghost">Cancelar</button>
       </div>
     </div>
   </div>

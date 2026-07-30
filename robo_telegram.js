@@ -1,5 +1,5 @@
 // ===================================================
-// ROBÔ TELEGRAM - Casal v2.0 (Identificação Automática + Cron)
+// ROBÔ TELEGRAM - Casal v2.0 (Identificação Automática + Cron Customizado)
 // ===================================================
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
@@ -73,10 +73,11 @@ bot.on('message', async (msg) => {
 
     if (resultado.success) {
       const dataFormatada = gasto.data ? gasto.data.split('-').reverse().join('/') : 'Hoje';
+      let avisoNota = gasto.aviso_correcao ? `\n💡 _${gasto.aviso_correcao}_\n` : '';
 
       bot.sendMessage(
         msg.chat.id,
-        `✅ *Gasto Registrado!*\n\n` +
+        `✅ *Gasto Registrado!*${avisoNota}\n` +
         `📅 *Data:* ${dataFormatada}\n` +
         `📁 *Centro de Custo:* ${gasto.macro}\n` +
         `  └ 🏷️ *Subcategoria:* ${gasto.micro}\n` +
@@ -92,7 +93,7 @@ bot.on('message', async (msg) => {
   }
 });
 
-// Verificação diária de contas recorrentes
+// Verificação diária de contas recorrentes (Respeita o campo dias_alerta de cada conta!)
 async function verificarContasAVencer() {
   if (!supabase || !grupoChatId) return;
 
@@ -104,18 +105,20 @@ async function verificarContasAVencer() {
 
     contas.forEach(c => {
       const diasRestantes = c.dia_vencimento - hoje;
+      const limiteAlerta = c.dias_alerta || 3; // Padrão: 3 dias, mas configurável (ex: 10 dias)
 
-      if (diasRestantes >= 0 && diasRestantes <= 3) {
+      if (diasRestantes >= 0 && diasRestantes <= limiteAlerta) {
         let msgDias = diasRestantes === 0 ? 'VENCE HOJE! 🚨' : `vence em ${diasRestantes} dia(s) ⏰`;
+        let empresaStr = c.empresa ? ` (${c.empresa})` : '';
 
         bot.sendMessage(
           grupoChatId,
           `⚠️ *ALERTA DE CONTA FIXA A VENCER!*\n\n` +
-          `📌 *Conta:* ${c.nome}\n` +
+          `📌 *Conta:* ${c.nome}${empresaStr}\n` +
           `💰 *Valor:* R$ ${Number(c.valor).toFixed(2)}\n` +
-          `👤 *Responsável:* ${c.responsavel || 'Casal 💑'}\n` +
+          `👤 *Responsável:* ${c.responsavel === 'Ele' ? 'Leo 👨' : (c.responsavel === 'Ela' ? 'Giu 👩' : 'Casal 💑')}\n` +
           `📅 *Vencimento:* Dia ${c.dia_vencimento} (${msgDias})\n\n` +
-          `_Lembrete automático para o casal!_ 💑`,
+          `_Lembrete automático (${limiteAlerta} dias de antecedência configurados)_ 💑`,
           { parse_mode: 'Markdown' }
         );
       }
@@ -134,9 +137,9 @@ bot.onText(/\/start|\/inicio/i, (msg) => {
     msg.chat.id,
     `👋 *Olá! Sou o Robô Financeiro do Casal v2.0!*\n\n` +
     `Mande gastos no formato:\n` +
-    `• \`Açai do Parque 25\` (Registra para Hoje)\n` +
-    `• \`Oficina sóbreque 250 25/07\` (Lançamento Retroativo)\n` +
-    `• \`Mercado Savenago 150 18/07 ela\` (Retroativo da Giu)\n`,
+    `• \`Açai do Parque 25\` (Registra em 1.5 Açaí)\n` +
+    `• \`Combustivel álcool 150\` (Registra em 2.1 Combustível)\n` +
+    `• \`Oficina sóbreque 250 25/07\` (Lançamento Retroativo)\n`,
     { parse_mode: 'Markdown' }
   );
 });

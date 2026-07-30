@@ -1,10 +1,23 @@
 // ===================================================
-// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA GRÁFICOS 2D)
+// APLICATIVO FINANCEIRO DO CASAL v2.0 (LÓGICA EXPANDIDA)
 // ===================================================
 
 let supabaseClient = null;
 let chartPieInstance = null;
 let chartLineInstance = null;
+
+// Mapa de Subcategorias Micro vinculadas a cada Centro de Custo Macro
+const SUBCATEGORIAS_MAP = {
+  '1.0 Alimentação': ['1.1 Supermercado', '1.2 Padaria', '1.3 Restaurante', '1.4 Delivery / iFood', '1.5 Açaí', '1.6 Açougue'],
+  '2.0 Transporte': ['2.1 Combustível', '2.2 Manutenção Veicular', '2.3 Aplicativo de Transporte', '2.4 Pedágio / Estacionamento'],
+  '3.0 Moradia': ['3.1 Aluguel', '3.2 Condomínio', '3.3 Energia / Luz', '3.4 Água', '3.5 Internet / Telefone', '3.6 Gás'],
+  '4.0 Saúde': ['4.1 Farmácia / Remédios', '4.2 Consultas / Exames', '4.3 Plano de Saúde', '4.4 Academia / Esportes'],
+  '5.0 Lazer': ['5.1 Streaming', '5.2 Cinema / Shows', '5.3 Viagens / Hotel'],
+  '6.0 Educação': ['6.1 Mensalidade Escolar', '6.2 Cursos / Treinamentos', '6.3 Material / Livros'],
+  '7.0 Roupas & Compras': ['7.1 Vestuário', '7.2 Eletrônicos / Presentes'],
+  '8.0 Investimentos': ['8.1 Renda Fixa / CDB', '8.2 Ações / FIIs', '8.3 Reserva de Emergência'],
+  '9.0 Outros': ['9.1 Diversos', '9.2 Transferências']
+};
 
 // Estado global da aplicação
 let estado = {
@@ -17,6 +30,7 @@ let estado = {
   transacoes: [],
   categorias: [],
   recorrentes: [],
+  financiamentos: [],
   regras: []
 };
 
@@ -62,6 +76,9 @@ async function carregarDados() {
 
     const { data: rec } = await supabaseClient.from('gastos_recorrentes').select('*');
     estado.recorrentes = rec || [];
+
+    const { data: fin } = await supabaseClient.from('financiamentos').select('*');
+    estado.financiamentos = fin || [];
 
     const { data: reg } = await supabaseClient.from('regras_mapeamento').select('*');
     estado.regras = reg || [];
@@ -166,6 +183,7 @@ function atualizarUI() {
 
   // 7. Atualizar Módulos Adicionais
   atualizarRecorrentes();
+  atualizarFinanciamentos();
   atualizarInvestimentos();
 }
 
@@ -275,7 +293,6 @@ function renderizarGraficoLinhaEvolucao() {
   const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const mapaMeses = {};
 
-  // Agrupar transações pelos últimos 6 meses
   const hoje = new Date();
   for (let i = 5; i >= 0; i--) {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
@@ -334,7 +351,7 @@ function renderizarGraficoLinhaEvolucao() {
 }
 
 // ===================================================
-// TABELA DE EXTRATO COM EDIÇÃO E ENSINO DO ROBÔ
+// TABELA DE EXTRATO COM EDIÇÃO MACRO+MICRO E ENSINO DO ROBÔ
 // ===================================================
 function preencherTabelaExtrato(lista, filtroBusca = '') {
   const tbody = document.getElementById('tbody-transacoes');
@@ -382,29 +399,61 @@ window.excluirTransacao = async function(id) {
   }
 };
 
+function atualizarOptionsMicro(macroVal, microSelecionado = '') {
+  const selectMicro = document.getElementById('edit-categoria-micro');
+  if (!selectMicro) return;
+  selectMicro.innerHTML = '';
+
+  // Buscar lista de micros para o macro
+  const chaveChave = Object.keys(SUBCATEGORIAS_MAP).find(k => k.toLowerCase().includes(macroVal.toLowerCase().substring(0, 3))) || macroVal;
+  const listaMicros = SUBCATEGORIAS_MAP[chaveChave] || SUBCATEGORIAS_MAP[macroVal] || ['9.1 Diversos'];
+
+  listaMicros.forEach(micro => {
+    const opt = document.createElement('option');
+    opt.value = micro;
+    opt.textContent = micro;
+    if (microSelecionado && micro.toLowerCase().includes(microSelecionado.toLowerCase())) {
+      opt.selected = true;
+    }
+    selectMicro.appendChild(opt);
+  });
+}
+
 window.abrirEdicao = function(id) {
   const t = estado.transacoes.find(r => r.id == id);
   if (!t) return;
+
   document.getElementById('edit-id').value = t.id;
   document.getElementById('edit-descricao').value = t.descricao;
   document.getElementById('edit-valor').value = t.valor;
   document.getElementById('edit-pago-por').value = t.pago_por;
 
+  const macroSel = document.getElementById('edit-categoria-macro');
+  let macroAtual = '9.0 Outros';
+
   if (t.categoria && t.categoria.nome) {
-    const sel = document.getElementById('edit-categoria-macro');
-    for (let i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value.includes(t.categoria.nome)) {
-        sel.selectedIndex = i;
+    for (let i = 0; i < macroSel.options.length; i++) {
+      if (macroSel.options[i].value.includes(t.categoria.nome)) {
+        macroSel.selectedIndex = i;
+        macroAtual = macroSel.options[i].value;
         break;
       }
     }
   }
 
+  // Extrair micro se já estiver na descrição formatada [1.1 Supermercado]
+  let microAtual = '';
+  const matchMicro = t.descricao.match(/^\[(.*?)\]/);
+  if (matchMicro) {
+    microAtual = matchMicro[1];
+  }
+
+  atualizarOptionsMicro(macroAtual, microAtual);
   document.getElementById('modal-editar').classList.remove('hidden');
 };
 
 // ===================================================
-// MÓDULO 2: GASTOS RECORRENTES COM RESPONSÁVEL
+// MÓDULO 2: GASTOS RECORRENTES COM EMPRESA E DIAS DE ALERTA
 // ===================================================
 function atualizarRecorrentes() {
   const tbody = document.getElementById('tbody-recorrentes');
@@ -427,24 +476,45 @@ function atualizarRecorrentes() {
   estado.recorrentes.forEach(r => {
     const tr = document.createElement('tr');
     const dias = r.dia_vencimento - hoje;
-    let statusText = dias === 0 ? '🚨 Vence Hoje' : (dias > 0 && dias <= 3 ? `⏰ Em ${dias} dia(s)` : '✅ Ok');
+    let statusText = dias === 0 ? '🚨 Vence Hoje' : (dias > 0 && dias <= (r.dias_alerta || 3) ? `⏰ Em ${dias} dia(s)` : '✅ Ok');
 
     const respTag = r.responsavel === 'Ele' ? '👨 Leo' : (r.responsavel === 'Ela' ? '👩 Giu' : '💑 Casal');
+    const empresaStr = r.empresa ? `<br><small style="color:var(--text-muted)">🏢 ${r.empresa}</small>` : '';
 
     tr.innerHTML = `
       <td>Dia ${r.dia_vencimento}</td>
-      <td><strong>${r.nome}</strong></td>
+      <td><strong>${r.nome}</strong>${empresaStr}</td>
       <td>${respTag}</td>
       <td>${r.categoria_macro || '3.0 Moradia'}</td>
+      <td><span class="tag">${r.dias_alerta || 3} dias antes</span></td>
       <td style="color:var(--red); font-weight:600">${fmt(r.valor)}</td>
-      <td><span class="tag">${statusText}</span></td>
-      <td><button onclick="excluirRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;">🗑️</button></td>
+      <td style="text-align:center;">
+        <button onclick="abrirEdicaoRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Editar">✏️</button>
+        <button onclick="excluirRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">🗑️</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
+window.abrirEdicaoRecorrente = function(id) {
+  const r = estado.recorrentes.find(rec => rec.id == id);
+  if (!r) return;
+
+  document.getElementById('edit-rec-id').value = r.id;
+  document.getElementById('edit-rec-nome').value = r.nome;
+  document.getElementById('edit-rec-empresa').value = r.empresa || '';
+  document.getElementById('edit-rec-valor').value = r.valor;
+  document.getElementById('edit-rec-dia').value = r.dia_vencimento;
+  document.getElementById('edit-rec-dias-alerta').value = r.dias_alerta || 3;
+  document.getElementById('edit-rec-responsavel').value = r.responsavel || 'Casal';
+  document.getElementById('edit-rec-macro').value = r.categoria_macro || '3.0 Moradia';
+
+  document.getElementById('modal-editar-recorrente').classList.remove('hidden');
+};
+
 window.excluirRecorrente = async function(id) {
+  if (!confirm('Excluir esta conta fixa?')) return;
   if (supabaseClient) {
     await supabaseClient.from('gastos_recorrentes').delete().eq('id', id);
     carregarDados();
@@ -452,7 +522,48 @@ window.excluirRecorrente = async function(id) {
 };
 
 // ===================================================
-// MÓDULO 3: SIMULADOR DE INVESTIMENTOS & CORRELAÇÃO COM FINANCIAMENTO
+// MÓDULO 3: FINANCIAMENTOS SALVOS
+// ===================================================
+function atualizarFinanciamentos() {
+  const tbody = document.getElementById('tbody-financiamentos');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (estado.financiamentos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Nenhum financiamento salvo.</td></tr>';
+    return;
+  }
+
+  estado.financiamentos.forEach(f => {
+    const tr = document.createElement('tr');
+    const saldoDevedor = Number(f.valor_total) - Number(f.entrada);
+
+    tr.innerHTML = `
+      <td><strong>${f.nome}</strong></td>
+      <td>${fmt(f.valor_total)}</td>
+      <td>${fmt(f.entrada)}</td>
+      <td><strong style="color:var(--yellow)">${fmt(saldoDevedor)}</strong></td>
+      <td>${f.taxa_juros}% a.a.</td>
+      <td>${f.prazo_meses} meses</td>
+      <td style="color:var(--accent); font-weight:700">${fmt(f.parcela_mensal)}</td>
+      <td style="text-align:center;">
+        <button onclick="excluirFinanciamento('${f.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+window.excluirFinanciamento = async function(id) {
+  if (!confirm('Remover esta simulação de financiamento?')) return;
+  if (supabaseClient) {
+    await supabaseClient.from('financiamentos').delete().eq('id', id);
+    carregarDados();
+  }
+};
+
+// ===================================================
+// MÓDULO 4: SIMULADOR DE INVESTIMENTOS & CORRELAÇÃO
 // ===================================================
 function atualizarInvestimentos() {
   const sobra = parseFloat(document.getElementById('inv-input-sobra').value) || estado.sobraReal;
@@ -474,7 +585,7 @@ function atualizarInvestimentos() {
   document.getElementById('inv-resgate-calculado').textContent = fmt(saldoResgate);
   document.getElementById('inv-resgate-sub').textContent = `Em ${prazoMesesInput} meses a ${taxaAnualInput}% a.a.`;
 
-  // CORRELAÇÃO COM FINANCIAMENTO: QUITAÇÃO OU AMORTIZAÇÃO ANTECIPADA
+  // CORRELAÇÃO COM FINANCIAMENTO
   const finValorTotal = parseFloat(document.getElementById('fin-valor-total').value) || 0;
   const finEntrada = parseFloat(document.getElementById('fin-entrada').value) || 0;
   const saldoDevedor = finValorTotal - finEntrada;
@@ -546,18 +657,29 @@ function configurarEventos() {
     atualizarUI();
   });
 
+  // Evento de alteração de Macro no modal de edição -> Atualiza subcategorias Micro
+  document.getElementById('edit-categoria-macro').addEventListener('change', (e) => {
+    atualizarOptionsMicro(e.target.value);
+  });
+
   document.getElementById('inv-input-sobra').addEventListener('input', atualizarInvestimentos);
   document.getElementById('inv-input-taxa').addEventListener('input', atualizarInvestimentos);
   document.getElementById('inv-input-prazo').addEventListener('input', atualizarInvestimentos);
 
+  // Salvar Edição de Transação
   document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
     const id = document.getElementById('edit-id').value;
-    const descricao = document.getElementById('edit-descricao').value.trim();
+    let descricao = document.getElementById('edit-descricao').value.trim();
     const novaMacro = document.getElementById('edit-categoria-macro').value;
+    const novaMicro = document.getElementById('edit-categoria-micro').value;
     const valor = parseFloat(document.getElementById('edit-valor').value);
     const pago_por = document.getElementById('edit-pago-por').value;
 
     if (!descricao || !valor) return alert('Preencha os campos!');
+
+    // Remover tag anterior se houver
+    descricao = descricao.replace(/^\[.*?\]\s*/, '');
+    const descFinal = novaMicro ? `[${novaMicro}] ${descricao}` : descricao;
 
     if (supabaseClient) {
       let catId = null;
@@ -569,7 +691,7 @@ function configurarEventos() {
         if (nv) catId = nv.id;
       }
 
-      await supabaseClient.from('transacoes').update({ descricao, valor, pago_por, categoria_id: catId }).eq('id', id);
+      await supabaseClient.from('transacoes').update({ descricao: descFinal, valor, pago_por, categoria_id: catId }).eq('id', id);
 
       const primeiraPalavra = descricao.split(/\s+/)[0].toLowerCase();
       if (primeiraPalavra && primeiraPalavra.length > 2) {
@@ -582,13 +704,13 @@ function configurarEventos() {
         if (regraEx) {
           await supabaseClient.from('regras_mapeamento').update({
             categoria_macro: novaMacro,
-            subcategoria_micro: novaMacro
+            subcategoria_micro: novaMicro || novaMacro
           }).eq('id', regraEx.id);
         } else {
           await supabaseClient.from('regras_mapeamento').insert([{
             palavra_chave: primeiraPalavra,
             categoria_macro: novaMacro,
-            subcategoria_micro: novaMacro
+            subcategoria_micro: novaMicro || novaMacro
           }]);
         }
       }
@@ -602,6 +724,34 @@ function configurarEventos() {
     document.getElementById('modal-editar').classList.add('hidden');
   });
 
+  // Salvar Edição de Conta Fixa
+  document.getElementById('btn-salvar-rec-edicao').addEventListener('click', async () => {
+    const id = document.getElementById('edit-rec-id').value;
+    const nome = document.getElementById('edit-rec-nome').value.trim();
+    const empresa = document.getElementById('edit-rec-empresa').value.trim();
+    const valor = parseFloat(document.getElementById('edit-rec-valor').value);
+    const dia_vencimento = parseInt(document.getElementById('edit-rec-dia').value);
+    const dias_alerta = parseInt(document.getElementById('edit-rec-dias-alerta').value);
+    const responsavel = document.getElementById('edit-rec-responsavel').value;
+    const categoria_macro = document.getElementById('edit-rec-macro').value;
+
+    if (!nome || !valor || !dia_vencimento) return alert('Preencha os campos!');
+
+    if (supabaseClient) {
+      await supabaseClient.from('gastos_recorrentes').update({
+        nome, empresa, valor, dia_vencimento, dias_alerta, responsavel, categoria_macro
+      }).eq('id', id);
+
+      document.getElementById('modal-editar-recorrente').classList.add('hidden');
+      carregarDados();
+    }
+  });
+
+  document.getElementById('btn-cancelar-rec-edicao').addEventListener('click', () => {
+    document.getElementById('modal-editar-recorrente').classList.add('hidden');
+  });
+
+  // Cadastro de Novo Gasto Manual
   document.getElementById('form-novo-gasto').addEventListener('submit', async (e) => {
     e.preventDefault();
     const catTexto = document.getElementById('gasto-categoria-texto').value.trim();
@@ -630,23 +780,27 @@ function configurarEventos() {
     document.getElementById('form-novo-gasto').reset();
   });
 
+  // Cadastro de Nova Conta Fixa Recorrente
   document.getElementById('form-nova-recorrente').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nome = document.getElementById('rec-nome').value.trim();
+    const empresa = document.getElementById('rec-empresa').value.trim();
     const valor = parseFloat(document.getElementById('rec-valor').value);
     const dia_vencimento = parseInt(document.getElementById('rec-dia').value);
+    const dias_alerta = parseInt(document.getElementById('rec-dias-alerta').value) || 3;
     const responsavel = document.getElementById('rec-responsavel').value;
     const categoria_macro = document.getElementById('rec-macro').value;
 
     if (supabaseClient) {
       await supabaseClient.from('gastos_recorrentes').insert([{
-        nome, valor, dia_vencimento, responsavel, categoria_macro, ativo: true
+        nome, empresa, valor, dia_vencimento, dias_alerta, responsavel, categoria_macro, ativo: true
       }]);
       carregarDados();
     }
     document.getElementById('form-nova-recorrente').reset();
   });
 
+  // Cálculo de Financiamento
   document.getElementById('btn-calcular-financiamento').addEventListener('click', () => {
     const total = parseFloat(document.getElementById('fin-valor-total').value) || 0;
     const entrada = parseFloat(document.getElementById('fin-entrada').value) || 0;
@@ -673,6 +827,28 @@ function configurarEventos() {
     }
 
     atualizarInvestimentos();
+  });
+
+  // Salvar Financiamento Simulado
+  document.getElementById('btn-salvar-financiamento').addEventListener('click', async () => {
+    const nome = document.getElementById('fin-nome').value.trim() || 'Financiamento';
+    const valor_total = parseFloat(document.getElementById('fin-valor-total').value) || 0;
+    const entrada = parseFloat(document.getElementById('fin-entrada').value) || 0;
+    const taxa_juros = parseFloat(document.getElementById('fin-juros').value) || 0;
+    const prazo_meses = parseInt(document.getElementById('fin-prazo').value) || 1;
+
+    if (!valor_total) return alert('Informe o valor total do bem!');
+
+    const financiado = valor_total - entrada;
+    const i = (taxa_juros / 100) / 12;
+    const parcela_mensal = i > 0 ? (financiado * (i * Math.pow(1 + i, prazo_meses))) / (Math.pow(1 + i, prazo_meses) - 1) : financiado / prazo_meses;
+
+    if (supabaseClient) {
+      await supabaseClient.from('financiamentos').insert([{
+        nome, valor_total, entrada, taxa_juros, prazo_meses, parcela_mensal
+      }]);
+      carregarDados();
+    }
   });
 
   document.getElementById('btn-config').addEventListener('click', () => {
