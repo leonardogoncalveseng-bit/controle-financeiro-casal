@@ -370,12 +370,13 @@ body {
   flex-direction: column;
   gap: 6px;
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
 label {
@@ -386,6 +387,8 @@ label {
 }
 
 input, select {
+  width: 100%;
+  min-width: 0;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -394,6 +397,7 @@ input, select {
   font-size: 14px;
   padding: 10px 14px;
   outline: none;
+  text-overflow: ellipsis;
 }
 
 input:focus, select:focus {
@@ -411,6 +415,30 @@ input:focus, select:focus {
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
 }
 
 .btn-primary-sm {
@@ -546,7 +574,7 @@ td {
 }
 
 /* ===================================================
-   MODAL
+   MODAL OVERLAY & CARD (AJUSTADO LARGURA E BOTÕES)
    =================================================== */
 .overlay {
   position: fixed;
@@ -557,6 +585,7 @@ td {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 16px;
 }
 
 .overlay.hidden { display: none; }
@@ -567,12 +596,28 @@ td {
   border-radius: var(--radius);
   padding: 24px;
   width: 100%;
-  max-width: 440px;
+  max-width: 540px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
 }
 
 .modal-btns {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-btns .btn-primary {
+  flex: 2;
+}
+
+.modal-btns .btn-ghost {
+  flex: 1;
+  text-align: center;
 }
