@@ -141,28 +141,52 @@
         <div class="card-top">
           <h2>Registrar Gasto Manualmente</h2>
         </div>
-        <form id="form-novo-gasto" class="form-row-three">
-          <div class="field">
-            <label>Palavra-Chave / Categoria</label>
-            <input type="text" id="gasto-categoria-texto" placeholder="Ex: Contador, Açaí, Posto Shell" required>
+        <form id="form-novo-gasto">
+          <div class="field-row">
+            <div class="field">
+              <label>Centro de Custo — Macro</label>
+              <select id="gasto-macro" onchange="atualizarMicroGasto(this.value)">
+                <option value="1.0 Alimentação">1.0 Alimentação</option>
+                <option value="2.0 Transporte">2.0 Transporte</option>
+                <option value="3.0 Moradia">3.0 Moradia</option>
+                <option value="4.0 Saúde">4.0 Saúde</option>
+                <option value="5.0 Lazer">5.0 Lazer</option>
+                <option value="6.0 Educação">6.0 Educação</option>
+                <option value="7.0 Roupas &amp; Cuidados Pessoais">7.0 Roupas &amp; Cuidados Pessoais</option>
+                <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+                <option value="9.0 Doações &amp; Presentes">9.0 Doações &amp; Presentes</option>
+                <option value="10.0 Outros">10.0 Outros</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Subcategoria — Micro</label>
+              <select id="gasto-micro">
+                <option>1.1 Supermercado</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>Nome do Estabelecimento</label>
-            <input type="text" id="gasto-descricao" placeholder="Ex: Contador LG, Savenago" required>
+          <div class="field-row">
+            <div class="field">
+              <label>Nome do Estabelecimento</label>
+              <input type="text" id="gasto-descricao" placeholder="Ex: Contador LG, Savenago" required>
+            </div>
+            <div class="field">
+              <label>Valor (R$)</label>
+              <input type="number" step="0.01" id="gasto-valor" placeholder="0,00" required>
+            </div>
           </div>
-          <div class="field">
-            <label>Valor (R$)</label>
-            <input type="number" step="0.01" id="gasto-valor" placeholder="0,00" required>
-          </div>
-          <div class="field">
-            <label>Quem Pagou?</label>
-            <select id="gasto-pago-por">
-              <option value="Ele">Leo 👨</option>
-              <option value="Ela">Giu 👩</option>
-            </select>
-          </div>
-          <div class="field" style="justify-content: flex-end;">
-            <button type="submit" class="btn-primary">Cadastrar</button>
+          <div class="field-row">
+            <div class="field">
+              <label>Quem Pagou?</label>
+              <select id="gasto-pago-por">
+                <option value="Ele">Leo 👨</option>
+                <option value="Ela">Giu 👩</option>
+              </select>
+            </div>
+            <div class="field" style="justify-content:flex-end;">
+              <label>&nbsp;</label>
+              <button type="submit" class="btn-primary">✅ Cadastrar Gasto</button>
+            </div>
           </div>
         </form>
       </section>
@@ -200,6 +224,8 @@
         <i data-lucide="alert-circle"></i>
         <span id="err-recorrentes-texto">Erro ao carregar contas fixas.</span>
       </div>
+
+      <!-- Formulário + Resumo em 2 colunas -->
       <div class="main-grid">
         <!-- FORMULÁRIO -->
         <section class="card">
@@ -213,44 +239,51 @@
               <label>Empresa / Fornecedor (opcional)</label>
               <input type="text" id="rec-empresa" placeholder="Ex: THEOS, Claro, CPFL">
             </div>
+            <div class="field">
+              <label>Tipo de Valor</label>
+              <select id="rec-tipo-valor">
+                <option value="fixo">💰 Fixo — mesmo valor todo mês</option>
+                <option value="variavel">📊 Variável — varia (ex: Água, Energia)</option>
+              </select>
+            </div>
             <div class="field-row">
               <div class="field">
-                <label>Valor Mensal (R$)</label>
-                <input type="number" step="0.01" id="rec-valor" placeholder="0,00" required>
+                <label>Valor Referência (R$)</label>
+                <input type="number" step="0.01" id="rec-valor" placeholder="0,00">
               </div>
               <div class="field">
                 <label>Dia Vencimento</label>
                 <input type="number" id="rec-dia" min="1" max="31" placeholder="Ex: 10" required>
               </div>
+            </div>
+            <div class="field-row">
               <div class="field">
                 <label>Alertar X Dias Antes (Telegram)</label>
                 <input type="number" id="rec-dias-alerta" min="1" max="30" value="3">
               </div>
-            </div>
-            <div class="field-row">
               <div class="field">
-                <label>Responsável pelo Pagamento</label>
+                <label>Responsável</label>
                 <select id="rec-responsavel">
                   <option value="Casal">Casal 💑</option>
                   <option value="Ele">Leo 👨</option>
                   <option value="Ela">Giu 👩</option>
                 </select>
               </div>
-              <div class="field">
-                <label>Centro de Custo Macro</label>
-                <select id="rec-macro">
-                  <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
-                  <option value="3.0 Moradia">3.0 Moradia</option>
-                  <option value="1.0 Alimentação">1.0 Alimentação</option>
-                  <option value="2.0 Transporte">2.0 Transporte</option>
-                  <option value="4.0 Saúde">4.0 Saúde</option>
-                  <option value="5.0 Lazer">5.0 Lazer</option>
-                  <option value="6.0 Educação">6.0 Educação</option>
-                  <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
-                  <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
-                  <option value="10.0 Outros">10.0 Outros</option>
-                </select>
-              </div>
+            </div>
+            <div class="field">
+              <label>Centro de Custo Macro</label>
+              <select id="rec-macro">
+                <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+                <option value="3.0 Moradia">3.0 Moradia</option>
+                <option value="1.0 Alimentação">1.0 Alimentação</option>
+                <option value="2.0 Transporte">2.0 Transporte</option>
+                <option value="4.0 Saúde">4.0 Saúde</option>
+                <option value="5.0 Lazer">5.0 Lazer</option>
+                <option value="6.0 Educação">6.0 Educação</option>
+                <option value="7.0 Roupas &amp; Cuidados Pessoais">7.0 Roupas &amp; Cuidados Pessoais</option>
+                <option value="9.0 Doações &amp; Presentes">9.0 Doações &amp; Presentes</option>
+                <option value="10.0 Outros">10.0 Outros</option>
+              </select>
             </div>
             <button type="submit" class="btn-primary">Adicionar Conta Fixa</button>
           </form>
@@ -258,33 +291,47 @@
 
         <!-- RESUMO -->
         <section class="card">
-          <div class="card-top"><h2>Resumo de Comprometimento Fixo</h2></div>
+          <div class="card-top"><h2>Comprometimento Fixo</h2></div>
           <div class="kpi-row-mini">
             <div class="mini-kpi">
               <span>Total Fixo Mensal:</span>
               <strong id="val-total-recorrente">R$ 0,00</strong>
             </div>
+            <div class="mini-kpi">
+              <span>Contas Variáveis:</span>
+              <strong id="val-total-variavel" style="color:var(--yellow)">R$ 0,00</strong>
+            </div>
           </div>
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Venc.</th>
-                  <th>Conta / Empresa</th>
-                  <th>Responsável</th>
-                  <th>Categoria</th>
-                  <th>Alerta</th>
-                  <th>Valor</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-recorrentes">
-                <tr><td colspan="7" class="empty">Nenhuma conta fixa cadastrada.</td></tr>
-              </tbody>
-            </table>
-          </div>
+          <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">⬇️ Tabela completa abaixo</p>
         </section>
       </div>
+
+      <!-- TABELA COMPLETA — Largura total -->
+      <section class="card">
+        <div class="card-top">
+          <h2>📋 Histórico de Contas Fixas</h2>
+          <span class="tag" id="rec-count-tag">0 contas</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Venc.</th>
+                <th>Conta / Empresa</th>
+                <th>Tipo</th>
+                <th>Responsável</th>
+                <th>Categoria</th>
+                <th>Alerta</th>
+                <th>Valor Ref.</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-recorrentes">
+              <tr><td colspan="8" class="empty">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
 
     <!-- ABA 3: FINANCIAMENTO -->
