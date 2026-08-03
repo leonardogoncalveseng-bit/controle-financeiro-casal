@@ -36,6 +36,7 @@
         <button class="nav-tab" data-tab="tab-fechamento"><i data-lucide="calendar"></i> <span class="tab-label">Fechamento</span></button>
       </div>
       <div class="topbar-actions">
+        <button onclick="abrirGuiaCategorias()" class="topbar-btn" title="Guia de Centros de Custo"><i data-lucide="info"></i> Guia (i)</button>
         <button id="btn-config" class="topbar-btn"><i data-lucide="database"></i> Banco</button>
         <button id="btn-atualizar" class="topbar-btn"><i data-lucide="refresh-cw"></i></button>
         <button onclick="sessionStorage.removeItem('fc_logado'); window.location.replace('login.html');" class="topbar-btn" title="Sair" style="color:#f43f5e;"><i data-lucide="log-out"></i></button>
@@ -59,7 +60,7 @@
         </div>
       </div>
       <div class="filter-group">
-        <label>Centro de Custo:</label>
+        <label>Centro de Custo <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button>:</label>
         <select id="filtro-categoria-macro">
           <option value="todas">Todos os Centros de Custo</option>
           <option value="10.0 Outros">⚠️ Pendentes de Ajuste (Outros)</option>
@@ -144,7 +145,7 @@
         <form id="form-novo-gasto">
           <div class="field-row">
             <div class="field">
-              <label>Centro de Custo — Macro</label>
+              <label>Centro de Custo — Macro <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button></label>
               <select id="gasto-macro" onchange="atualizarMicroGasto(this.value)">
                 <option value="1.0 Alimentação">1.0 Alimentação</option>
                 <option value="2.0 Transporte">2.0 Transporte</option>
@@ -271,7 +272,7 @@
               </div>
             </div>
             <div class="field">
-              <label>Centro de Custo Macro</label>
+              <label>Centro de Custo Macro <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button></label>
               <select id="rec-macro">
                 <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
                 <option value="3.0 Moradia">3.0 Moradia</option>
@@ -729,6 +730,28 @@
       <div class="modal-btns">
         <button id="btn-salvar-config" class="btn-primary">Conectar</button>
         <button id="btn-fechar-config" class="btn-ghost">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL GUIA DE CENTROS DE CUSTO (i) -->
+  <div id="modal-guia-categorias" class="overlay hidden">
+    <div class="modal modal-lg">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;display:flex;align-items:center;gap:8px;">ℹ️ Guia de Centros de Custo &amp; Subcategorias</h2>
+        <button onclick="fecharGuiaCategorias()" style="background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;line-height:1.4;">
+        Consulte abaixo onde alocar cada gasto da família. Digite no campo abaixo para filtrar instantaneamente (ex: <em>iFood, CPFL, Uber, Barbeiro, Contador...</em>).
+      </p>
+      <div class="field" style="margin-bottom:14px;">
+        <input type="text" id="busca-guia-categorias" placeholder="🔍 Digite para buscar (ex: Posto, Farmácia, Netflix, Salão...)" oninput="filtrarGuiaCategorias(this.value)">
+      </div>
+      <div id="lista-guia-categorias" class="guia-grid">
+        <!-- Preenchido dinamicamente via JS -->
+      </div>
+      <div class="modal-btns" style="margin-top:16px;">
+        <button onclick="fecharGuiaCategorias()" class="btn-primary">Entendido 👍</button>
       </div>
     </div>
   </div>

@@ -1031,3 +1031,87 @@ function configurarEventos() {
     preencherTabelaExtrato(obterTransacoesFiltradas(), e.target.value);
   });
 }
+
+// ===================================================
+// GUIA DE CENTROS DE CUSTO MODAL (i)
+// ===================================================
+window.abrirGuiaCategorias = function() {
+  renderizarGuiaCategorias();
+  document.getElementById('modal-guia-categorias')?.classList.remove('hidden');
+  const buscaInput = document.getElementById('busca-guia-categorias');
+  if (buscaInput) {
+    buscaInput.value = '';
+    setTimeout(() => buscaInput.focus(), 150);
+  }
+};
+
+window.fecharGuiaCategorias = function() {
+  document.getElementById('modal-guia-categorias')?.classList.add('hidden');
+};
+
+window.renderizarGuiaCategorias = function(filtro = '') {
+  const container = document.getElementById('lista-guia-categorias');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const termoNorm = filtro.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const iconesMacro = {
+    '1.0 Alimentação': '🍔',
+    '2.0 Transporte': '🚗',
+    '3.0 Moradia': '🏠',
+    '4.0 Saúde': '🏥',
+    '5.0 Lazer': '🎉',
+    '6.0 Educação': '🎓',
+    '7.0 Roupas & Cuidados Pessoais': '👕',
+    '8.0 Empresa / Negócios': '💼',
+    '9.0 Doações & Presentes': '🎁',
+    '10.0 Outros': '📌'
+  };
+
+  Object.entries(SUBCATEGORIAS_MAP).forEach(([macro, micros]) => {
+    const icon = iconesMacro[macro] || '📌';
+    const macroNorm = macro.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    // Filtra subcategorias
+    const microsFiltrados = micros.filter(m => {
+      if (!termoNorm) return true;
+      const mNorm = m.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return mNorm.includes(termoNorm) || macroNorm.includes(termoNorm);
+    });
+
+    if (termoNorm && microsFiltrados.length === 0 && !macroNorm.includes(termoNorm)) {
+      return; // Oculta a macro se a busca não bater
+    }
+
+    const card = document.createElement('div');
+    card.className = 'guia-macro-card';
+
+    const pillsHtml = (termoNorm ? microsFiltrados : micros).map(m => {
+      const mNorm = m.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const isMatch = termoNorm && mNorm.includes(termoNorm);
+      return `<span class="guia-micro-pill ${isMatch ? 'highlight' : ''}">${m}</span>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="guia-macro-title">
+        <span>${icon}</span>
+        <span>${macro}</span>
+      </div>
+      <div class="guia-micro-list">
+        ${pillsHtml}
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+
+  if (container.children.length === 0) {
+    container.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:24px;">Nenhum centro de custo ou subcategoria encontrado para "${filtro}".</div>`;
+  }
+};
+
+window.filtrarGuiaCategorias = function(val) {
+  renderizarGuiaCategorias(val);
+};
+
