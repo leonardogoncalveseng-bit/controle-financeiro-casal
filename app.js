@@ -32,7 +32,8 @@ const SUBCATEGORIAS_MAP = {
     '3.4 Água (SAAE)',
     '3.5 Internet / Telefone',
     '3.6 Gás',
-    '3.7 Manutenção / Reforma'
+    '3.7 Manutenção / Reforma',
+    '3.8 Casa / Utensílios Domésticos'
   ],
   '4.0 Saúde': [
     '4.1 Farmácia / Remédios',
@@ -93,7 +94,8 @@ let estado = {
   recorrentes: [],
   financiamentos: [],
   investimentos: [],
-  regras: []
+  regras: [],
+  subcategoriasCustom: {}
 };
 
 // ===================================================
@@ -101,6 +103,8 @@ let estado = {
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
   if (window.lucide) lucide.createIcons();
+
+  carregarSubcategoriasPersonalizadas();
 
   const defaultUrl = 'https://bsrcbtgdayqsggcijxfu.supabase.co';
   const defaultKey = 'sb_publishable_PEVDs7pauyzHqBRiZNMuLg_tXFhfw0v';
@@ -1033,6 +1037,74 @@ function configurarEventos() {
 }
 
 // ===================================================
+// GERENCIADOR DE SUBCATEGORIAS PERSONALIZADAS
+// ===================================================
+function carregarSubcategoriasPersonalizadas() {
+  try {
+    const salvas = JSON.parse(localStorage.getItem('CUSTOM_SUBCATEGORIAS') || '{}');
+    Object.entries(salvas).forEach(([chave, lista]) => {
+      if (SUBCATEGORIAS_MAP[chave] && Array.isArray(lista)) {
+        lista.forEach(sub => {
+          if (!SUBCATEGORIAS_MAP[chave].includes(sub)) {
+            SUBCATEGORIAS_MAP[chave].push(sub);
+          }
+        });
+      }
+    });
+  } catch(e) {
+    console.warn('Erro ao carregar subcategorias customizadas:', e);
+  }
+}
+
+window.adicionarSubcategoriaCustomizada = function(macroVal) {
+  const chave = resolverChaveMacro(macroVal);
+  const nomeNova = prompt(`➕ Criar nova subcategoria em "${chave}":\n\nExemplo: 3.8 Utensílios de Cozinha / Xícaras`);
+  if (!nomeNova || !nomeNova.trim()) return;
+  const limpo = nomeNova.trim();
+
+  // Salvar localmente
+  const salvas = JSON.parse(localStorage.getItem('CUSTOM_SUBCATEGORIAS') || '{}');
+  if (!salvas[chave]) salvas[chave] = [];
+  if (!salvas[chave].includes(limpo)) {
+    salvas[chave].push(limpo);
+    localStorage.setItem('CUSTOM_SUBCATEGORIAS', JSON.stringify(salvas));
+  }
+
+  // Adicionar na memória atual
+  if (!SUBCATEGORIAS_MAP[chave].includes(limpo)) {
+    SUBCATEGORIAS_MAP[chave].push(limpo);
+  }
+
+  // Atualiza a visualização no modal e nos selects
+  renderizarGuiaCategorias();
+  const gastoMacroEl = document.getElementById('gasto-macro');
+  if (gastoMacroEl) atualizarMicroGasto(gastoMacroEl.value);
+
+  alert(`✅ Subcategoria "${limpo}" adicionada em ${chave}!`);
+};
+
+window.removerSubcategoriaCustomizada = function(macroVal, subNome) {
+  if (!confirm(`Remover a subcategoria "${subNome}" de ${macroVal}?`)) return;
+  const chave = resolverChaveMacro(macroVal);
+
+  // Remove da memória
+  if (SUBCATEGORIAS_MAP[chave]) {
+    SUBCATEGORIAS_MAP[chave] = SUBCATEGORIAS_MAP[chave].filter(s => s !== subNome);
+  }
+
+  // Remove do storage
+  const salvas = JSON.parse(localStorage.getItem('CUSTOM_SUBCATEGORIAS') || '{}');
+  if (salvas[chave]) {
+    salvas[chave] = salvas[chave].filter(s => s !== subNome);
+    localStorage.setItem('CUSTOM_SUBCATEGORIAS', JSON.stringify(salvas));
+  }
+
+  renderizarGuiaCategorias();
+  const gastoMacroEl = document.getElementById('gasto-macro');
+  if (gastoMacroEl) atualizarMicroGasto(gastoMacroEl.value);
+};
+
+// ===================================================
 // GUIA DE CENTROS DE CUSTO MODAL (i)
 // ===================================================
 window.abrirGuiaCategorias = function() {
@@ -1055,6 +1127,7 @@ window.renderizarGuiaCategorias = function(filtro = '') {
   container.innerHTML = '';
 
   const termoNorm = filtro.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const salvas = JSON.parse(localStorage.getItem('CUSTOM_SUBCATEGORIAS') || '{}');
 
   const iconesMacro = {
     '1.0 Alimentação': '🍔',
@@ -1072,7 +1145,8 @@ window.renderizarGuiaCategorias = function(filtro = '') {
   Object.entries(SUBCATEGORIAS_MAP).forEach(([macro, micros]) => {
     const icon = iconesMacro[macro] || '📌';
     const macroNorm = macro.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
+    const customDaMacro = salvas[macro] || [];
+
     // Filtra subcategorias
     const microsFiltrados = micros.filter(m => {
       if (!termoNorm) return true;
@@ -1090,15 +1164,17 @@ window.renderizarGuiaCategorias = function(filtro = '') {
     const pillsHtml = (termoNorm ? microsFiltrados : micros).map(m => {
       const mNorm = m.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       const isMatch = termoNorm && mNorm.includes(termoNorm);
-      return `<span class="guia-micro-pill ${isMatch ? 'highlight' : ''}">${m}</span>`;
+      const isCustom = customDaMacro.includes(m);
+      const removeBtn = isCustom ? `<button onclick="event.stopPropagation();removerSubcategoriaCustomizada('${macro}','${m}')" style="background:none;border:none;color:#ef4444;margin-left:4px;cursor:pointer;font-weight:700;" title="Remover subcategoria customizada">✕</button>` : '';
+      return `<span class="guia-micro-pill ${isMatch ? 'highlight' : ''}">${m}${removeBtn}</span>`;
     }).join('');
 
     card.innerHTML = `
-      <div class="guia-macro-title">
-        <span>${icon}</span>
-        <span>${macro}</span>
+      <div class="guia-macro-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="display:flex;align-items:center;gap:6px;"><span>${icon}</span> <span>${macro}</span></span>
+        <button type="button" onclick="adicionarSubcategoriaCustomizada('${macro}')" class="btn-primary-sm" style="padding:2px 8px;font-size:10.5px;border-radius:6px;white-space:nowrap;" title="Criar nova subcategoria neste centro de custo">+ Sub</button>
       </div>
-      <div class="guia-micro-list">
+      <div class="guia-micro-list" style="margin-top:8px;">
         ${pillsHtml}
       </div>
     `;
@@ -1114,4 +1190,5 @@ window.renderizarGuiaCategorias = function(filtro = '') {
 window.filtrarGuiaCategorias = function(val) {
   renderizarGuiaCategorias(val);
 };
+
 
