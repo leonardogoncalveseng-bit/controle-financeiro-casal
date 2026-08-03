@@ -466,6 +466,12 @@ select {
   padding-right: 32px;
 }
 
+select option {
+  background-color: #0f172a; /* Slate 900 */
+  color: #f1f5f9; /* Slate 100 */
+  font-size: 14px;
+}
+
 .btn-primary {
   width: 100%;
   padding: 12px;

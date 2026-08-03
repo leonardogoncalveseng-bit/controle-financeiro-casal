@@ -265,7 +265,7 @@ function atualizarUI() {
   // 3. Dia da semana que mais gasta
   const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   const somaPorDia = [0, 0, 0, 0, 0, 0, 0];
-  filtradas.forEach(t => { if (t.data) somaPorDia[new Date(t.data).getDay()] += Number(t.valor); });
+  filtradas.forEach(t => { if (t.data) somaPorDia[new Date(t.data + 'T12:00:00').getDay()] += Number(t.valor); });
   const maxIdx = somaPorDia.indexOf(Math.max(...somaPorDia));
   const pctDia = total > 0 ? ((somaPorDia[maxIdx] / total) * 100).toFixed(0) : 0;
   document.getElementById('val-dia-mais-gasta').textContent = somaPorDia[maxIdx] > 0 ? diasSemana[maxIdx] : '—';
@@ -302,24 +302,23 @@ function obterTransacoesFiltradas() {
   const hoje = new Date();
 
   if (estado.filtroPeriodo === 'custom' && estado.dataInicio && estado.dataFim) {
-    const dIni = new Date(estado.dataInicio);
-    const dFim = new Date(estado.dataFim);
-    dFim.setHours(23, 59, 59);
-    res = res.filter(t => { const d = new Date(t.data); return d >= dIni && d <= dFim; });
+    const dIni = new Date(estado.dataInicio + 'T00:00:00');
+    const dFim = new Date(estado.dataFim + 'T23:59:59');
+    res = res.filter(t => { const d = new Date(t.data + 'T12:00:00'); return d >= dIni && d <= dFim; });
   } else if (estado.filtroPeriodo === 'mes-atual') {
     res = res.filter(t => {
-      const d = new Date(t.data);
+      const d = new Date(t.data + 'T12:00:00');
       return d.getFullYear() === hoje.getFullYear() && d.getMonth() === hoje.getMonth();
     });
   } else if (estado.filtroPeriodo === 'mes-passado') {
     const mp = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
     res = res.filter(t => {
-      const d = new Date(t.data);
+      const d = new Date(t.data + 'T12:00:00');
       return d.getFullYear() === mp.getFullYear() && d.getMonth() === mp.getMonth();
     });
   } else if (estado.filtroPeriodo === '3-meses') {
     const lim = new Date(); lim.setMonth(lim.getMonth() - 3);
-    res = res.filter(t => new Date(t.data) >= lim);
+    res = res.filter(t => new Date(t.data + 'T12:00:00') >= lim);
   }
 
   if (estado.filtroMacro !== 'todas') {
@@ -414,7 +413,7 @@ function renderizarGraficoLinhaEvolucao() {
   }
   estado.transacoes.forEach(t => {
     if (t.data) {
-      const d = new Date(t.data);
+      const d = new Date(t.data + 'T12:00:00');
       const chave = `${mesesNomes[d.getMonth()]}/${d.getFullYear().toString().slice(2)}`;
       if (mapaMeses[chave] !== undefined) mapaMeses[chave] += Number(t.valor);
     }
@@ -468,7 +467,7 @@ function preencherTabelaExtrato(lista, filtroBusca = '') {
     tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum gasto encontrado.</td></tr>';
     return;
   }
-  [...filtradas].sort((a, b) => new Date(b.data) - new Date(a.data)).forEach(t => {
+  [...filtradas].sort((a, b) => new Date(b.data + 'T12:00:00') - new Date(a.data + 'T12:00:00')).forEach(t => {
     const cat = t.categoria ? t.categoria.nome : '10.0 Outros';
     const quem = t.pago_por === 'Ele' ? '👨 Leo' : '👩 Giu';
     const tr = document.createElement('tr');
