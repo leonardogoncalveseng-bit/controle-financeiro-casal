@@ -288,7 +288,19 @@ function atualizarUI() {
   // 5. Dica
   gerarDica(maiorMacro, maiorVal, total);
 
-  // 6. Tabela, gráficos e módulos
+  // 6. Atualizar Título do Extrato
+  const tituloExtrato = document.getElementById('titulo-extrato');
+  if (tituloExtrato) {
+    const mapaTitulos = {
+      'mes-atual': 'Este Mês',
+      'mes-passado': 'Mês Passado',
+      '3-meses': 'Últimos 3 Meses',
+      'custom': 'Período Personalizado'
+    };
+    tituloExtrato.textContent = `Extrato de Gastos da Família (${mapaTitulos[estado.filtroPeriodo] || ''})`;
+  }
+
+  // 7. Tabela, gráficos e módulos
   preencherTabelaExtrato(filtradas);
   renderizarGraficoPie(mapaMacro, total);
   renderizarGraficoLinhaEvolucao();
