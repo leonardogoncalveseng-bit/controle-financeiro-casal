@@ -285,6 +285,84 @@ function atualizarUI() {
   document.getElementById('val-maior-macro').textContent = maiorVal > 0 ? `${maiorMacro.split(' ').slice(1).join(' ')} (${fmt(maiorVal)})` : '—';
   document.getElementById('val-menor-macro').textContent = menorVal < Infinity ? `${menorMacro.split(' ').slice(1).join(' ')} (${fmt(menorVal)})` : '—';
 
+  // 4b. Novos KPIs Extras
+  let sumFixos = 0;
+  let sumVariaveis = 0;
+  let sumSemana = 0;
+  let sumFds = 0;
+  let sumAlimentacao = 0;
+
+  // Nível Zero (Custo de Sobrevivência)
+  let nivelZero = 0;
+  if (estado.recorrentes && estado.recorrentes.length) {
+    nivelZero = estado.recorrentes.filter(r => r.ativo).reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
+  }
+  const elNivelZero = document.getElementById('val-nivel-zero');
+  if (elNivelZero) elNivelZero.textContent = fmt(nivelZero);
+
+  filtradas.forEach(t => {
+    const val = Number(t.valor) || 0;
+    
+    // Fixos vs Variáveis
+    if (t.descricao.includes('[Conta Fixa]')) {
+      sumFixos += val;
+    } else {
+      sumVariaveis += val;
+    }
+
+    // Curva do FDS
+    const dia = t.data ? new Date(t.data + 'T12:00:00').getDay() : -1;
+    if (dia === 0 || dia === 6) {
+      sumFds += val;
+    } else if (dia >= 1 && dia <= 5) {
+      sumSemana += val;
+    }
+
+    // Alimentação
+    if (t.categoria && t.categoria.nome.includes('1.0 Alimentação')) {
+      sumAlimentacao += val;
+    }
+  });
+
+  // Atualiza DOM - Fixos vs Dia a dia
+  if (document.getElementById('val-fixos-vs-var-fixo')) {
+    const pctFixo = total > 0 ? ((sumFixos / total) * 100).toFixed(0) : 0;
+    const pctVar = total > 0 ? ((sumVariaveis / total) * 100).toFixed(0) : 0;
+    document.getElementById('val-fixos-vs-var-fixo').textContent = `${pctFixo}%`;
+    document.getElementById('val-fixos-vs-var-var').textContent = `${pctVar}%`;
+    document.getElementById('bar-fixos').style.width = `${pctFixo}%`;
+    document.getElementById('bar-opcionais').style.width = `${pctVar}%`;
+  }
+
+  // Atualiza DOM - FDS
+  if (document.getElementById('val-curva-semana')) {
+    const totalSemanaFds = sumSemana + sumFds;
+    const pctSemana = totalSemanaFds > 0 ? ((sumSemana / totalSemanaFds) * 100).toFixed(0) : 0;
+    const pctFds = totalSemanaFds > 0 ? ((sumFds / totalSemanaFds) * 100).toFixed(0) : 0;
+    document.getElementById('val-curva-semana').textContent = `${pctSemana}%`;
+    document.getElementById('val-curva-fds').textContent = `${pctFds}%`;
+    document.getElementById('bar-semana').style.width = `${pctSemana}%`;
+    document.getElementById('bar-fds').style.width = `${pctFds}%`;
+  }
+
+  // Atualiza DOM - Alimentação
+  if (document.getElementById('val-term-alim')) {
+    const pctAlim = total > 0 ? ((sumAlimentacao / total) * 100).toFixed(0) : 0;
+    document.getElementById('val-term-alim').textContent = `${pctAlim}%`;
+  }
+
+  // Atualiza DOM - Alerta Variáveis
+  if (document.getElementById('val-alerta-var')) {
+    let contasVar = [];
+    if (estado.recorrentes) contasVar = estado.recorrentes.filter(r => r.ativo && r.tipo_valor === 'variavel');
+    if (contasVar.length > 0) {
+      document.getElementById('val-alerta-var').textContent = `Fique de olho: ${contasVar.map(r => r.nome).join(', ')}`;
+    } else {
+      document.getElementById('val-alerta-var').textContent = 'Nenhuma conta variável cadastrada.';
+    }
+  }
+
+
   // 5. Dica
   gerarDica(maiorMacro, maiorVal, total);
 
