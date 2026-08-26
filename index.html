@@ -176,7 +176,11 @@
               <input type="number" step="0.01" id="gasto-valor" placeholder="0,00" required>
             </div>
           </div>
-          <div class="field-row">
+          <div class="form-row-three">
+            <div class="field">
+              <label>Data</label>
+              <input type="date" id="gasto-data" required>
+            </div>
             <div class="field">
               <label>Quem Pagou?</label>
               <select id="gasto-pago-por">
@@ -186,7 +190,7 @@
             </div>
             <div class="field" style="justify-content:flex-end;">
               <label>&nbsp;</label>
-              <button type="submit" class="btn-primary">✅ Cadastrar Gasto</button>
+              <button type="submit" class="btn-primary">✅ Cadastrar</button>
             </div>
           </div>
         </form>
@@ -605,10 +609,14 @@
           </select>
         </div>
       </div>
-      <div class="field-row">
+      <div class="form-row-three">
+        <div class="field">
+          <label>Data</label>
+          <input type="date" id="edit-data" required>
+        </div>
         <div class="field">
           <label>Valor (R$)</label>
-          <input type="number" step="0.01" id="edit-valor">
+          <input type="number" step="0.01" id="edit-valor" required>
         </div>
         <div class="field">
           <label>Quem Pagou?</label>

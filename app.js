@@ -385,26 +385,29 @@ function renderizarGraficoPie(mapaMacro, total) {
 
   if (chartPieInstance) chartPieInstance.destroy();
   chartPieInstance = new Chart(ctx, {
-    type: 'doughnut',
+    type: 'bar',
     data: {
       labels: labels.length > 0 ? labels : ['Nenhum gasto'],
       datasets: [{
-        data: valores.length > 0 ? valores : [1],
+        data: valores.length > 0 ? valores : [0],
         backgroundColor: valores.length > 0 ? cores.slice(0, labels.length) : ['#1e293b'],
-        borderWidth: 0,
-        hoverOffset: 6
+        borderRadius: 4,
+        borderWidth: 0
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
+        legend: { display: false },
         tooltip: {
-          callbacks: { label: (ctx) => { const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0; return ` ${ctx.label}: ${fmt(ctx.raw)} (${pct}%)`; } }
+          callbacks: { label: (ctx) => { const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0; return ` ${fmt(ctx.raw)} (${pct}%)`; } }
         }
       },
-      cutout: '70%'
+      scales: {
+        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+      }
     }
   });
 }
@@ -509,6 +512,7 @@ window.abrirEdicao = function(id) {
   document.getElementById('edit-descricao').value = t.descricao.replace(/^\[.*?\]\s*/, '');
   document.getElementById('edit-valor').value = t.valor;
   document.getElementById('edit-pago-por').value = t.pago_por;
+  document.getElementById('edit-data').value = t.data ? t.data.split('T')[0] : '';
   const nomeCat = t.categoria ? t.categoria.nome : '10.0 Outros';
   const chaveMacro = resolverChaveMacro(nomeCat);
   const macroSel = document.getElementById('edit-categoria-macro');
@@ -835,14 +839,15 @@ function configurarEventos() {
     const novaMicro = document.getElementById('edit-categoria-micro').value;
     const valor = parseFloat(document.getElementById('edit-valor').value);
     const pago_por = document.getElementById('edit-pago-por').value;
-    if (!descricao || !valor) return alert('Preencha os campos!');
+    const novaData = document.getElementById('edit-data').value;
+    if (!descricao || !valor || !novaData) return alert('Preencha os campos!');
     const descFinal = novaMicro ? `[${novaMicro}] ${descricao}` : descricao;
     if (supabaseClient) {
       let catId = null;
       const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', novaMacro).maybeSingle();
       if (ex) { catId = ex.id; }
       else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: novaMacro, icone: '📌' }]).select('id').single(); if (nv) catId = nv.id; }
-      await supabaseClient.from('transacoes').update({ descricao: descFinal, valor, pago_por, categoria_id: catId }).eq('id', id);
+      await supabaseClient.from('transacoes').update({ descricao: descFinal, valor, pago_por, categoria_id: catId, data: novaData }).eq('id', id);
       // Ensinar o robô
       const pChave = descricao.split(/\s+/)[0].toLowerCase();
       if (pChave && pChave.length > 2) {
@@ -923,6 +928,7 @@ function configurarEventos() {
     const descricao = document.getElementById('gasto-descricao').value.trim();
     const valor    = parseFloat(document.getElementById('gasto-valor').value);
     const pago_por = document.getElementById('gasto-pago-por').value;
+    const dataStr  = document.getElementById('gasto-data').value;
     if (!descricao || !valor) return alert('Preencha Estabelecimento e Valor!');
     if (supabaseClient) {
       let catId = null;
@@ -930,10 +936,12 @@ function configurarEventos() {
       if (ex) { catId = ex.id; }
       else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macro, icone: '📌' }]).select('id').single(); if (nv) catId = nv.id; }
       const descFinal = `[${micro}] ${descricao}`;
-      await supabaseClient.from('transacoes').insert([{ descricao: descFinal, valor, pago_por, categoria_id: catId, data: new Date().toISOString().split('T')[0] }]);
+      const dataFinal = dataStr || new Date().toISOString().split('T')[0];
+      await supabaseClient.from('transacoes').insert([{ descricao: descFinal, valor, pago_por, categoria_id: catId, data: dataFinal }]);
       carregarDados();
     }
     e.target.reset();
+    document.getElementById('gasto-data').value = new Date().toISOString().split('T')[0];
     // Re-inicializar micro após reset
     const macroEl = document.getElementById('gasto-macro');
     if (macroEl) atualizarMicroGasto(macroEl.value);

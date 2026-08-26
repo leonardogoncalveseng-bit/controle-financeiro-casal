@@ -101,15 +101,29 @@ async function verificarContasAVencer() {
     const { data: contas } = await supabase.from('gastos_recorrentes').select('*').eq('ativo', true);
     if (!contas || contas.length === 0) return;
 
-    const hoje = new Date().getDate();
+    const hojeObj = new Date();
+    const hoje = hojeObj.getDate();
+    const anoMesAtual = `${hojeObj.getFullYear()}-${String(hojeObj.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Buscar transações deste mês para checar se a conta já foi paga
+    const { data: transacoesMes } = await supabase
+      .from('transacoes')
+      .select('descricao')
+      .gte('data', `${anoMesAtual}-01`);
 
     contas.forEach(c => {
       const diasRestantes = c.dia_vencimento - hoje;
       const limiteAlerta = c.dias_alerta || 3; // Padrão: 3 dias, mas configurável (ex: 10 dias)
 
       if (diasRestantes >= 0 && diasRestantes <= limiteAlerta) {
-        let msgDias = diasRestantes === 0 ? 'VENCE HOJE! 🚨' : `vence em ${diasRestantes} dia(s) ⏰`;
         let empresaStr = c.empresa ? ` (${c.empresa})` : '';
+        const nomeContaFormatado = `[Conta Fixa] ${c.nome}${empresaStr}`;
+        
+        // Verifica se já foi paga neste mês
+        const jaPaga = transacoesMes && transacoesMes.some(t => t.descricao === nomeContaFormatado);
+        if (jaPaga) return; // Pula o aviso!
+
+        let msgDias = diasRestantes === 0 ? 'VENCE HOJE! 🚨' : `vence em ${diasRestantes} dia(s) ⏰`;
 
         bot.sendMessage(
           grupoChatId,
