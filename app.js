@@ -476,6 +476,7 @@ function renderizarGraficoPie(mapaMacro, total) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      indexAxis: 'y',
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -483,8 +484,8 @@ function renderizarGraficoPie(mapaMacro, total) {
         }
       },
       scales: {
-        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
-        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
       }
     }
   });
