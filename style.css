@@ -353,6 +353,15 @@ body::before {
 /* ===================================================
    CARDS & GRID
    =================================================== */
+.detalhamento-container details { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; transition: border-color 0.2s; }
+.detalhamento-container details:hover { border-color: var(--border-light); }
+.detalhamento-container summary { padding: 12px 16px; font-size: 14.5px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; outline: none; background: rgba(255, 255, 255, 0.02); }
+.detalhamento-container summary::-webkit-details-marker { display: none; }
+.detalhamento-container summary span { pointer-events: none; }
+.detalhamento-container .micro-row { display: flex; justify-content: space-between; padding: 10px 16px 10px 24px; border-top: 1px dashed var(--border); font-size: 13.5px; color: var(--text-dim); }
+.detalhamento-container .micro-row:hover { background: rgba(255, 255, 255, 0.02); color: var(--text); }
+.detalhamento-container details[open] summary i { transform: rotate(180deg); }
+.detalhamento-container summary i { transition: transform 0.2s; }
 .main-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

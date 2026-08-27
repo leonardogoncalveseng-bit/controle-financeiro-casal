@@ -382,6 +382,7 @@ function atualizarUI() {
   preencherTabelaExtrato(filtradas);
   renderizarGraficoPie(mapaMacro, total);
   renderizarGraficoLinhaEvolucao();
+  renderizarDetalhamento(filtradas);
   atualizarRecorrentes();
   atualizarFinanciamentos();
   atualizarInvestimentos();
@@ -540,6 +541,80 @@ function renderizarGraficoLinhaEvolucao() {
       }
     }
   });
+}
+
+// ===================================================
+// DETALHAMENTO DE CATEGORIAS (MACRO E MICRO)
+// ===================================================
+function renderizarDetalhamento(filtradas) {
+  const container = document.getElementById('lista-detalhamento');
+  if (!container) return;
+
+  if (filtradas.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-dim); text-align: center; padding: 20px;">Nenhum gasto neste período.</div>';
+    return;
+  }
+
+  const mapa = {};
+  let totalGeral = 0;
+
+  filtradas.forEach(t => {
+    const val = Number(t.valor) || 0;
+    const macro = t.categoria ? t.categoria.nome : '10.0 Outros';
+    
+    let micro = 'Outros';
+    const match = t.descricao.match(/^\[(.*?)\]/);
+    if (match) {
+      micro = match[1];
+    } else if (t.descricao.includes('[Conta Fixa]')) {
+      micro = 'Conta Fixa / Recorrente';
+    }
+
+    if (!mapa[macro]) {
+      mapa[macro] = { total: 0, micros: {} };
+    }
+    if (!mapa[macro].micros[micro]) {
+      mapa[macro].micros[micro] = 0;
+    }
+
+    mapa[macro].total += val;
+    mapa[macro].micros[micro] += val;
+    totalGeral += val;
+  });
+
+  const macrosOrdenados = Object.keys(mapa).sort((a, b) => mapa[b].total - mapa[a].total);
+
+  let html = '';
+  macrosOrdenados.forEach(macro => {
+    const objMacro = mapa[macro];
+    const pctMacro = totalGeral > 0 ? ((objMacro.total / totalGeral) * 100).toFixed(1) : 0;
+    const nomeMacroLpo = macro.split(' ').slice(1).join(' ');
+    
+    html += `<details>
+      <summary>
+        <span style="display:flex;align-items:center;gap:6px;"><i data-lucide="chevron-down" style="width:16px;height:16px;color:var(--accent);"></i> <strong>${nomeMacroLpo}</strong></span>
+        <span>${fmt(objMacro.total)} <small style="color:var(--text-dim);">(${pctMacro}%)</small></span>
+      </summary>
+      <div>`;
+    
+    const microsOrdenados = Object.keys(objMacro.micros).sort((a, b) => objMacro.micros[b] - objMacro.micros[a]);
+    
+    microsOrdenados.forEach(micro => {
+      const valMicro = objMacro.micros[micro];
+      const pctMicro = objMacro.total > 0 ? ((valMicro / objMacro.total) * 100).toFixed(0) : 0;
+      let nomeMicroLpo = micro;
+      
+      html += `<div class="micro-row">
+        <span>${nomeMicroLpo}</span>
+        <span>${fmt(valMicro)} <small>(${pctMicro}%)</small></span>
+      </div>`;
+    });
+
+    html += `</div></details>`;
+  });
+
+  container.innerHTML = html;
+  if (window.lucide) window.lucide.createIcons();
 }
 
 // ===================================================
