@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="style.css?v=2.2">
+  <link rel="stylesheet" href="style.css?v=2.3">
   <!-- Proteção de sessão: redireciona para login se não autenticado -->
   <script>
     if (sessionStorage.getItem('fc_logado') !== 'sim') {
@@ -50,6 +50,7 @@
         <div class="btn-group-period">
           <button class="period-btn active" data-period="mes-atual">Este Mês</button>
           <button class="period-btn" data-period="mes-passado">Mês Passado</button>
+          <input type="month" id="filtro-mes-especifico" class="period-btn" style="padding:4px 8px; font-family:inherit; font-size:13px; color:inherit; background:transparent; border:1px solid var(--border); outline:none; cursor:pointer;" title="Escolher mês específico">
           <button class="period-btn" data-period="3-meses">Últimos 3 Meses</button>
           <div class="custom-date-container">
             <input type="date" id="filtro-data-inicio" title="Data de Início">
@@ -58,6 +59,14 @@
             <button id="btn-aplicar-datas" class="btn-sm-apply">Filtrar</button>
           </div>
         </div>
+      </div>
+      <div class="filter-group">
+        <label>Quem Pagou:</label>
+        <select id="filtro-pessoa">
+          <option value="todos">Todos (Casal)</option>
+          <option value="Ele">Leonardo</option>
+          <option value="Ela">Giulia</option>
+        </select>
       </div>
       <div class="filter-group">
         <label>Centro de Custo <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button>:</label>
@@ -173,6 +182,20 @@
         </section>
       </main>
 
+      <!-- DETALHAMENTO DE CATEGORIAS -->
+      <section class="card full-card">
+        <div class="card-top">
+          <h2>Detalhamento por Subcategoria</h2>
+          <span class="tag">Para onde o dinheiro foi?</span>
+        </div>
+        <div id="lista-detalhamento" class="detalhamento-container">
+          <!-- Renderizado via JS -->
+          <div style="color:var(--text-dim); font-size: 14px; text-align: center; padding: 20px;">
+            Carregando detalhamento...
+          </div>
+        </div>
+      </section>
+
       <!-- LANÇAMENTO MANUAL -->
       <section class="card full-card">
         <div class="card-top">
@@ -230,20 +253,6 @@
             </div>
           </div>
         </form>
-      </section>
-
-      <!-- DETALHAMENTO DE CATEGORIAS -->
-      <section class="card full-card">
-        <div class="card-top">
-          <h2>Detalhamento por Subcategoria</h2>
-          <span class="tag">Para onde o dinheiro foi?</span>
-        </div>
-        <div id="lista-detalhamento" class="detalhamento-container">
-          <!-- Renderizado via JS -->
-          <div style="color:var(--text-dim); font-size: 14px; text-align: center; padding: 20px;">
-            Carregando detalhamento...
-          </div>
-        </div>
       </section>
 
       <!-- EXTRATO -->
@@ -823,6 +832,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2.2"></script>
+  <script src="app.js?v=2.3"></script>
 </body>
 </html>

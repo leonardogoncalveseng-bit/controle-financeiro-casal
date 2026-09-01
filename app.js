@@ -86,7 +86,9 @@ let estado = {
   filtroPeriodo: 'mes-atual',
   dataInicio: null,
   dataFim: null,
+  dataMesEspecifico: null,
   filtroMacro: 'todas',
+  filtroPessoa: 'todos',
   sobraReal: 3000,
   rendaCasal: 8000,
   transacoes: [],
@@ -102,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '2.2';
+  const APP_VERSION = '2.3';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -385,7 +387,19 @@ function atualizarUI() {
       '3-meses': 'Últimos 3 Meses',
       'custom': 'Período Personalizado'
     };
-    tituloExtrato.textContent = `Extrato de Gastos da Família (${mapaTitulos[estado.filtroPeriodo] || ''})`;
+    let tituloContexto = '';
+    if (estado.filtroPeriodo === 'mes-especifico' && estado.dataMesEspecifico) {
+      const [ano, mes] = estado.dataMesEspecifico.split('-');
+      tituloContexto = `${mes}/${ano}`;
+    } else {
+      tituloContexto = mapaTitulos[estado.filtroPeriodo] || '';
+    }
+    
+    let pessoaContexto = '';
+    if (estado.filtroPessoa === 'Ele') pessoaContexto = ' - Leonardo';
+    else if (estado.filtroPessoa === 'Ela') pessoaContexto = ' - Giulia';
+
+    tituloExtrato.textContent = `Extrato de Gastos da Família (${tituloContexto}${pessoaContexto})`;
   }
 
   // 7. Tabela, gráficos e módulos
@@ -420,6 +434,16 @@ function obterTransacoesFiltradas() {
   } else if (estado.filtroPeriodo === '3-meses') {
     const lim = new Date(); lim.setMonth(lim.getMonth() - 3);
     res = res.filter(t => new Date(t.data + 'T12:00:00') >= lim);
+  } else if (estado.filtroPeriodo === 'mes-especifico' && estado.dataMesEspecifico) {
+    const [ano, mes] = estado.dataMesEspecifico.split('-');
+    res = res.filter(t => {
+      const d = new Date(t.data + 'T12:00:00');
+      return d.getFullYear() === Number(ano) && d.getMonth() === (Number(mes) - 1);
+    });
+  }
+
+  if (estado.filtroPessoa && estado.filtroPessoa !== 'todos') {
+    res = res.filter(t => t.pago_por === estado.filtroPessoa);
   }
 
   if (estado.filtroMacro !== 'todas') {
@@ -957,11 +981,26 @@ function configurarEventos() {
   // Filtros de período
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (btn.id === 'filtro-mes-especifico') return; // tratado no onchange
       document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       estado.filtroPeriodo = btn.getAttribute('data-period');
       atualizarUI();
     });
+  });
+
+  document.getElementById('filtro-mes-especifico')?.addEventListener('change', (e) => {
+    if (!e.target.value) return;
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    estado.filtroPeriodo = 'mes-especifico';
+    estado.dataMesEspecifico = e.target.value; // "YYYY-MM"
+    atualizarUI();
+  });
+
+  document.getElementById('filtro-pessoa')?.addEventListener('change', (e) => {
+    estado.filtroPessoa = e.target.value;
+    atualizarUI();
   });
 
   document.getElementById('btn-aplicar-datas').addEventListener('click', () => {
