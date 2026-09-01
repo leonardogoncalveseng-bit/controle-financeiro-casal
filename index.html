@@ -1,17 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FinanÃ§as do Casal v2.0 â€” Leo & Giu</title>
+  <title>Finanças do Casal v2.0 — Leo & Giu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="style.css?v=2.4">
-  <!-- ProteÃ§Ã£o de sessÃ£o: redireciona para login se nÃ£o autenticado -->
+  <link rel="stylesheet" href="style.css?v=2.5">
+  <!-- Proteção de sessão: redireciona para login se não autenticado -->
   <script>
     if (sessionStorage.getItem('fc_logado') !== 'sim') {
       window.location.replace('login.html');
@@ -26,7 +26,7 @@
     <nav class="topbar">
       <div class="topbar-brand">
         <span class="brand-dot"></span>
-        <span class="brand-name">FinanÃ§as do Casal <span class="version-tag">v2.0</span></span>
+        <span class="brand-name">Finanças do Casal <span class="version-tag">v2.0</span></span>
       </div>
       <div class="nav-tabs">
         <button class="nav-tab active" data-tab="tab-dashboard"><i data-lucide="bar-chart-2"></i> <span class="tab-label">Dashboard</span></button>
@@ -46,42 +46,33 @@
     <!-- FILTROS GLOBAIS -->
     <section class="filter-bar">
       <div class="filter-group">
-        <label>PerÃ­odo:</label>
+        <label>Período:</label>
         <div class="btn-group-period">
-          <button class="period-btn active" data-period="mes-atual">Este MÃªs</button>
-          <button class="period-btn" data-period="mes-passado">MÃªs Passado</button>
-          <input type="month" id="filtro-mes-especifico" class="period-btn" style="padding:4px 8px; font-family:inherit; font-size:13px; color:inherit; background:transparent; border:1px solid var(--border); outline:none; cursor:pointer;" title="Escolher mÃªs especÃ­fico">
-          <button class="period-btn" data-period="3-meses">Ãšltimos 3 Meses</button>
+          <button class="period-btn active" data-period="mes-atual">Este Mês</button>
+          <button class="period-btn" data-period="mes-passado">Mês Passado</button>
+          <button class="period-btn" data-period="3-meses">Últimos 3 Meses</button>
           <div class="custom-date-container">
-            <input type="date" id="filtro-data-inicio" title="Data de InÃ­cio">
-            <span>atÃ©</span>
+            <input type="date" id="filtro-data-inicio" title="Data de Início">
+            <span>até</span>
             <input type="date" id="filtro-data-fim" title="Data de Fim">
             <button id="btn-aplicar-datas" class="btn-sm-apply">Filtrar</button>
           </div>
         </div>
       </div>
       <div class="filter-group">
-        <label>Quem Pagou:</label>
-        <select id="filtro-pessoa">
-          <option value="todos">Todos (Casal)</option>
-          <option value="Ele">Leonardo</option>
-          <option value="Ela">Giulia</option>
-        </select>
-      </div>
-      <div class="filter-group">
         <label>Centro de Custo <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button>:</label>
         <select id="filtro-categoria-macro">
           <option value="todas">Todos os Centros de Custo</option>
-          <option value="10.0 Outros">âš ï¸ Pendentes de Ajuste (Outros)</option>
-          <option value="1.0 AlimentaÃ§Ã£o">1.0 AlimentaÃ§Ã£o</option>
+          <option value="10.0 Outros">⚠️ Pendentes de Ajuste (Outros)</option>
+          <option value="1.0 Alimentação">1.0 Alimentação</option>
           <option value="2.0 Transporte">2.0 Transporte</option>
           <option value="3.0 Moradia">3.0 Moradia</option>
-          <option value="4.0 SaÃºde">4.0 SaÃºde</option>
+          <option value="4.0 Saúde">4.0 Saúde</option>
           <option value="5.0 Lazer">5.0 Lazer</option>
-          <option value="6.0 EducaÃ§Ã£o">6.0 EducaÃ§Ã£o</option>
+          <option value="6.0 Educação">6.0 Educação</option>
           <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
-          <option value="8.0 Empresa / NegÃ³cios">8.0 Empresa / NegÃ³cios</option>
-          <option value="9.0 DoaÃ§Ãµes & Presentes">9.0 DoaÃ§Ãµes & Presentes</option>
+          <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+          <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
           <option value="10.0 Outros">10.0 Outros</option>
         </select>
       </div>
@@ -92,40 +83,40 @@
 
       <div id="alert-pendentes-box" class="alert-pendentes hidden">
         <i data-lucide="alert-triangle"></i>
-        <span id="alert-pendentes-texto">Existem lanÃ§amentos sem categoria definida!</span>
+        <span id="alert-pendentes-texto">Existem lançamentos sem categoria definida!</span>
         <button id="btn-filtrar-pendentes" class="btn-sm-alert">Filtrar Pendentes</button>
       </div>
 
       <section class="kpi-grid-v2">
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">Total de Gastos no PerÃ­odo</span>
+          <span class="kpi-title-v2">Total de Gastos no Período</span>
           <div class="kpi-number-v2 expense" id="val-gastos-totais">R$ 0,00</div>
-          <span class="kpi-sub-v2" id="val-media-diaria">MÃ©dia: R$ 0,00/dia</span>
+          <span class="kpi-sub-v2" id="val-media-diaria">Média: R$ 0,00/dia</span>
         </div>
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Maior Gasto Individual</span>
-          <div class="kpi-highlight-text" id="val-maior-gasto-item">â€”</div>
-          <span class="kpi-sub-v2" id="val-maior-gasto-detalhe">Nenhum lanÃ§amento no perÃ­odo</span>
+          <div class="kpi-highlight-text" id="val-maior-gasto-item">—</div>
+          <span class="kpi-sub-v2" id="val-maior-gasto-detalhe">Nenhum lançamento no período</span>
         </div>
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Dia da Semana que Mais Gasta</span>
-          <div class="kpi-number-v2" id="val-dia-mais-gasta">â€”</div>
-          <span class="kpi-sub-v2" id="val-dia-mais-gasta-sub">AnÃ¡lise de comportamento</span>
+          <div class="kpi-number-v2" id="val-dia-mais-gasta">—</div>
+          <span class="kpi-sub-v2" id="val-dia-mais-gasta-sub">Análise de comportamento</span>
         </div>
         <div class="kpi-card-v2">
           <span class="kpi-title-v2">Maior vs Menor Centro de Custo</span>
           <div class="split-kpi">
-            <div><span>Maior:</span> <strong id="val-maior-macro">â€”</strong></div>
-            <div><span>Menor:</span> <strong id="val-menor-macro">â€”</strong></div>
+            <div><span>Maior:</span> <strong id="val-maior-macro">—</strong></div>
+            <div><span>Menor:</span> <strong id="val-menor-macro">—</strong></div>
           </div>
         </div>
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">NÃ­vel Zero (SobrevivÃªncia)</span>
+          <span class="kpi-title-v2">Nível Zero (Sobrevivência)</span>
           <div class="kpi-number-v2" id="val-nivel-zero">R$ 0,00</div>
-          <span class="kpi-sub-v2" id="sub-nivel-zero">Contas fixas ativas / mÃªs</span>
+          <span class="kpi-sub-v2" id="sub-nivel-zero">Contas fixas ativas / mês</span>
         </div>
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">ObrigaÃ§Ãµes vs Dia a Dia</span>
+          <span class="kpi-title-v2">Obrigações vs Dia a Dia</span>
           <div class="split-kpi">
             <div><span>Contas:</span> <strong id="val-fixos-vs-var-fixo">0%</strong></div>
             <div><span>Dia a dia:</span> <strong id="val-fixos-vs-var-var">0%</strong></div>
@@ -139,7 +130,7 @@
           <span class="kpi-title-v2">Curva do Fim de Semana</span>
           <div class="split-kpi">
             <div><span>Seg-Sex:</span> <strong id="val-curva-semana">0%</strong></div>
-            <div><span>SÃ¡b-Dom:</span> <strong id="val-curva-fds">0%</strong></div>
+            <div><span>Sáb-Dom:</span> <strong id="val-curva-fds">0%</strong></div>
           </div>
           <div style="width:100%;height:4px;background:#334155;border-radius:2px;margin-top:8px;display:flex;overflow:hidden;">
             <div id="bar-semana" style="background:#10b981;width:0%;"></div>
@@ -147,12 +138,12 @@
           </div>
         </div>
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">TermÃ´metro de AlimentaÃ§Ã£o</span>
+          <span class="kpi-title-v2">Termômetro de Alimentação</span>
           <div class="kpi-number-v2" id="val-term-alim" style="color:#f43f5e;">0%</div>
           <span class="kpi-sub-v2" id="sub-term-alim">Da sua grana vai pra comida</span>
         </div>
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">Alerta de Contas VariÃ¡veis</span>
+          <span class="kpi-title-v2">Alerta de Contas Variáveis</span>
           <div class="kpi-highlight-text" id="val-alerta-var" style="font-size:13px;white-space:normal;line-height:1.4;margin-top:4px;">Analisando...</div>
         </div>
       </section>
@@ -161,20 +152,20 @@
         <section class="card">
           <div class="card-top">
             <h2>Gastos por Centro de Custo (%)</h2>
-            <span class="tag">DivisÃ£o Percentual</span>
+            <span class="tag">Divisão Percentual</span>
           </div>
           <div class="chart-wrapper">
             <canvas id="chart-pie-categorias"></canvas>
           </div>
           <div id="dicas-economia" class="tip-bar">
-            <span id="texto-dica-economia">Carregando sugestÃ£o de economia...</span>
+            <span id="texto-dica-economia">Carregando sugestão de economia...</span>
           </div>
         </section>
 
         <section class="card">
           <div class="card-top">
-            <h2>EvoluÃ§Ã£o de Gastos MÃªs a MÃªs</h2>
-            <span class="tag">HistÃ³rico Mensal</span>
+            <h2>Evolução de Gastos Mês a Mês</h2>
+            <span class="tag">Histórico Mensal</span>
           </div>
           <div class="chart-wrapper">
             <canvas id="chart-line-evolucao"></canvas>
@@ -182,21 +173,7 @@
         </section>
       </main>
 
-      <!-- DETALHAMENTO DE CATEGORIAS -->
-      <section class="card full-card">
-        <div class="card-top">
-          <h2>Detalhamento por Subcategoria</h2>
-          <span class="tag">Para onde o dinheiro foi?</span>
-        </div>
-        <div id="lista-detalhamento" class="detalhamento-container">
-          <!-- Renderizado via JS -->
-          <div style="color:var(--text-dim); font-size: 14px; text-align: center; padding: 20px;">
-            Carregando detalhamento...
-          </div>
-        </div>
-      </section>
-
-      <!-- LANÃ‡AMENTO MANUAL -->
+      <!-- LANÇAMENTO MANUAL -->
       <section class="card full-card">
         <div class="card-top">
           <h2>Registrar Gasto Manualmente</h2>
@@ -204,22 +181,22 @@
         <form id="form-novo-gasto">
           <div class="field-row">
             <div class="field">
-              <label>Centro de Custo â€” Macro <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button></label>
+              <label>Centro de Custo — Macro <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button></label>
               <select id="gasto-macro" onchange="atualizarMicroGasto(this.value)">
-                <option value="1.0 AlimentaÃ§Ã£o">1.0 AlimentaÃ§Ã£o</option>
+                <option value="1.0 Alimentação">1.0 Alimentação</option>
                 <option value="2.0 Transporte">2.0 Transporte</option>
                 <option value="3.0 Moradia">3.0 Moradia</option>
-                <option value="4.0 SaÃºde">4.0 SaÃºde</option>
+                <option value="4.0 Saúde">4.0 Saúde</option>
                 <option value="5.0 Lazer">5.0 Lazer</option>
-                <option value="6.0 EducaÃ§Ã£o">6.0 EducaÃ§Ã£o</option>
+                <option value="6.0 Educação">6.0 Educação</option>
                 <option value="7.0 Roupas &amp; Cuidados Pessoais">7.0 Roupas &amp; Cuidados Pessoais</option>
-                <option value="8.0 Empresa / NegÃ³cios">8.0 Empresa / NegÃ³cios</option>
-                <option value="9.0 DoaÃ§Ãµes &amp; Presentes">9.0 DoaÃ§Ãµes &amp; Presentes</option>
+                <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+                <option value="9.0 Doações &amp; Presentes">9.0 Doações &amp; Presentes</option>
                 <option value="10.0 Outros">10.0 Outros</option>
               </select>
             </div>
             <div class="field">
-              <label>Subcategoria â€” Micro</label>
+              <label>Subcategoria — Micro</label>
               <select id="gasto-micro">
                 <option>1.1 Supermercado</option>
               </select>
@@ -243,23 +220,37 @@
             <div class="field">
               <label>Quem Pagou?</label>
               <select id="gasto-pago-por">
-                <option value="Ele">Leo ðŸ‘¨</option>
-                <option value="Ela">Giu ðŸ‘©</option>
+                <option value="Ele">Leo 👨</option>
+                <option value="Ela">Giu 👩</option>
               </select>
             </div>
             <div class="field" style="justify-content:flex-end;">
               <label>&nbsp;</label>
-              <button type="submit" class="btn-primary">âœ… Cadastrar</button>
+              <button type="submit" class="btn-primary">✅ Cadastrar</button>
             </div>
           </div>
         </form>
       </section>
 
+      <!-- DETALHAMENTO DE CATEGORIAS -->
+      <section class="card full-card">
+        <div class="card-top">
+          <h2>Detalhamento por Subcategoria</h2>
+          <span class="tag">Para onde o dinheiro foi?</span>
+        </div>
+        <div id="lista-detalhamento" class="detalhamento-container">
+          <!-- Renderizado via JS -->
+          <div style="color:var(--text-dim); font-size: 14px; text-align: center; padding: 20px;">
+            Carregando detalhamento...
+          </div>
+        </div>
+      </section>
+
       <!-- EXTRATO -->
       <section class="card full-card">
         <div class="card-top">
-          <h2 id="titulo-extrato">Extrato de Gastos da FamÃ­lia</h2>
-          <input type="text" id="input-busca-extrato" placeholder="ðŸ” Buscar lanÃ§amento..." class="search-input">
+          <h2 id="titulo-extrato">Extrato de Gastos da Família</h2>
+          <input type="text" id="input-busca-extrato" placeholder="🔍 Buscar lançamento..." class="search-input">
         </div>
         <div class="table-scroll">
           <table>
@@ -267,10 +258,10 @@
               <tr>
                 <th>Data</th>
                 <th>Centro de Custo</th>
-                <th>DescriÃ§Ã£o</th>
+                <th>Descrição</th>
                 <th>Quem Pagou</th>
                 <th>Valor</th>
-                <th style="text-align:center;">AÃ§Ãµes</th>
+                <th style="text-align:center;">Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-transacoes">
@@ -289,9 +280,9 @@
         <span id="err-recorrentes-texto">Erro ao carregar contas fixas.</span>
       </div>
 
-      <!-- FormulÃ¡rio + Resumo em 2 colunas -->
+      <!-- Formulário + Resumo em 2 colunas -->
       <div class="main-grid">
-        <!-- FORMULÃRIO -->
+        <!-- FORMULÁRIO -->
         <section class="card">
           <div class="card-top"><h2>Cadastrar Conta Fixa</h2></div>
           <form id="form-nova-recorrente">
@@ -306,13 +297,13 @@
             <div class="field">
               <label>Tipo de Valor</label>
               <select id="rec-tipo-valor">
-                <option value="fixo">ðŸ’° Fixo â€” mesmo valor todo mÃªs</option>
-                <option value="variavel">ðŸ“Š VariÃ¡vel â€” varia (ex: Ãgua, Energia)</option>
+                <option value="fixo">💰 Fixo — mesmo valor todo mês</option>
+                <option value="variavel">📊 Variável — varia (ex: Água, Energia)</option>
               </select>
             </div>
             <div class="field-row">
               <div class="field">
-                <label>Valor ReferÃªncia (R$)</label>
+                <label>Valor Referência (R$)</label>
                 <input type="number" step="0.01" id="rec-valor" placeholder="0,00">
               </div>
               <div class="field">
@@ -326,26 +317,26 @@
                 <input type="number" id="rec-dias-alerta" min="1" max="30" value="3">
               </div>
               <div class="field">
-                <label>ResponsÃ¡vel</label>
+                <label>Responsável</label>
                 <select id="rec-responsavel">
-                  <option value="Casal">Casal ðŸ’‘</option>
-                  <option value="Ele">Leo ðŸ‘¨</option>
-                  <option value="Ela">Giu ðŸ‘©</option>
+                  <option value="Casal">Casal 💑</option>
+                  <option value="Ele">Leo 👨</option>
+                  <option value="Ela">Giu 👩</option>
                 </select>
               </div>
             </div>
             <div class="field">
               <label>Centro de Custo Macro <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button></label>
               <select id="rec-macro">
-                <option value="8.0 Empresa / NegÃ³cios">8.0 Empresa / NegÃ³cios</option>
+                <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
                 <option value="3.0 Moradia">3.0 Moradia</option>
-                <option value="1.0 AlimentaÃ§Ã£o">1.0 AlimentaÃ§Ã£o</option>
+                <option value="1.0 Alimentação">1.0 Alimentação</option>
                 <option value="2.0 Transporte">2.0 Transporte</option>
-                <option value="4.0 SaÃºde">4.0 SaÃºde</option>
+                <option value="4.0 Saúde">4.0 Saúde</option>
                 <option value="5.0 Lazer">5.0 Lazer</option>
-                <option value="6.0 EducaÃ§Ã£o">6.0 EducaÃ§Ã£o</option>
+                <option value="6.0 Educação">6.0 Educação</option>
                 <option value="7.0 Roupas &amp; Cuidados Pessoais">7.0 Roupas &amp; Cuidados Pessoais</option>
-                <option value="9.0 DoaÃ§Ãµes &amp; Presentes">9.0 DoaÃ§Ãµes &amp; Presentes</option>
+                <option value="9.0 Doações &amp; Presentes">9.0 Doações &amp; Presentes</option>
                 <option value="10.0 Outros">10.0 Outros</option>
               </select>
             </div>
@@ -362,18 +353,18 @@
               <strong id="val-total-recorrente">R$ 0,00</strong>
             </div>
             <div class="mini-kpi">
-              <span>Contas VariÃ¡veis:</span>
+              <span>Contas Variáveis:</span>
               <strong id="val-total-variavel" style="color:var(--yellow)">R$ 0,00</strong>
             </div>
           </div>
-          <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">â¬‡ï¸ Tabela completa abaixo</p>
+          <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">⬇️ Tabela completa abaixo</p>
         </section>
       </div>
 
-      <!-- TABELA COMPLETA â€” Largura total -->
+      <!-- TABELA COMPLETA — Largura total -->
       <section class="card">
         <div class="card-top">
-          <h2>ðŸ“‹ HistÃ³rico de Contas Fixas</h2>
+          <h2>📋 Histórico de Contas Fixas</h2>
           <span class="tag" id="rec-count-tag">0 contas</span>
         </div>
         <div class="table-scroll">
@@ -383,11 +374,11 @@
                 <th>Venc.</th>
                 <th>Conta / Empresa</th>
                 <th>Tipo</th>
-                <th>ResponsÃ¡vel</th>
+                <th>Responsável</th>
                 <th>Categoria</th>
                 <th>Alerta</th>
                 <th>Valor Ref.</th>
-                <th>AÃ§Ãµes</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-recorrentes">
@@ -431,7 +422,7 @@
         </section>
 
         <section class="card">
-          <div class="card-top"><h2>Resultado da SimulaÃ§Ã£o</h2></div>
+          <div class="card-top"><h2>Resultado da Simulação</h2></div>
           <div id="fin-resultado-box" class="sim-result-grid">
             <div class="result-card">
               <span>Parcela Mensal Estimada:</span>
@@ -443,10 +434,10 @@
             </div>
             <div class="result-card full">
               <span>Impacto na Sobra do Casal:</span>
-              <p id="fin-res-impacto">Simule um financiamento para ver o impacto no orÃ§amento.</p>
+              <p id="fin-res-impacto">Simule um financiamento para ver o impacto no orçamento.</p>
             </div>
           </div>
-          <button id="btn-salvar-financiamento" class="btn-primary-sm" style="margin-top:15px;width:100%;">ðŸ’¾ Salvar SimulaÃ§Ã£o</button>
+          <button id="btn-salvar-financiamento" class="btn-primary-sm" style="margin-top:15px;width:100%;">💾 Salvar Simulação</button>
         </section>
       </div>
 
@@ -463,7 +454,7 @@
                 <th>Taxa a.a.</th>
                 <th>Prazo</th>
                 <th>Parcela</th>
-                <th style="text-align:center;">AÃ§Ãµes</th>
+                <th style="text-align:center;">Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-financiamentos">
@@ -477,49 +468,49 @@
     <!-- ABA 4: INVESTIMENTOS (REFORMULADO) -->
     <div id="tab-investimentos" class="tab-content">
 
-      <!-- RESUMO DO PATRIMÃ”NIO -->
+      <!-- RESUMO DO PATRIMÔNIO -->
       <section class="kpi-grid-v2" style="margin-bottom:0;">
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">ðŸ’° PatrimÃ´nio Total Investido</span>
+          <span class="kpi-title-v2">💰 Patrimônio Total Investido</span>
           <div class="kpi-number-v2" id="inv-total-aplicado" style="color:var(--accent);">R$ 0,00</div>
           <span class="kpi-sub-v2" id="inv-total-sub">Soma dos valores iniciais</span>
         </div>
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">ðŸ“ˆ Saldo Atual (com Juros)</span>
+          <span class="kpi-title-v2">📈 Saldo Atual (com Juros)</span>
           <div class="kpi-number-v2" id="inv-saldo-atual" style="color:#10b981;">R$ 0,00</div>
-          <span class="kpi-sub-v2">Calculado atÃ© hoje</span>
+          <span class="kpi-sub-v2">Calculado até hoje</span>
         </div>
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">ðŸŽ¯ Saldo Total no Resgate</span>
+          <span class="kpi-title-v2">🎯 Saldo Total no Resgate</span>
           <div class="kpi-number-v2" id="inv-saldo-resgate" style="color:#f59e0b;">R$ 0,00</div>
           <span class="kpi-sub-v2" id="inv-resgate-sub">Projetado na data de resgate</span>
         </div>
         <div class="kpi-card-v2">
-          <span class="kpi-title-v2">ðŸ  CorrelaÃ§Ã£o com Financiamento</span>
-          <p id="inv-correlacao-mini" style="font-size:0.78rem;color:var(--text-muted);margin:6px 0 0;">Configure um financiamento para ver a correlaÃ§Ã£o.</p>
+          <span class="kpi-title-v2">🏠 Correlação com Financiamento</span>
+          <p id="inv-correlacao-mini" style="font-size:0.78rem;color:var(--text-muted);margin:6px 0 0;">Configure um financiamento para ver a correlação.</p>
         </div>
       </section>
 
       <div class="main-grid" style="margin-top:20px;">
 
-        <!-- FORMULÃRIO DE NOVO INVESTIMENTO -->
+        <!-- FORMULÁRIO DE NOVO INVESTIMENTO -->
         <section class="card">
           <div class="card-top"><h2>Cadastrar Investimento Real</h2></div>
           <form id="form-novo-investimento">
             <div class="field">
               <label>Nome do Investimento</label>
-              <input type="text" id="inv-nome" placeholder="Ex: CDB Nubank, Tesouro Direto, PoupanÃ§a" required>
+              <input type="text" id="inv-nome" placeholder="Ex: CDB Nubank, Tesouro Direto, Poupança" required>
             </div>
             <div class="field">
               <label>Tipo de Investimento</label>
               <select id="inv-tipo">
                 <option value="Renda Fixa / CDB">Renda Fixa / CDB</option>
                 <option value="Tesouro Direto">Tesouro Direto</option>
-                <option value="PoupanÃ§a">PoupanÃ§a</option>
+                <option value="Poupança">Poupança</option>
                 <option value="LCI / LCA">LCI / LCA</option>
-                <option value="AÃ§Ãµes / FIIs">AÃ§Ãµes / FIIs</option>
+                <option value="Ações / FIIs">Ações / FIIs</option>
                 <option value="Fundo de Investimento">Fundo de Investimento</option>
-                <option value="Reserva de EmergÃªncia">Reserva de EmergÃªncia</option>
+                <option value="Reserva de Emergência">Reserva de Emergência</option>
               </select>
             </div>
             <div class="field-row">
@@ -543,10 +534,10 @@
               </div>
             </div>
             <div class="field">
-              <label>ObservaÃ§Ãµes (opcional)</label>
+              <label>Observações (opcional)</label>
               <input type="text" id="inv-obs" placeholder="Ex: Banco do Brasil, CDB 110% CDI">
             </div>
-            <button type="submit" class="btn-primary">ðŸ’¾ Salvar Investimento</button>
+            <button type="submit" class="btn-primary">💾 Salvar Investimento</button>
           </form>
         </section>
 
@@ -554,7 +545,7 @@
         <section class="card">
           <div class="card-top">
             <h2>Simulador de Aporte Futuro</h2>
-            <span class="tag">ContribuiÃ§Ã£o mensal</span>
+            <span class="tag">Contribuição mensal</span>
           </div>
           <div class="invest-config-bar">
             <div class="field-inline">
@@ -578,7 +569,7 @@
             </div>
           </div>
           <div id="inv-correlacao-financiamento" class="tip-bar" style="margin-top:16px;">
-            Configure um financiamento e veja aqui o plano de amortizaÃ§Ã£o!
+            Configure um financiamento e veja aqui o plano de amortização!
           </div>
         </section>
 
@@ -598,11 +589,11 @@
                 <th>Tipo</th>
                 <th>Valor Inicial</th>
                 <th>Taxa a.a.</th>
-                <th>Data InÃ­cio</th>
+                <th>Data Início</th>
                 <th>Data Resgate</th>
-                <th>Saldo Atual ðŸ“ˆ</th>
-                <th>Saldo no Resgate ðŸŽ¯</th>
-                <th style="text-align:center;">AÃ§Ãµes</th>
+                <th>Saldo Atual 📈</th>
+                <th>Saldo no Resgate 🎯</th>
+                <th style="text-align:center;">Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-investimentos">
@@ -618,17 +609,17 @@
     <div id="tab-fechamento" class="tab-content">
       <section class="card full-card">
         <div class="card-top">
-          <h2>Fechamento do MÃªs & Comparativo</h2>
-          <button id="btn-fechar-mes-acao" class="btn-primary-sm">Salvar Fechamento deste MÃªs</button>
+          <h2>Fechamento do Mês & Comparativo</h2>
+          <button id="btn-fechar-mes-acao" class="btn-primary-sm">Salvar Fechamento deste Mês</button>
         </div>
         <div class="fechamento-grid">
           <div class="fechamento-box">
             <h3>Centro de Custo que MAIS CRESCEU</h3>
-            <p id="fech-maior-crescimento">Comparando com o mÃªs anterior...</p>
+            <p id="fech-maior-crescimento">Comparando com o mês anterior...</p>
           </div>
           <div class="fechamento-box success">
             <h3>Centro de Custo que MAIS REDUZIU</h3>
-            <p id="fech-maior-reducao">Comparando com o mÃªs anterior...</p>
+            <p id="fech-maior-reducao">Comparando com o mês anterior...</p>
           </div>
         </div>
       </section>
@@ -636,28 +627,28 @@
 
   </div>
 
-  <!-- MODAL EDIÃ‡ÃƒO TRANSAÃ‡ÃƒO -->
+  <!-- MODAL EDIÇÃO TRANSAÇÃO -->
   <div id="modal-editar" class="overlay hidden">
     <div class="modal">
       <h2>Editar & Reordenar Centro de Custo</h2>
       <input type="hidden" id="edit-id">
       <div class="field">
-        <label>DescriÃ§Ã£o / Estabelecimento</label>
+        <label>Descrição / Estabelecimento</label>
         <input type="text" id="edit-descricao">
       </div>
       <div class="field-row">
         <div class="field">
           <label>Centro de Custo (Macro)</label>
           <select id="edit-categoria-macro">
-            <option value="1.0 AlimentaÃ§Ã£o">1.0 AlimentaÃ§Ã£o</option>
+            <option value="1.0 Alimentação">1.0 Alimentação</option>
             <option value="2.0 Transporte">2.0 Transporte</option>
             <option value="3.0 Moradia">3.0 Moradia</option>
-            <option value="4.0 SaÃºde">4.0 SaÃºde</option>
+            <option value="4.0 Saúde">4.0 Saúde</option>
             <option value="5.0 Lazer">5.0 Lazer</option>
-            <option value="6.0 EducaÃ§Ã£o">6.0 EducaÃ§Ã£o</option>
+            <option value="6.0 Educação">6.0 Educação</option>
             <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
-            <option value="8.0 Empresa / NegÃ³cios">8.0 Empresa / NegÃ³cios</option>
-            <option value="9.0 DoaÃ§Ãµes & Presentes">9.0 DoaÃ§Ãµes & Presentes</option>
+            <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+            <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
             <option value="10.0 Outros">10.0 Outros</option>
           </select>
         </div>
@@ -680,19 +671,19 @@
         <div class="field">
           <label>Quem Pagou?</label>
           <select id="edit-pago-por">
-            <option value="Ele">Leo ðŸ‘¨</option>
-            <option value="Ela">Giu ðŸ‘©</option>
+            <option value="Ele">Leo 👨</option>
+            <option value="Ela">Giu 👩</option>
           </select>
         </div>
       </div>
       <div class="modal-btns">
-        <button id="btn-salvar-edicao" class="btn-primary">Salvar & Ensinar RobÃ´ ðŸŽ“</button>
+        <button id="btn-salvar-edicao" class="btn-primary">Salvar & Ensinar Robô 🎓</button>
         <button id="btn-cancelar-edicao" class="btn-ghost">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL EDIÃ‡ÃƒO CONTA FIXA -->
+  <!-- MODAL EDIÇÃO CONTA FIXA -->
   <div id="modal-editar-recorrente" class="overlay hidden">
     <div class="modal">
       <h2>Editar Conta Fixa</h2>
@@ -708,8 +699,8 @@
       <div class="field">
         <label>Tipo de Valor</label>
         <select id="edit-rec-tipo-valor">
-          <option value="fixo">ðŸ’° Fixo â€” mesmo valor todo mÃªs</option>
-          <option value="variavel">ðŸ“Š VariÃ¡vel â€” varia (ex: Ãgua, Energia)</option>
+          <option value="fixo">💰 Fixo — mesmo valor todo mês</option>
+          <option value="variavel">📊 Variável — varia (ex: Água, Energia)</option>
         </select>
       </div>
       <div class="field-row">
@@ -728,31 +719,31 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label>ResponsÃ¡vel</label>
+          <label>Responsável</label>
           <select id="edit-rec-responsavel">
-            <option value="Casal">Casal ðŸ’‘</option>
-            <option value="Ele">Leo ðŸ‘¨</option>
-            <option value="Ela">Giu ðŸ‘©</option>
+            <option value="Casal">Casal 💑</option>
+            <option value="Ele">Leo 👨</option>
+            <option value="Ela">Giu 👩</option>
           </select>
         </div>
         <div class="field">
           <label>Centro de Custo</label>
           <select id="edit-rec-macro">
-            <option value="8.0 Empresa / NegÃ³cios">8.0 Empresa / NegÃ³cios</option>
+            <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
             <option value="3.0 Moradia">3.0 Moradia</option>
-            <option value="1.0 AlimentaÃ§Ã£o">1.0 AlimentaÃ§Ã£o</option>
+            <option value="1.0 Alimentação">1.0 Alimentação</option>
             <option value="2.0 Transporte">2.0 Transporte</option>
-            <option value="4.0 SaÃºde">4.0 SaÃºde</option>
+            <option value="4.0 Saúde">4.0 Saúde</option>
             <option value="5.0 Lazer">5.0 Lazer</option>
-            <option value="6.0 EducaÃ§Ã£o">6.0 EducaÃ§Ã£o</option>
+            <option value="6.0 Educação">6.0 Educação</option>
             <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
-            <option value="9.0 DoaÃ§Ãµes & Presentes">9.0 DoaÃ§Ãµes & Presentes</option>
+            <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
             <option value="10.0 Outros">10.0 Outros</option>
           </select>
         </div>
       </div>
       <div class="modal-btns">
-        <button id="btn-salvar-rec-edicao" class="btn-primary">Salvar AlteraÃ§Ãµes</button>
+        <button id="btn-salvar-rec-edicao" class="btn-primary">Salvar Alterações</button>
         <button id="btn-cancelar-rec-edicao" class="btn-ghost">Cancelar</button>
       </div>
     </div>
@@ -761,7 +752,7 @@
   <!-- MODAL PAGAR CONTA FIXA -->
   <div id="modal-pagar-recorrente" class="overlay hidden">
     <div class="modal">
-      <h2>ðŸ’³ Registrar Pagamento de Conta</h2>
+      <h2>💳 Registrar Pagamento de Conta</h2>
       <input type="hidden" id="pagar-rec-id">
       <input type="hidden" id="pagar-rec-macro">
       <div class="field">
@@ -770,19 +761,19 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Valor Pago Neste MÃªs (R$)</label>
+          <label>Valor Pago Neste Mês (R$)</label>
           <input type="number" step="0.01" id="pagar-rec-valor" required>
         </div>
         <div class="field">
           <label>Quem Pagou?</label>
           <select id="pagar-rec-responsavel">
-            <option value="Ele">Leo ðŸ‘¨</option>
-            <option value="Ela">Giu ðŸ‘©</option>
+            <option value="Ele">Leo 👨</option>
+            <option value="Ela">Giu 👩</option>
           </select>
         </div>
       </div>
       <div class="modal-btns">
-        <button id="btn-confirmar-pagamento-rec" class="btn-primary">âœ… Confirmar &amp; LanÃ§ar no Extrato</button>
+        <button id="btn-confirmar-pagamento-rec" class="btn-primary">✅ Confirmar &amp; Lançar no Extrato</button>
         <button id="btn-cancelar-pagamento-rec" class="btn-ghost">Cancelar</button>
       </div>
     </div>
@@ -790,11 +781,11 @@
 
 
 
-  <!-- MODAL ATUALIZAÃ‡ÃƒO -->
+  <!-- MODAL ATUALIZAÇÃO -->
   <div id="modal-atualizacao" class="overlay hidden" style="z-index: 9999;">
     <div class="modal" style="text-align:center;">
-      <h2 style="color:var(--accent);">Nova VersÃ£o DisponÃ­vel! ðŸš€</h2>
-      <p style="margin: 12px 0; color:var(--text-dim); font-size:14px;">Tem coisa nova no app! Atualize agora para carregar as Ãºltimas melhorias sem bugar nada.</p>
+      <h2 style="color:var(--accent);">Nova Versão Disponível! 🚀</h2>
+      <p style="margin: 12px 0; color:var(--text-dim); font-size:14px;">Tem coisa nova no app! Atualize agora para carregar as últimas melhorias sem bugar nada.</p>
       <button onclick="window.location.href = window.location.pathname + '?v=' + Date.now();" class="btn-primary" style="width:100%; margin-top:8px;">Atualizar App</button>
     </div>
   </div>
@@ -803,24 +794,24 @@
   <div id="modal-guia-categorias" class="overlay hidden">
     <div class="modal modal-lg">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h2 style="margin:0;display:flex;align-items:center;gap:8px;">â„¹ï¸ Guia de Centros de Custo &amp; Subcategorias</h2>
-        <button onclick="fecharGuiaCategorias()" style="background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer;line-height:1;">âœ•</button>
+        <h2 style="margin:0;display:flex;align-items:center;gap:8px;">ℹ️ Guia de Centros de Custo &amp; Subcategorias</h2>
+        <button onclick="fecharGuiaCategorias()" style="background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer;line-height:1;">✕</button>
       </div>
       <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;line-height:1.4;">
-        Consulte abaixo onde alocar cada gasto da famÃ­lia. Digite no campo abaixo para filtrar instantaneamente (ex: <em>iFood, CPFL, Uber, Barbeiro, Contador...</em>).
+        Consulte abaixo onde alocar cada gasto da família. Digite no campo abaixo para filtrar instantaneamente (ex: <em>iFood, CPFL, Uber, Barbeiro, Contador...</em>).
       </p>
       <div class="field" style="margin-bottom:14px;">
-        <input type="text" id="busca-guia-categorias" placeholder="ðŸ” Digite para buscar (ex: Posto, FarmÃ¡cia, Netflix, SalÃ£o...)" oninput="filtrarGuiaCategorias(this.value)">
+        <input type="text" id="busca-guia-categorias" placeholder="🔍 Digite para buscar (ex: Posto, Farmácia, Netflix, Salão...)" oninput="filtrarGuiaCategorias(this.value)">
       </div>
       <div id="lista-guia-categorias" class="guia-grid">
         <!-- Preenchido dinamicamente via JS -->
       </div>
       <div class="modal-btns" style="margin-top:16px;">
-        <button onclick="fecharGuiaCategorias()" class="btn-primary">Entendido ðŸ‘</button>
+        <button onclick="fecharGuiaCategorias()" class="btn-primary">Entendido 👍</button>
       </div>
     </div>
   </div>
 
-  <script src="app.js?v=2.4"></script>
+  <script src="app.js?v=2.5"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-﻿// ===================================================
+// ===================================================
 // APLICATIVO FINANCEIRO DO CASAL v2.0
 // ===================================================
 
@@ -10,36 +10,36 @@ let chartLineInstance = null;
 // HIERARQUIA DE CENTROS DE CUSTO (10 MACROS + SUBCATEGORIAS)
 // ===================================================
 const SUBCATEGORIAS_MAP = {
-  '1.0 AlimentaÃ§Ã£o': [
+  '1.0 Alimentação': [
     '1.1 Supermercado',
     '1.2 Padaria',
     '1.3 Restaurante',
     '1.4 Delivery / iFood',
-    '1.5 AÃ§aÃ­',
-    '1.6 AÃ§ougue / Hortifruti'
+    '1.5 Açaí',
+    '1.6 Açougue / Hortifruti'
   ],
   '2.0 Transporte': [
-    '2.1 CombustÃ­vel',
-    '2.2 ManutenÃ§Ã£o Veicular',
+    '2.1 Combustível',
+    '2.2 Manutenção Veicular',
     '2.3 Uber / App de Transporte',
-    '2.4 PedÃ¡gio / Estacionamento',
+    '2.4 Pedágio / Estacionamento',
     '2.5 Seguro Veicular'
   ],
   '3.0 Moradia': [
     '3.1 Aluguel',
-    '3.2 CondomÃ­nio',
+    '3.2 Condomínio',
     '3.3 Energia / Luz (CPFL)',
-    '3.4 Ãgua (SAAE)',
+    '3.4 Água (SAAE)',
     '3.5 Internet / Telefone',
-    '3.6 GÃ¡s',
-    '3.7 ManutenÃ§Ã£o / Reforma',
-    '3.8 Casa / UtensÃ­lios DomÃ©sticos'
+    '3.6 Gás',
+    '3.7 Manutenção / Reforma',
+    '3.8 Casa / Utensílios Domésticos'
   ],
-  '4.0 SaÃºde': [
-    '4.1 FarmÃ¡cia / RemÃ©dios',
-    '4.2 Consultas MÃ©dicas',
-    '4.3 Exames / LaboratÃ³rio',
-    '4.4 Plano de SaÃºde',
+  '4.0 Saúde': [
+    '4.1 Farmácia / Remédios',
+    '4.2 Consultas Médicas',
+    '4.3 Exames / Laboratório',
+    '4.4 Plano de Saúde',
     '4.5 Academia / Esportes',
     '4.6 Dentista'
   ],
@@ -50,33 +50,33 @@ const SUBCATEGORIAS_MAP = {
     '5.4 Assinatura de Apps',
     '5.5 Passeios / Lazer Geral'
   ],
-  '6.0 EducaÃ§Ã£o': [
+  '6.0 Educação': [
     '6.1 Mensalidade Escolar / Faculdade',
     '6.2 Cursos / Treinamentos',
     '6.3 Material Escolar / Livros'
   ],
   '7.0 Roupas & Cuidados Pessoais': [
-    '7.1 VestuÃ¡rio / CalÃ§ados',
-    '7.2 SalÃ£o / Barbeiro',
-    '7.3 EstÃ©tica / CosmÃ©ticos',
-    '7.4 EletrÃ´nicos / Presentes pessoais'
+    '7.1 Vestuário / Calçados',
+    '7.2 Salão / Barbeiro',
+    '7.3 Estética / Cosméticos',
+    '7.4 Eletrônicos / Presentes pessoais'
   ],
-  '8.0 Empresa / NegÃ³cios': [
+  '8.0 Empresa / Negócios': [
     '8.1 Contabilidade / Contador',
     '8.2 Sistemas / Software / Hospedagem',
     '8.3 Impostos / DAS / Taxas CNPJ',
-    '8.4 Marketing / AnÃºncios',
+    '8.4 Marketing / Anúncios',
     '8.5 Equipamentos / Suprimentos',
-    '8.6 ServiÃ§os Profissionais Terceiros'
+    '8.6 Serviços Profissionais Terceiros'
   ],
-  '9.0 DoaÃ§Ãµes & Presentes': [
-    '9.1 Presentes / AniversÃ¡rios',
-    '9.2 Casamentos / ConfraternizaÃ§Ãµes',
-    '9.3 Caridade / DoaÃ§Ãµes'
+  '9.0 Doações & Presentes': [
+    '9.1 Presentes / Aniversários',
+    '9.2 Casamentos / Confraternizações',
+    '9.3 Caridade / Doações'
   ],
   '10.0 Outros': [
     '10.1 Diversos',
-    '10.2 TransferÃªncias',
+    '10.2 Transferências',
     '10.3 A Classificar'
   ]
 };
@@ -86,9 +86,7 @@ let estado = {
   filtroPeriodo: 'mes-atual',
   dataInicio: null,
   dataFim: null,
-  dataMesEspecifico: null,
   filtroMacro: 'todas',
-  filtroPessoa: 'todos',
   sobraReal: 3000,
   rendaCasal: 8000,
   transacoes: [],
@@ -101,10 +99,10 @@ let estado = {
 };
 
 // ===================================================
-// INICIALIZAÃ‡ÃƒO
+// INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '2.4';
+  const APP_VERSION = '2.5';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -112,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modal-atualizacao').classList.remove('hidden');
       }
     })
-    .catch(e => console.log('Erro ao checar versÃ£o', e));
+    .catch(e => console.log('Erro ao checar versão', e));
 
   if (window.lucide) lucide.createIcons();
 
@@ -164,7 +162,7 @@ async function carregarDados() {
       esconderErroRecorrentes();
     }
   } catch(e) {
-    mostrarErroRecorrentes('Tabela gastos_recorrentes nÃ£o encontrada. Execute o SQL fornecido no Supabase.');
+    mostrarErroRecorrentes('Tabela gastos_recorrentes não encontrada. Execute o SQL fornecido no Supabase.');
   }
 
   try {
@@ -202,15 +200,15 @@ function esconderErroRecorrentes() {
 function resolverChaveMacro(str) {
   if (!str) return '10.0 Outros';
   const s = str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (s.includes('1.0') || s.includes('aliment')) return '1.0 AlimentaÃ§Ã£o';
+  if (s.includes('1.0') || s.includes('aliment')) return '1.0 Alimentação';
   if (s.includes('2.0') || s.includes('transp')) return '2.0 Transporte';
   if (s.includes('3.0') || s.includes('morad')) return '3.0 Moradia';
-  if (s.includes('4.0') || s.includes('saud')) return '4.0 SaÃºde';
+  if (s.includes('4.0') || s.includes('saud')) return '4.0 Saúde';
   if (s.includes('5.0') || s.includes('lazer')) return '5.0 Lazer';
-  if (s.includes('6.0') || s.includes('educ')) return '6.0 EducaÃ§Ã£o';
+  if (s.includes('6.0') || s.includes('educ')) return '6.0 Educação';
   if (s.includes('7.0') || s.includes('roupa') || s.includes('cuidado') || s.includes('barbeiro') || s.includes('salao')) return '7.0 Roupas & Cuidados Pessoais';
-  if (s.includes('8.0') || s.includes('empresa') || s.includes('negoc') || s.includes('contador') || s.includes('theos') || s.includes('das') || s.includes('cnpj')) return '8.0 Empresa / NegÃ³cios';
-  if (s.includes('9.0') || s.includes('doac') || s.includes('doaÃ§Ã£o') || s.includes('presente')) return '9.0 DoaÃ§Ãµes & Presentes';
+  if (s.includes('8.0') || s.includes('empresa') || s.includes('negoc') || s.includes('contador') || s.includes('theos') || s.includes('das') || s.includes('cnpj')) return '8.0 Empresa / Negócios';
+  if (s.includes('9.0') || s.includes('doac') || s.includes('doação') || s.includes('presente')) return '9.0 Doações & Presentes';
   // Legado / compatibilidade com antigas categorias
   if (s.includes('9.0 outro') || s.includes('15.0') || s.includes('outro') || s.includes('divers')) return '10.0 Outros';
   return '10.0 Outros';
@@ -238,7 +236,7 @@ function atualizarOptionsMicro(macroVal, microSelecionado = '') {
 }
 
 // ===================================================
-// ATUALIZAÃ‡ÃƒO DA INTERFACE PRINCIPAL
+// ATUALIZAÇÃO DA INTERFACE PRINCIPAL
 // ===================================================
 function atualizarUI() {
   const filtradas = obterTransacoesFiltradas();
@@ -250,7 +248,7 @@ function atualizarUI() {
   const alertBox = document.getElementById('alert-pendentes-box');
   if (alertBox) {
     if (pendentes.length > 0) {
-      document.getElementById('alert-pendentes-texto').textContent = `Existem ${pendentes.length} lanÃ§amento(s) pendentes de classificaÃ§Ã£o em "Outros"!`;
+      document.getElementById('alert-pendentes-texto').textContent = `Existem ${pendentes.length} lançamento(s) pendentes de classificação em "Outros"!`;
       alertBox.classList.remove('hidden');
     } else {
       alertBox.classList.add('hidden');
@@ -261,7 +259,7 @@ function atualizarUI() {
   const total = filtradas.reduce((s, t) => s + Number(t.valor), 0);
   document.getElementById('val-gastos-totais').textContent = fmt(total);
   const diasNoMes = new Date().getDate();
-  document.getElementById('val-media-diaria').textContent = `MÃ©dia: ${fmt(total / Math.max(diasNoMes, 1))}/dia (${filtradas.length} compras)`;
+  document.getElementById('val-media-diaria').textContent = `Média: ${fmt(total / Math.max(diasNoMes, 1))}/dia (${filtradas.length} compras)`;
 
   // 2. Maior gasto
   let maiorGasto = null;
@@ -270,17 +268,17 @@ function atualizarUI() {
     document.getElementById('val-maior-gasto-item').textContent = fmt(maiorGasto.valor);
     document.getElementById('val-maior-gasto-detalhe').textContent = `${maiorGasto.descricao} (${maiorGasto.pago_por})`;
   } else {
-    document.getElementById('val-maior-gasto-item').textContent = 'â€”';
-    document.getElementById('val-maior-gasto-detalhe').textContent = 'Nenhum lanÃ§amento no perÃ­odo';
+    document.getElementById('val-maior-gasto-item').textContent = '—';
+    document.getElementById('val-maior-gasto-detalhe').textContent = 'Nenhum lançamento no período';
   }
 
   // 3. Dia da semana que mais gasta
-  const diasSemana = ['Domingo', 'Segunda', 'TerÃ§a', 'Quarta', 'Quinta', 'Sexta', 'SÃ¡bado'];
+  const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   const somaPorDia = [0, 0, 0, 0, 0, 0, 0];
   filtradas.forEach(t => { if (t.data) somaPorDia[new Date(t.data + 'T12:00:00').getDay()] += Number(t.valor); });
   const maxIdx = somaPorDia.indexOf(Math.max(...somaPorDia));
   const pctDia = total > 0 ? ((somaPorDia[maxIdx] / total) * 100).toFixed(0) : 0;
-  document.getElementById('val-dia-mais-gasta').textContent = somaPorDia[maxIdx] > 0 ? diasSemana[maxIdx] : 'â€”';
+  document.getElementById('val-dia-mais-gasta').textContent = somaPorDia[maxIdx] > 0 ? diasSemana[maxIdx] : '—';
   document.getElementById('val-dia-mais-gasta-sub').textContent = somaPorDia[maxIdx] > 0 ? `${pctDia}% dos gastos (${fmt(somaPorDia[maxIdx])})` : 'Sem dados';
 
   // 4. Maior/Menor macro
@@ -289,13 +287,13 @@ function atualizarUI() {
     const nom = t.categoria ? t.categoria.nome : '10.0 Outros';
     mapaMacro[nom] = (mapaMacro[nom] || 0) + Number(t.valor);
   });
-  let maiorMacro = 'â€”', maiorVal = 0, menorMacro = 'â€”', menorVal = Infinity;
+  let maiorMacro = '—', maiorVal = 0, menorMacro = '—', menorVal = Infinity;
   Object.entries(mapaMacro).forEach(([nom, val]) => {
     if (val > maiorVal) { maiorVal = val; maiorMacro = nom; }
     if (val < menorVal) { menorVal = val; menorMacro = nom; }
   });
-  document.getElementById('val-maior-macro').textContent = maiorVal > 0 ? `${maiorMacro.split(' ').slice(1).join(' ')} (${fmt(maiorVal)})` : 'â€”';
-  document.getElementById('val-menor-macro').textContent = menorVal < Infinity ? `${menorMacro.split(' ').slice(1).join(' ')} (${fmt(menorVal)})` : 'â€”';
+  document.getElementById('val-maior-macro').textContent = maiorVal > 0 ? `${maiorMacro.split(' ').slice(1).join(' ')} (${fmt(maiorVal)})` : '—';
+  document.getElementById('val-menor-macro').textContent = menorVal < Infinity ? `${menorMacro.split(' ').slice(1).join(' ')} (${fmt(menorVal)})` : '—';
 
   // 4b. Novos KPIs Extras
   let sumFixos = 0;
@@ -304,7 +302,7 @@ function atualizarUI() {
   let sumFds = 0;
   let sumAlimentacao = 0;
 
-  // NÃ­vel Zero (Custo de SobrevivÃªncia)
+  // Nível Zero (Custo de Sobrevivência)
   let nivelZero = 0;
   if (estado.recorrentes && estado.recorrentes.length) {
     nivelZero = estado.recorrentes.filter(r => r.ativo).reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
@@ -315,7 +313,7 @@ function atualizarUI() {
   filtradas.forEach(t => {
     const val = Number(t.valor) || 0;
     
-    // Fixos vs VariÃ¡veis
+    // Fixos vs Variáveis
     if (t.descricao.includes('[Conta Fixa]')) {
       sumFixos += val;
     } else {
@@ -330,8 +328,8 @@ function atualizarUI() {
       sumSemana += val;
     }
 
-    // AlimentaÃ§Ã£o
-    if (t.categoria && t.categoria.nome.includes('1.0 AlimentaÃ§Ã£o')) {
+    // Alimentação
+    if (t.categoria && t.categoria.nome.includes('1.0 Alimentação')) {
       sumAlimentacao += val;
     }
   });
@@ -357,20 +355,20 @@ function atualizarUI() {
     document.getElementById('bar-fds').style.width = `${pctFds}%`;
   }
 
-  // Atualiza DOM - AlimentaÃ§Ã£o
+  // Atualiza DOM - Alimentação
   if (document.getElementById('val-term-alim')) {
     const pctAlim = total > 0 ? ((sumAlimentacao / total) * 100).toFixed(0) : 0;
     document.getElementById('val-term-alim').textContent = `${pctAlim}%`;
   }
 
-  // Atualiza DOM - Alerta VariÃ¡veis
+  // Atualiza DOM - Alerta Variáveis
   if (document.getElementById('val-alerta-var')) {
     let contasVar = [];
     if (estado.recorrentes) contasVar = estado.recorrentes.filter(r => r.ativo && r.tipo_valor === 'variavel');
     if (contasVar.length > 0) {
       document.getElementById('val-alerta-var').textContent = `Fique de olho: ${contasVar.map(r => r.nome).join(', ')}`;
     } else {
-      document.getElementById('val-alerta-var').textContent = 'Nenhuma conta variÃ¡vel cadastrada.';
+      document.getElementById('val-alerta-var').textContent = 'Nenhuma conta variável cadastrada.';
     }
   }
 
@@ -378,31 +376,19 @@ function atualizarUI() {
   // 5. Dica
   gerarDica(maiorMacro, maiorVal, total);
 
-  // 6. Atualizar TÃ­tulo do Extrato
+  // 6. Atualizar Título do Extrato
   const tituloExtrato = document.getElementById('titulo-extrato');
   if (tituloExtrato) {
     const mapaTitulos = {
-      'mes-atual': 'Este MÃªs',
-      'mes-passado': 'MÃªs Passado',
-      '3-meses': 'Ãšltimos 3 Meses',
-      'custom': 'PerÃ­odo Personalizado'
+      'mes-atual': 'Este Mês',
+      'mes-passado': 'Mês Passado',
+      '3-meses': 'Últimos 3 Meses',
+      'custom': 'Período Personalizado'
     };
-    let tituloContexto = '';
-    if (estado.filtroPeriodo === 'mes-especifico' && estado.dataMesEspecifico) {
-      const [ano, mes] = estado.dataMesEspecifico.split('-');
-      tituloContexto = `${mes}/${ano}`;
-    } else {
-      tituloContexto = mapaTitulos[estado.filtroPeriodo] || '';
-    }
-    
-    let pessoaContexto = '';
-    if (estado.filtroPessoa === 'Ele') pessoaContexto = ' - Leonardo';
-    else if (estado.filtroPessoa === 'Ela') pessoaContexto = ' - Giulia';
-
-    tituloExtrato.textContent = `Extrato de Gastos da FamÃ­lia (${tituloContexto}${pessoaContexto})`;
+    tituloExtrato.textContent = `Extrato de Gastos da Família (${mapaTitulos[estado.filtroPeriodo] || ''})`;
   }
 
-  // 7. Tabela, grÃ¡ficos e mÃ³dulos
+  // 7. Tabela, gráficos e módulos
   preencherTabelaExtrato(filtradas);
   renderizarGraficoPie(mapaMacro, total);
   renderizarGraficoLinhaEvolucao();
@@ -434,16 +420,6 @@ function obterTransacoesFiltradas() {
   } else if (estado.filtroPeriodo === '3-meses') {
     const lim = new Date(); lim.setMonth(lim.getMonth() - 3);
     res = res.filter(t => new Date(t.data + 'T12:00:00') >= lim);
-  } else if (estado.filtroPeriodo === 'mes-especifico' && estado.dataMesEspecifico) {
-    const [ano, mes] = estado.dataMesEspecifico.split('-');
-    res = res.filter(t => {
-      const d = new Date(t.data + 'T12:00:00');
-      return d.getFullYear() === Number(ano) && d.getMonth() === (Number(mes) - 1);
-    });
-  }
-
-  if (estado.filtroPessoa && estado.filtroPessoa !== 'todos') {
-    res = res.filter(t => t.pago_por === estado.filtroPessoa);
   }
 
   if (estado.filtroMacro !== 'todas') {
@@ -456,10 +432,10 @@ function obterTransacoesFiltradas() {
 function gerarDica(cat, val, total) {
   const el = document.getElementById('texto-dica-economia');
   if (!el) return;
-  if (total === 0) { el.textContent = 'Mande lanÃ§amentos no Telegram para ver anÃ¡lises aqui.'; return; }
+  if (total === 0) { el.textContent = 'Mande lançamentos no Telegram para ver análises aqui.'; return; }
   const pct = ((val / total) * 100).toFixed(0);
   const catNome = cat.split(' ').slice(1).join(' ');
-  el.innerHTML = `ðŸ’¡ <strong>Dica:</strong> <strong>${catNome}</strong> representa <strong>${pct}%</strong> dos gastos (${fmt(val)}). Reduzir 15% = economizar <strong>${fmt(val * 0.15)}/mÃªs</strong>!`;
+  el.innerHTML = `💡 <strong>Dica:</strong> <strong>${catNome}</strong> representa <strong>${pct}%</strong> dos gastos (${fmt(val)}). Reduzir 15% = economizar <strong>${fmt(val * 0.15)}/mês</strong>!`;
 }
 
 function fmt(v) {
@@ -473,7 +449,7 @@ function fmtData(str) {
 }
 
 // ===================================================
-// CÃLCULO DE JUROS COMPOSTOS
+// CÁLCULO DE JUROS COMPOSTOS
 // ===================================================
 function calcularJurosCompostos(valorInicial, taxaAnualPct, dataInicio, dataFim) {
   const taxaAnual = taxaAnualPct / 100;
@@ -486,7 +462,7 @@ function calcularJurosCompostos(valorInicial, taxaAnualPct, dataInicio, dataFim)
 }
 
 // ===================================================
-// GRÃFICO CIRCULAR (PIZZA/DONUT)
+// GRÁFICO CIRCULAR (PIZZA/DONUT)
 // ===================================================
 function renderizarGraficoPie(mapaMacro, total) {
   const canvas = document.getElementById('chart-pie-categorias');
@@ -527,7 +503,7 @@ function renderizarGraficoPie(mapaMacro, total) {
 }
 
 // ===================================================
-// GRÃFICO DE LINHA: EVOLUÃ‡ÃƒO MENSAL
+// GRÁFICO DE LINHA: EVOLUÇÃO MENSAL
 // ===================================================
 function renderizarGraficoLinhaEvolucao() {
   const canvas = document.getElementById('chart-line-evolucao');
@@ -585,7 +561,7 @@ function renderizarDetalhamento(filtradas) {
   if (!container) return;
 
   if (filtradas.length === 0) {
-    container.innerHTML = '<div style="color:var(--text-dim); text-align: center; padding: 20px;">Nenhum gasto neste perÃ­odo.</div>';
+    container.innerHTML = '<div style="color:var(--text-dim); text-align: center; padding: 20px;">Nenhum gasto neste período.</div>';
     return;
   }
 
@@ -672,7 +648,7 @@ function preencherTabelaExtrato(lista, filtroBusca = '') {
   }
   [...filtradas].sort((a, b) => new Date(b.data + 'T12:00:00') - new Date(a.data + 'T12:00:00')).forEach(t => {
     const cat = t.categoria ? t.categoria.nome : '10.0 Outros';
-    const quem = t.pago_por === 'Ele' ? 'ðŸ‘¨ Leo' : 'ðŸ‘© Giu';
+    const quem = t.pago_por === 'Ele' ? '👨 Leo' : '👩 Giu';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${fmtData(t.data)}</td>
@@ -681,15 +657,15 @@ function preencherTabelaExtrato(lista, filtroBusca = '') {
       <td>${quem}</td>
       <td style="color:var(--red);font-weight:700">${fmt(t.valor)}</td>
       <td style="text-align:center;">
-        <button onclick="abrirEdicao('${t.id}')" style="background:none;border:none;cursor:pointer;" title="Editar">âœï¸</button>
-        <button onclick="excluirTransacao('${t.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">ðŸ—‘ï¸</button>
+        <button onclick="abrirEdicao('${t.id}')" style="background:none;border:none;cursor:pointer;" title="Editar">✏️</button>
+        <button onclick="excluirTransacao('${t.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">🗑️</button>
       </td>`;
     tbody.appendChild(tr);
   });
 }
 
 window.excluirTransacao = async function(id) {
-  if (!confirm('Excluir este lanÃ§amento?')) return;
+  if (!confirm('Excluir este lançamento?')) return;
   if (supabaseClient) { await supabaseClient.from('transacoes').delete().eq('id', id); carregarDados(); }
 };
 
@@ -715,7 +691,7 @@ window.abrirEdicao = function(id) {
 };
 
 // ===================================================
-// MÃ“DULO 2: CONTAS FIXAS (RECORRENTES)
+// MÓDULO 2: CONTAS FIXAS (RECORRENTES)
 // ===================================================
 function atualizarRecorrentes() {
   const tbody = document.getElementById('tbody-recorrentes');
@@ -734,7 +710,7 @@ function atualizarRecorrentes() {
   if (elTag)   elTag.textContent   = `${estado.recorrentes.length} conta(s)`;
 
   if (estado.recorrentes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty">Nenhuma conta fixa cadastrada. Use o formulÃ¡rio acima.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Nenhuma conta fixa cadastrada. Use o formulário acima.</td></tr>';
     return;
   }
 
@@ -742,18 +718,18 @@ function atualizarRecorrentes() {
   [...estado.recorrentes].sort((a, b) => a.dia_vencimento - b.dia_vencimento).forEach(r => {
     const tr = document.createElement('tr');
     const dias = r.dia_vencimento - hoje;
-    let statusText = 'âœ… Ok';
-    if (dias === 0) statusText = 'ðŸš¨ Vence Hoje';
-    else if (dias > 0 && dias <= (r.dias_alerta || 3)) statusText = `â° Em ${dias}d`;
-    else if (dias < 0) statusText = `ðŸ“Œ Dia ${r.dia_vencimento}`;
+    let statusText = '✅ Ok';
+    if (dias === 0) statusText = '🚨 Vence Hoje';
+    else if (dias > 0 && dias <= (r.dias_alerta || 3)) statusText = `⏰ Em ${dias}d`;
+    else if (dias < 0) statusText = `📌 Dia ${r.dia_vencimento}`;
 
-    const respTag = r.responsavel === 'Ele' ? 'ðŸ‘¨ Leo' : (r.responsavel === 'Ela' ? 'ðŸ‘© Giu' : 'ðŸ’‘ Casal');
-    const empresaStr = r.empresa ? `<br><small style="color:var(--text-muted)">ðŸ¢ ${r.empresa}</small>` : '';
+    const respTag = r.responsavel === 'Ele' ? '👨 Leo' : (r.responsavel === 'Ela' ? '👩 Giu' : '💑 Casal');
+    const empresaStr = r.empresa ? `<br><small style="color:var(--text-muted)">🏢 ${r.empresa}</small>` : '';
     const tipoTag = (r.tipo_valor || 'fixo') === 'variavel'
-      ? `<span class="tag" style="background:rgba(245,158,11,0.15);color:var(--yellow)">ðŸ“Š VariÃ¡vel</span>`
-      : `<span class="tag" style="background:rgba(16,185,129,0.12);color:var(--green)">ðŸ’° Fixo</span>`;
+      ? `<span class="tag" style="background:rgba(245,158,11,0.15);color:var(--yellow)">📊 Variável</span>`
+      : `<span class="tag" style="background:rgba(16,185,129,0.12);color:var(--green)">💰 Fixo</span>`;
     const valorStr = (r.tipo_valor || 'fixo') === 'variavel'
-      ? `<span style="color:var(--yellow)">${r.valor ? fmt(r.valor) + ' est.' : 'â€”'}</span>`
+      ? `<span style="color:var(--yellow)">${r.valor ? fmt(r.valor) + ' est.' : '—'}</span>`
       : `<span style="color:var(--red);font-weight:600">${fmt(r.valor)}</span>`;
 
     tr.innerHTML = `
@@ -765,16 +741,16 @@ function atualizarRecorrentes() {
       <td><small>${r.dias_alerta || 3}d antes</small><br>${statusText}</td>
       <td>${valorStr}</td>
       <td style="text-align:center;white-space:nowrap;">
-        <button onclick="abrirPagamentoRecorrente('${r.id}')" class="btn-primary-sm" style="padding:4px 8px;font-size:11px;margin-right:4px;" title="Registrar Pagamento do MÃªs">ðŸ’³ Pagar</button>
-        <button onclick="abrirEdicaoRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Editar">âœï¸</button>
-        <button onclick="excluirRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">ðŸ—‘ï¸</button>
+        <button onclick="abrirPagamentoRecorrente('${r.id}')" class="btn-primary-sm" style="padding:4px 8px;font-size:11px;margin-right:4px;" title="Registrar Pagamento do Mês">💳 Pagar</button>
+        <button onclick="abrirEdicaoRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Editar">✏️</button>
+        <button onclick="excluirRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">🗑️</button>
       </td>`;
     tbody.appendChild(tr);
   });
 }
 
 // ===================================================
-// SELETOR CASCATA: MICRO PARA LANÃ‡AMENTO MANUAL E EDIÃ‡ÃƒO
+// SELETOR CASCATA: MICRO PARA LANÇAMENTO MANUAL E EDIÇÃO
 // ===================================================
 window.atualizarMicroGasto = function(macroVal) {
   const sel = document.getElementById('gasto-micro');
@@ -801,7 +777,7 @@ window.abrirEdicaoRecorrente = function(id) {
   document.getElementById('edit-rec-dia').value = r.dia_vencimento;
   document.getElementById('edit-rec-dias-alerta').value = r.dias_alerta || 3;
   document.getElementById('edit-rec-responsavel').value = r.responsavel || 'Casal';
-  document.getElementById('edit-rec-macro').value = r.categoria_macro || '8.0 Empresa / NegÃ³cios';
+  document.getElementById('edit-rec-macro').value = r.categoria_macro || '8.0 Empresa / Negócios';
   document.getElementById('modal-editar-recorrente').classList.remove('hidden');
 };
 
@@ -823,7 +799,7 @@ window.excluirRecorrente = async function(id) {
 };
 
 // ===================================================
-// MÃ“DULO 3: FINANCIAMENTOS
+// MÓDULO 3: FINANCIAMENTOS
 // ===================================================
 function atualizarFinanciamentos() {
   const tbody = document.getElementById('tbody-financiamentos');
@@ -844,18 +820,18 @@ function atualizarFinanciamentos() {
       <td>${f.taxa_juros}%</td>
       <td>${f.prazo_meses} meses</td>
       <td style="color:var(--accent);font-weight:700">${fmt(f.parcela_mensal)}</td>
-      <td style="text-align:center;"><button onclick="excluirFinanciamento('${f.id}')" style="background:none;border:none;cursor:pointer;">ðŸ—‘ï¸</button></td>`;
+      <td style="text-align:center;"><button onclick="excluirFinanciamento('${f.id}')" style="background:none;border:none;cursor:pointer;">🗑️</button></td>`;
     tbody.appendChild(tr);
   });
 }
 
 window.excluirFinanciamento = async function(id) {
-  if (!confirm('Remover esta simulaÃ§Ã£o?')) return;
+  if (!confirm('Remover esta simulação?')) return;
   if (supabaseClient) { await supabaseClient.from('financiamentos').delete().eq('id', id); carregarDados(); }
 };
 
 // ===================================================
-// MÃ“DULO 4: INVESTIMENTOS REAIS + SIMULADOR
+// MÓDULO 4: INVESTIMENTOS REAIS + SIMULADOR
 // ===================================================
 function atualizarInvestimentos() {
   const tbody = document.getElementById('tbody-investimentos');
@@ -869,7 +845,7 @@ function atualizarInvestimentos() {
   tbody.innerHTML = '';
 
   if (estado.investimentos.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="empty">Nenhum investimento cadastrado ainda. Use o formulÃ¡rio ao lado!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Nenhum investimento cadastrado ainda. Use o formulário ao lado!</td></tr>';
   } else {
     estado.investimentos.forEach(inv => {
       const saldoAtual = calcularJurosCompostos(Number(inv.valor_inicial), Number(inv.taxa_anual), inv.data_inicio, hoje);
@@ -894,7 +870,7 @@ function atualizarInvestimentos() {
         <td>${fmt(inv.valor_inicial)}</td>
         <td>${inv.taxa_anual}% a.a.</td>
         <td>${fmtData(inv.data_inicio)}</td>
-        <td>${inv.data_resgate ? fmtData(inv.data_resgate) : '<span style="color:var(--text-muted)">â€”</span>'}</td>
+        <td>${inv.data_resgate ? fmtData(inv.data_resgate) : '<span style="color:var(--text-muted)">—</span>'}</td>
         <td>
           <strong style="color:#10b981">${fmt(saldoAtual)}</strong>
           <br><small style="color:#10b981">+${pctRendimento}% (${fmt(rendimento)})</small>
@@ -903,7 +879,7 @@ function atualizarInvestimentos() {
           <strong style="color:#f59e0b">${fmt(saldoResgate)}</strong>
           ${inv.data_resgate ? `<br><small style="color:var(--text-muted)">${fmtData(inv.data_resgate)}</small>` : ''}
         </td>
-        <td style="text-align:center;"><button onclick="excluirInvestimento('${inv.id}')" style="background:none;border:none;cursor:pointer;">ðŸ—‘ï¸</button></td>`;
+        <td style="text-align:center;"><button onclick="excluirInvestimento('${inv.id}')" style="background:none;border:none;cursor:pointer;">🗑️</button></td>`;
       tbody.appendChild(tr);
     });
   }
@@ -920,11 +896,11 @@ function atualizarInvestimentos() {
   if (elResgate) elResgate.textContent = fmt(totalSaldoResgate);
   if (elSub) {
     const rendTotal = totalSaldoAtual - totalAplicado;
-    elSub.textContent = totalAplicado > 0 ? `+${fmt(rendTotal)} de rendimento acumulado` : 'Cadastre investimentos para ver o patrimÃ´nio';
+    elSub.textContent = totalAplicado > 0 ? `+${fmt(rendTotal)} de rendimento acumulado` : 'Cadastre investimentos para ver o patrimônio';
   }
   if (elBadge) elBadge.textContent = `${estado.investimentos.length} investimento(s)`;
 
-  // CorrelaÃ§Ã£o com Financiamento
+  // Correlação com Financiamento
   const finValorTotal = parseFloat(document.getElementById('fin-valor-total')?.value) || 0;
   const finEntrada = parseFloat(document.getElementById('fin-entrada')?.value) || 0;
   const saldoDevedor = finValorTotal - finEntrada;
@@ -934,12 +910,12 @@ function atualizarInvestimentos() {
   if (saldoDevedor > 0 && totalSaldoResgate > 0) {
     const pct = ((totalSaldoResgate / saldoDevedor) * 100).toFixed(0);
     const msg = totalSaldoResgate >= saldoDevedor
-      ? `ðŸŽ‰ <strong>QUITAÃ‡ÃƒO TOTAL!</strong> Com os investimentos no resgate (${fmt(totalSaldoResgate)}), vocÃªs podem quitar o financiamento (${fmt(saldoDevedor)})!`
-      : `ðŸ’¡ Os investimentos no resgate (${fmt(totalSaldoResgate)}) cobrem <strong>${pct}%</strong> do saldo devedor (${fmt(saldoDevedor)}). Ã“tima amortizaÃ§Ã£o antecipada!`;
+      ? `🎉 <strong>QUITAÇÃO TOTAL!</strong> Com os investimentos no resgate (${fmt(totalSaldoResgate)}), vocês podem quitar o financiamento (${fmt(saldoDevedor)})!`
+      : `💡 Os investimentos no resgate (${fmt(totalSaldoResgate)}) cobrem <strong>${pct}%</strong> do saldo devedor (${fmt(saldoDevedor)}). Ótima amortização antecipada!`;
     if (elCorrelacaoMini) elCorrelacaoMini.innerHTML = msg;
     if (elCorrelacao) elCorrelacao.innerHTML = msg;
   } else {
-    if (elCorrelacaoMini) elCorrelacaoMini.textContent = 'Configure um financiamento na aba Financiamento para ver a correlaÃ§Ã£o.';
+    if (elCorrelacaoMini) elCorrelacaoMini.textContent = 'Configure um financiamento na aba Financiamento para ver a correlação.';
   }
 
   // Simulador de aportes futuros
@@ -956,7 +932,7 @@ function atualizarSimuladorAportes() {
   const elRes = document.getElementById('inv-resgate-calculado');
   const elSub = document.getElementById('inv-sim-sub');
   if (elRes) elRes.textContent = fmt(acum);
-  if (elSub) elSub.textContent = `Em ${prazoMeses} meses aportando ${fmt(sobra)}/mÃªs a ${taxaAnual}% a.a.`;
+  if (elSub) elSub.textContent = `Em ${prazoMeses} meses aportando ${fmt(sobra)}/mês a ${taxaAnual}% a.a.`;
 }
 
 window.excluirInvestimento = async function(id) {
@@ -965,7 +941,7 @@ window.excluirInvestimento = async function(id) {
 };
 
 // ===================================================
-// EVENTOS E NAVEGAÃ‡ÃƒO
+// EVENTOS E NAVEGAÇÃO
 // ===================================================
 function configurarEventos() {
   // Abas
@@ -978,10 +954,9 @@ function configurarEventos() {
     });
   });
 
-  // Filtros de perÃ­odo
+  // Filtros de período
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (btn.id === 'filtro-mes-especifico') return; // tratado no onchange
       document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       estado.filtroPeriodo = btn.getAttribute('data-period');
@@ -989,24 +964,10 @@ function configurarEventos() {
     });
   });
 
-  document.getElementById('filtro-mes-especifico')?.addEventListener('change', (e) => {
-    if (!e.target.value) return;
-    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    estado.filtroPeriodo = 'mes-especifico';
-    estado.dataMesEspecifico = e.target.value; // "YYYY-MM"
-    atualizarUI();
-  });
-
-  document.getElementById('filtro-pessoa')?.addEventListener('change', (e) => {
-    estado.filtroPessoa = e.target.value;
-    atualizarUI();
-  });
-
   document.getElementById('btn-aplicar-datas').addEventListener('click', () => {
     const dIni = document.getElementById('filtro-data-inicio').value;
     const dFim = document.getElementById('filtro-data-fim').value;
-    if (!dIni || !dFim) return alert('Selecione a data de inÃ­cio e fim!');
+    if (!dIni || !dFim) return alert('Selecione a data de início e fim!');
     estado.filtroPeriodo = 'custom';
     estado.dataInicio = dIni;
     estado.dataFim = dFim;
@@ -1034,7 +995,7 @@ function configurarEventos() {
     document.getElementById(id)?.addEventListener('input', atualizarSimuladorAportes);
   });
 
-  // Salvar ediÃ§Ã£o de transaÃ§Ã£o
+  // Salvar edição de transação
   document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
     const id = document.getElementById('edit-id').value;
     let descricao = document.getElementById('edit-descricao').value.trim().replace(/^\[.*?\]\s*/, '');
@@ -1049,9 +1010,9 @@ function configurarEventos() {
       let catId = null;
       const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', novaMacro).maybeSingle();
       if (ex) { catId = ex.id; }
-      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: novaMacro, icone: 'ðŸ“Œ' }]).select('id').single(); if (nv) catId = nv.id; }
+      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: novaMacro, icone: '📌' }]).select('id').single(); if (nv) catId = nv.id; }
       await supabaseClient.from('transacoes').update({ descricao: descFinal, valor, pago_por, categoria_id: catId, data: novaData }).eq('id', id);
-      // Ensinar o robÃ´
+      // Ensinar o robô
       const pChave = descricao.split(/\s+/)[0].toLowerCase();
       if (pChave && pChave.length > 2) {
         const { data: rEx } = await supabaseClient.from('regras_mapeamento').select('id').ilike('palavra_chave', pChave).maybeSingle();
@@ -1067,7 +1028,7 @@ function configurarEventos() {
     document.getElementById('modal-editar').classList.add('hidden');
   });
 
-  // Salvar ediÃ§Ã£o conta fixa
+  // Salvar edição conta fixa
   document.getElementById('btn-salvar-rec-edicao').addEventListener('click', async () => {
     const id = document.getElementById('edit-rec-id').value;
     const nome = document.getElementById('edit-rec-nome').value.trim();
@@ -1102,7 +1063,7 @@ function configurarEventos() {
       let catId = null;
       const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', macro).maybeSingle();
       if (ex) { catId = ex.id; }
-      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macro, icone: 'ðŸ“Œ' }]).select('id').single(); if (nv) catId = nv.id; }
+      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macro, icone: '📌' }]).select('id').single(); if (nv) catId = nv.id; }
 
       const descFinal = `[Conta Fixa] ${nomeConta}`;
       await supabaseClient.from('transacoes').insert([{
@@ -1114,7 +1075,7 @@ function configurarEventos() {
       }]);
 
       document.getElementById('modal-pagar-recorrente').classList.add('hidden');
-      alert(`âœ… Pagamento de ${fmt(valor)} registrado com sucesso no Extrato!`);
+      alert(`✅ Pagamento de ${fmt(valor)} registrado com sucesso no Extrato!`);
       carregarDados();
     }
   });
@@ -1123,7 +1084,7 @@ function configurarEventos() {
     document.getElementById('modal-pagar-recorrente').classList.add('hidden');
   });
 
-  // FormulÃ¡rio: Novo Gasto Manual (usa macro + micro)
+  // Formulário: Novo Gasto Manual (usa macro + micro)
   document.getElementById('form-novo-gasto').addEventListener('submit', async (e) => {
     e.preventDefault();
     const macro    = document.getElementById('gasto-macro').value;
@@ -1137,7 +1098,7 @@ function configurarEventos() {
       let catId = null;
       const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', macro).maybeSingle();
       if (ex) { catId = ex.id; }
-      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macro, icone: 'ðŸ“Œ' }]).select('id').single(); if (nv) catId = nv.id; }
+      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macro, icone: '📌' }]).select('id').single(); if (nv) catId = nv.id; }
       const descFinal = `[${micro}] ${descricao}`;
       const dataFinal = dataStr || new Date().toISOString().split('T')[0];
       await supabaseClient.from('transacoes').insert([{ descricao: descFinal, valor, pago_por, categoria_id: catId, data: dataFinal }]);
@@ -1145,12 +1106,12 @@ function configurarEventos() {
     }
     e.target.reset();
     document.getElementById('gasto-data').value = new Date().toISOString().split('T')[0];
-    // Re-inicializar micro apÃ³s reset
+    // Re-inicializar micro após reset
     const macroEl = document.getElementById('gasto-macro');
     if (macroEl) atualizarMicroGasto(macroEl.value);
   });
 
-  // FormulÃ¡rio: Nova Conta Fixa
+  // Formulário: Nova Conta Fixa
   document.getElementById('form-nova-recorrente').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nome         = document.getElementById('rec-nome').value.trim();
@@ -1176,7 +1137,7 @@ function configurarEventos() {
     e.target.reset();
   });
 
-  // FormulÃ¡rio: Novo Investimento
+  // Formulário: Novo Investimento
   document.getElementById('form-novo-investimento').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nome = document.getElementById('inv-nome').value.trim();
@@ -1186,7 +1147,7 @@ function configurarEventos() {
     const data_inicio = document.getElementById('inv-data-inicio').value;
     const data_resgate = document.getElementById('inv-data-resgate').value || null;
     const observacoes = document.getElementById('inv-obs').value.trim();
-    if (!nome || !valor_inicial || !taxa_anual || !data_inicio) return alert('Preencha: Nome, Valor, Taxa e Data de InÃ­cio!');
+    if (!nome || !valor_inicial || !taxa_anual || !data_inicio) return alert('Preencha: Nome, Valor, Taxa e Data de Início!');
     if (supabaseClient) {
       const { error } = await supabaseClient.from('investimentos').insert([{ nome, tipo, valor_inicial, taxa_anual, data_inicio, data_resgate, observacoes }]);
       if (error) {
@@ -1213,9 +1174,9 @@ function configurarEventos() {
     document.getElementById('fin-res-juros').textContent = fmt(jurosPagos);
     const novaSobra = estado.sobraReal - parcela;
     if (novaSobra >= 0) {
-      document.getElementById('fin-res-impacto').innerHTML = `âœ… Com essa parcela de <strong>${fmt(parcela)}</strong>, ainda sobram <strong>${fmt(novaSobra)}/mÃªs</strong> do orÃ§amento!`;
+      document.getElementById('fin-res-impacto').innerHTML = `✅ Com essa parcela de <strong>${fmt(parcela)}</strong>, ainda sobram <strong>${fmt(novaSobra)}/mês</strong> do orçamento!`;
     } else {
-      document.getElementById('fin-res-impacto').innerHTML = `âš ï¸ <strong>ALERTA!</strong> Parcela de <strong>${fmt(parcela)}</strong> ultrapassa a sobra atual em <strong>${fmt(Math.abs(novaSobra))}</strong>.`;
+      document.getElementById('fin-res-impacto').innerHTML = `⚠️ <strong>ALERTA!</strong> Parcela de <strong>${fmt(parcela)}</strong> ultrapassa a sobra atual em <strong>${fmt(Math.abs(novaSobra))}</strong>.`;
     }
     atualizarInvestimentos();
   });
@@ -1237,7 +1198,7 @@ function configurarEventos() {
     }
   });
 
-  // Config Supabase
+
 
   document.getElementById('btn-atualizar').addEventListener('click', carregarDados);
 
@@ -1269,7 +1230,7 @@ function carregarSubcategoriasPersonalizadas() {
 
 window.adicionarSubcategoriaCustomizada = function(macroVal) {
   const chave = resolverChaveMacro(macroVal);
-  const nomeNova = prompt(`âž• Criar nova subcategoria em "${chave}":\n\nExemplo: 3.8 UtensÃ­lios de Cozinha / XÃ­caras`);
+  const nomeNova = prompt(`➕ Criar nova subcategoria em "${chave}":\n\nExemplo: 3.8 Utensílios de Cozinha / Xícaras`);
   if (!nomeNova || !nomeNova.trim()) return;
   const limpo = nomeNova.trim();
 
@@ -1281,24 +1242,24 @@ window.adicionarSubcategoriaCustomizada = function(macroVal) {
     localStorage.setItem('CUSTOM_SUBCATEGORIAS', JSON.stringify(salvas));
   }
 
-  // Adicionar na memÃ³ria atual
+  // Adicionar na memória atual
   if (!SUBCATEGORIAS_MAP[chave].includes(limpo)) {
     SUBCATEGORIAS_MAP[chave].push(limpo);
   }
 
-  // Atualiza a visualizaÃ§Ã£o no modal e nos selects
+  // Atualiza a visualização no modal e nos selects
   renderizarGuiaCategorias();
   const gastoMacroEl = document.getElementById('gasto-macro');
   if (gastoMacroEl) atualizarMicroGasto(gastoMacroEl.value);
 
-  alert(`âœ… Subcategoria "${limpo}" adicionada em ${chave}!`);
+  alert(`✅ Subcategoria "${limpo}" adicionada em ${chave}!`);
 };
 
 window.removerSubcategoriaCustomizada = function(macroVal, subNome) {
   if (!confirm(`Remover a subcategoria "${subNome}" de ${macroVal}?`)) return;
   const chave = resolverChaveMacro(macroVal);
 
-  // Remove da memÃ³ria
+  // Remove da memória
   if (SUBCATEGORIAS_MAP[chave]) {
     SUBCATEGORIAS_MAP[chave] = SUBCATEGORIAS_MAP[chave].filter(s => s !== subNome);
   }
@@ -1341,20 +1302,20 @@ window.renderizarGuiaCategorias = function(filtro = '') {
   const salvas = JSON.parse(localStorage.getItem('CUSTOM_SUBCATEGORIAS') || '{}');
 
   const iconesMacro = {
-    '1.0 AlimentaÃ§Ã£o': 'ðŸ”',
-    '2.0 Transporte': 'ðŸš—',
-    '3.0 Moradia': 'ðŸ ',
-    '4.0 SaÃºde': 'ðŸ¥',
-    '5.0 Lazer': 'ðŸŽ‰',
-    '6.0 EducaÃ§Ã£o': 'ðŸŽ“',
-    '7.0 Roupas & Cuidados Pessoais': 'ðŸ‘•',
-    '8.0 Empresa / NegÃ³cios': 'ðŸ’¼',
-    '9.0 DoaÃ§Ãµes & Presentes': 'ðŸŽ',
-    '10.0 Outros': 'ðŸ“Œ'
+    '1.0 Alimentação': '🍔',
+    '2.0 Transporte': '🚗',
+    '3.0 Moradia': '🏠',
+    '4.0 Saúde': '🏥',
+    '5.0 Lazer': '🎉',
+    '6.0 Educação': '🎓',
+    '7.0 Roupas & Cuidados Pessoais': '👕',
+    '8.0 Empresa / Negócios': '💼',
+    '9.0 Doações & Presentes': '🎁',
+    '10.0 Outros': '📌'
   };
 
   Object.entries(SUBCATEGORIAS_MAP).forEach(([macro, micros]) => {
-    const icon = iconesMacro[macro] || 'ðŸ“Œ';
+    const icon = iconesMacro[macro] || '📌';
     const macroNorm = macro.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const customDaMacro = salvas[macro] || [];
 
@@ -1366,7 +1327,7 @@ window.renderizarGuiaCategorias = function(filtro = '') {
     });
 
     if (termoNorm && microsFiltrados.length === 0 && !macroNorm.includes(termoNorm)) {
-      return; // Oculta a macro se a busca nÃ£o bater
+      return; // Oculta a macro se a busca não bater
     }
 
     const card = document.createElement('div');
@@ -1376,7 +1337,7 @@ window.renderizarGuiaCategorias = function(filtro = '') {
       const mNorm = m.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       const isMatch = termoNorm && mNorm.includes(termoNorm);
       const isCustom = customDaMacro.includes(m);
-      const removeBtn = isCustom ? `<button onclick="event.stopPropagation();removerSubcategoriaCustomizada('${macro}','${m}')" style="background:none;border:none;color:#ef4444;margin-left:4px;cursor:pointer;font-weight:700;" title="Remover subcategoria customizada">âœ•</button>` : '';
+      const removeBtn = isCustom ? `<button onclick="event.stopPropagation();removerSubcategoriaCustomizada('${macro}','${m}')" style="background:none;border:none;color:#ef4444;margin-left:4px;cursor:pointer;font-weight:700;" title="Remover subcategoria customizada">✕</button>` : '';
       return `<span class="guia-micro-pill ${isMatch ? 'highlight' : ''}">${m}${removeBtn}</span>`;
     }).join('');
 
