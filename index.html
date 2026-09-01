@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2.2">
   <!-- Proteção de sessão: redireciona para login se não autenticado -->
   <script>
     if (sessionStorage.getItem('fc_logado') !== 'sim') {
@@ -792,6 +792,15 @@
     </div>
   </div>
 
+  <!-- MODAL ATUALIZAÇÃO -->
+  <div id="modal-atualizacao" class="overlay hidden" style="z-index: 9999;">
+    <div class="modal" style="text-align:center;">
+      <h2 style="color:var(--accent);">Nova Versão Disponível! 🚀</h2>
+      <p style="margin: 12px 0; color:var(--text-dim); font-size:14px;">Tem coisa nova no app! Atualize agora para carregar as últimas melhorias sem bugar nada.</p>
+      <button onclick="window.location.href = window.location.pathname + '?v=' + Date.now();" class="btn-primary" style="width:100%; margin-top:8px;">Atualizar App</button>
+    </div>
+  </div>
+
   <!-- MODAL GUIA DE CENTROS DE CUSTO (i) -->
   <div id="modal-guia-categorias" class="overlay hidden">
     <div class="modal modal-lg">
@@ -814,6 +823,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2.2"></script>
 </body>
 </html>

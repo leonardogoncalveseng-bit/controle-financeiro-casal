@@ -760,8 +760,9 @@ tr:last-child td { border-bottom: none; }
     text-overflow: ellipsis;
   }
 
-  /* CUSTOM DATES CONTAINER — Perfeitamente ajustado no mobile */
+  /* CUSTOM DATES CONTAINER - Perfeitamente ajustado no mobile */
   .custom-date-container {
+    grid-column: 1 / -1;
     width: 100%;
     margin-left: 0;
     margin-top: 4px;
@@ -772,7 +773,7 @@ tr:last-child td { border-bottom: none; }
     justify-content: space-between;
     gap: 6px;
     background: rgba(0, 0, 0, 0.4);
-    border-radius: 10px;
+    border-radius: 8px;
     border: 1px solid var(--border);
     box-sizing: border-box;
   }
@@ -783,6 +784,8 @@ tr:last-child td { border-bottom: none; }
     width: 0;
     font-size: 11px;
     padding: 6px 4px;
+    background: var(--bg-body);
+    color: var(--text);
   }
 
   .custom-date-container span {

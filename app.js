@@ -102,6 +102,16 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
+  const APP_VERSION = '2.2';
+  fetch('version.json?t=' + Date.now())
+    .then(res => res.json())
+    .then(data => {
+      if (data.version && data.version !== APP_VERSION) {
+        document.getElementById('modal-atualizacao').classList.remove('hidden');
+      }
+    })
+    .catch(e => console.log('Erro ao checar versão', e));
+
   if (window.lucide) lucide.createIcons();
 
   carregarSubcategoriasPersonalizadas();
