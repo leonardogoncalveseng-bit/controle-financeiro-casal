@@ -86,7 +86,9 @@ let estado = {
   filtroPeriodo: 'mes-atual',
   dataInicio: null,
   dataFim: null,
+  dataMesEspecifico: null,
   filtroMacro: 'todas',
+  filtroPessoa: 'todos',
   sobraReal: 3000,
   rendaCasal: 8000,
   transacoes: [],
@@ -113,6 +115,24 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(e => console.log('Erro ao checar versão', e));
 
   if (window.lucide) lucide.createIcons();
+
+  // Populate Month Dropdown (ultimos 12 meses)
+  const dropdownMes = document.getElementById('filtro-mes-dropdown');
+  if (dropdownMes) {
+    const nomesMeses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const d = new Date();
+    for (let i = 0; i < 12; i++) {
+      const mes = d.getMonth();
+      const ano = d.getFullYear();
+      const val = `${ano}-${String(mes + 1).padStart(2, '0')}`;
+      const texto = `${nomesMeses[mes]} / ${ano}`;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = texto;
+      dropdownMes.appendChild(opt);
+      d.setMonth(d.getMonth() - 1);
+    }
+  }
 
   carregarSubcategoriasPersonalizadas();
 
@@ -385,7 +405,19 @@ function atualizarUI() {
       '3-meses': 'Últimos 3 Meses',
       'custom': 'Período Personalizado'
     };
-    tituloExtrato.textContent = `Extrato de Gastos da Família (${mapaTitulos[estado.filtroPeriodo] || ''})`;
+    let tituloContexto = '';
+    if (estado.filtroPeriodo === 'mes-especifico' && estado.dataMesEspecifico) {
+      const [ano, mes] = estado.dataMesEspecifico.split('-');
+      tituloContexto = `${mes}/${ano}`;
+    } else {
+      tituloContexto = mapaTitulos[estado.filtroPeriodo] || '';
+    }
+
+    let pessoaContexto = '';
+    if (estado.filtroPessoa === 'Ele') pessoaContexto = ' - Leonardo';
+    else if (estado.filtroPessoa === 'Ela') pessoaContexto = ' - Giulia';
+
+    tituloExtrato.textContent = `Extrato de Gastos da Família (${tituloContexto}${pessoaContexto})`;
   }
 
   // 7. Tabela, gráficos e módulos
@@ -420,6 +452,16 @@ function obterTransacoesFiltradas() {
   } else if (estado.filtroPeriodo === '3-meses') {
     const lim = new Date(); lim.setMonth(lim.getMonth() - 3);
     res = res.filter(t => new Date(t.data + 'T12:00:00') >= lim);
+  } else if (estado.filtroPeriodo === 'mes-especifico' && estado.dataMesEspecifico) {
+    const [ano, mes] = estado.dataMesEspecifico.split('-');
+    res = res.filter(t => {
+      const d = new Date(t.data + 'T12:00:00');
+      return d.getFullYear() === Number(ano) && d.getMonth() === (Number(mes) - 1);
+    });
+  }
+
+  if (estado.filtroPessoa && estado.filtroPessoa !== 'todos') {
+    res = res.filter(t => t.pago_por === estado.filtroPessoa);
   }
 
   if (estado.filtroMacro !== 'todas') {
