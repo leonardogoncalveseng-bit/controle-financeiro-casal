@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '4.5';
+  const APP_VERSION = '4.6';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -200,7 +200,69 @@ async function carregarDados() {
     estado.regras = reg || [];
   } catch(e) { console.warn('regras:', e.message); }
 
+  // Baixa automática de contas em cartão de crédito cujo vencimento já chegou no mês
+  await processarBaixasAutomaticasCartao();
+
   atualizarUI();
+}
+
+// Rotina para lançar no extrato despesas de cartão cujo dia de vencimento já chegou
+async function processarBaixasAutomaticasCartao() {
+  if (!supabaseClient || !estado.recorrentes || !estado.recorrentes.length) return;
+  const hojeObj = new Date();
+  const diaHoje = hojeObj.getDate();
+  const anoMesAtual = `${hojeObj.getFullYear()}-${String(hojeObj.getMonth() + 1).padStart(2, '0')}`;
+
+  let inseriuAlguma = false;
+
+  for (const r of estado.recorrentes) {
+    if (!r.ativo) continue;
+    
+    const isCartao = (r.forma_pagamento === 'cartao') || (r.empresa && r.empresa.includes('💳'));
+    if (!isCartao) continue;
+
+    // Só debita se o dia de cobrança já chegou ou passou no mês atual
+    if (diaHoje < r.dia_vencimento) continue;
+
+    // Verifica se já existe lançamento deste mês no extrato
+    const jaRegistrado = estado.transacoes && estado.transacoes.some(t => {
+      if (!t.data || !t.data.startsWith(anoMesAtual)) return false;
+      return t.descricao && t.descricao.includes(r.nome);
+    });
+
+    if (jaRegistrado) continue;
+
+    // Lança automaticamente no extrato
+    const [macro, micro] = (r.categoria_macro || '10.0 Outros').split(' — ');
+    const macroFinal = macro || '10.0 Outros';
+
+    let catId = null;
+    const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', macroFinal).maybeSingle();
+    if (ex) { catId = ex.id; }
+    else {
+      const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macroFinal, icone: '📌' }]).select('id').single();
+      if (nv) catId = nv.id;
+    }
+
+    const prefixo = micro ? `[${micro}]` : '[Conta Fixa]';
+    const descFinal = `${prefixo} ${r.nome}${r.empresa ? ` (${r.empresa})` : ''}`;
+    const dataCobranca = `${anoMesAtual}-${String(Math.min(r.dia_vencimento, 28)).padStart(2, '0')}`;
+
+    await supabaseClient.from('transacoes').insert([{
+      descricao: descFinal,
+      valor: Number(r.valor) || 0,
+      pago_por: r.responsavel === 'Ela' ? 'Ela' : 'Ele',
+      categoria_id: catId,
+      data: dataCobranca
+    }]);
+
+    inseriuAlguma = true;
+  }
+
+  if (inseriuAlguma) {
+    const { data: trans } = await supabaseClient.from('transacoes').select('*, categoria:categorias(nome)');
+    estado.transacoes = trans || [];
+  }
 }
 
 function mostrarErroRecorrentes(msg) {
@@ -775,18 +837,54 @@ function atualizarRecorrentes() {
     return;
   }
 
-  const hoje = new Date().getDate();
+  const hojeDate = new Date();
+  const hoje = hojeDate.getDate();
+  const anoMesAtual = `${hojeDate.getFullYear()}-${String(hojeDate.getMonth() + 1).padStart(2, '0')}`;
+
   [...estado.recorrentes].sort((a, b) => a.dia_vencimento - b.dia_vencimento).forEach(r => {
     const tr = document.createElement('tr');
     const dias = r.dia_vencimento - hoje;
+
+    let nomeEmpresa = r.empresa || '';
+    let nomeCartao = r.cartao || '';
+    let isCartao = (r.forma_pagamento === 'cartao') || (r.empresa && r.empresa.includes('💳'));
+
+    if (r.empresa && r.empresa.includes('💳')) {
+      const match = r.empresa.match(/^(.*?)\s*—\s*💳\s*(.*)$/);
+      if (match) {
+        nomeEmpresa = match[1].trim();
+        nomeCartao = match[2].trim();
+      } else if (r.empresa.startsWith('💳')) {
+        nomeEmpresa = '';
+        nomeCartao = r.empresa.replace('💳', '').trim();
+      }
+    }
+
+    // Verifica se já foi pago ou debitado este mês
+    const jaPagoEsteMes = estado.transacoes && estado.transacoes.some(t => {
+      if (!t.data || !t.data.startsWith(anoMesAtual)) return false;
+      return t.descricao && (t.descricao.includes(r.nome) || (nomeEmpresa && t.descricao.includes(nomeEmpresa)));
+    });
+
     let statusText = '✅ Ok';
-    if (dias === 0) statusText = '🚨 Vence Hoje';
-    else if (dias > 0 && dias <= (r.dias_alerta || 3)) statusText = `⏰ Em ${dias}d`;
-    else if (dias < 0) statusText = `📌 Dia ${r.dia_vencimento}`;
+    if (jaPagoEsteMes) {
+      statusText = isCartao ? '✅ Debitado' : '✅ Pago no Mês';
+    } else if (isCartao) {
+      if (dias === 0) statusText = '⚡ Debita Hoje!';
+      else if (dias > 0) statusText = `💳 Debita em ${dias}d`;
+      else statusText = '⚡ Débito Auto';
+    } else {
+      if (dias === 0) statusText = '🚨 Vence Hoje';
+      else if (dias > 0 && dias <= (r.dias_alerta || 3)) statusText = `⏰ Em ${dias}d`;
+      else if (dias < 0) statusText = `📌 Dia ${r.dia_vencimento}`;
+    }
 
     const respTag = r.responsavel === 'Ele' ? '👨 Leo' : (r.responsavel === 'Ela' ? '👩 Giu' : '💑 Casal');
-    const empresaStr = r.empresa ? `<br><small style="color:var(--text-muted)">🏢 ${r.empresa}</small>` : '';
-    const cartaoTag = r.cartao ? `<br><small style="color:var(--accent)">💳 ${r.cartao}</small>` : (r.forma_pagamento === 'cartao' ? `<br><small style="color:var(--accent)">💳 Cartão</small>` : '');
+    const empresaStr = nomeEmpresa ? `<br><small style="color:var(--text-muted)">🏢 ${nomeEmpresa}</small>` : '';
+    const cobrancaBadge = isCartao
+      ? `<br><span class="tag" style="background:rgba(10,132,255,0.15);color:var(--accent);font-size:10px;font-weight:600;margin-top:3px;display:inline-block;padding:2px 7px;border-radius:6px;">⚡ Débito Auto • 💳 ${nomeCartao || 'Cartão'}</span>`
+      : `<br><span class="tag" style="background:rgba(255,255,255,0.06);color:var(--text-dim);font-size:10px;margin-top:3px;display:inline-block;padding:2px 7px;border-radius:6px;">📄 Boleto / Manual</span>`;
+
     const tipoTag = (r.tipo_valor || 'fixo') === 'variavel'
       ? `<span class="tag" style="background:rgba(245,158,11,0.15);color:var(--yellow)">📊 Variável</span>`
       : `<span class="tag" style="background:var(--green-dim);color:var(--green)">💰 Fixo</span>`;
@@ -798,16 +896,25 @@ function atualizarRecorrentes() {
     const macroNome = macroP.split(' ').slice(1).join(' ') || macroP;
     const microStr = microP ? `<br><small style="color:var(--text-dim)">🏷️ ${microP.split(' ').slice(1).join(' ') || microP}</small>` : '';
 
+    let acaoBtnHtml = '';
+    if (jaPagoEsteMes) {
+      acaoBtnHtml = `<span class="tag" style="background:var(--green-dim);color:var(--green);font-size:11px;padding:3px 8px;margin-right:4px;">✅ Pago</span>`;
+    } else if (isCartao) {
+      acaoBtnHtml = `<button onclick="abrirPagamentoRecorrente('${r.id}')" class="btn-ghost" style="padding:3px 8px;font-size:11px;margin-right:4px;color:var(--accent);" title="Antecipar lançamento manual se desejar">⚡ Auto</button>`;
+    } else {
+      acaoBtnHtml = `<button onclick="abrirPagamentoRecorrente('${r.id}')" class="btn-primary-sm" style="padding:4px 8px;font-size:11px;margin-right:4px;" title="Registrar Pagamento do Mês">💳 Pagar</button>`;
+    }
+
     tr.innerHTML = `
       <td>Dia ${r.dia_vencimento}</td>
-      <td><strong>${r.nome}</strong>${empresaStr}${cartaoTag}</td>
+      <td><strong>${r.nome}</strong>${empresaStr}${cobrancaBadge}</td>
       <td>${tipoTag}</td>
       <td>${respTag}</td>
       <td style="font-size:11px"><strong>${macroNome}</strong>${microStr}</td>
       <td><small>${r.dias_alerta || 3}d antes</small><br>${statusText}</td>
       <td>${valorStr}</td>
       <td style="text-align:center;white-space:nowrap;">
-        <button onclick="abrirPagamentoRecorrente('${r.id}')" class="btn-primary-sm" style="padding:4px 8px;font-size:11px;margin-right:4px;" title="Registrar Pagamento do Mês">💳 Pagar</button>
+        ${acaoBtnHtml}
         <button onclick="abrirEdicaoRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Editar">✏️</button>
         <button onclick="excluirRecorrente('${r.id}')" style="background:none;border:none;cursor:pointer;" title="Excluir">🗑️</button>
       </td>`;
