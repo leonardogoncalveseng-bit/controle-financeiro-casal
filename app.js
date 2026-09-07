@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '4.0';
+  const APP_VERSION = '4.2';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -510,9 +510,21 @@ function renderizarGraficoPie(mapaMacro, total) {
   const canvas = document.getElementById('chart-pie-categorias');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const labels = Object.keys(mapaMacro).map(k => k.split(' ').slice(1).join(' '));
-  const valores = Object.values(mapaMacro);
-  const cores = ['#38bdf8', '#f43f5e', '#10b981', '#a855f7', '#f59e0b', '#6366f1', '#ec4899', '#14b8a6', '#eab308', '#8b5cf6'];
+
+  // Ordena do maior valor para o menor valor (topo para baixo)
+  const itensOrdenados = Object.entries(mapaMacro)
+    .filter(([_, val]) => val > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  const labels = itensOrdenados.map(([k]) => {
+    const partes = k.split(' ');
+    return (partes.length > 1 && /^\d+(\.\d+)?$/.test(partes[0])) ? partes.slice(1).join(' ') : k;
+  });
+  const valores = itensOrdenados.map(([_, v]) => v);
+  const cores = ['#38bdf8', '#a855f7', '#10b981', '#ec4899', '#f43f5e', '#f59e0b', '#6366f1', '#14b8a6', '#eab308', '#8b5cf6'];
+  const backgroundColors = valores.length > 0
+    ? valores.map((_, i) => cores[i % cores.length])
+    : ['#1e293b'];
 
   if (chartPieInstance) chartPieInstance.destroy();
   chartPieInstance = new Chart(ctx, {
@@ -521,7 +533,7 @@ function renderizarGraficoPie(mapaMacro, total) {
       labels: labels.length > 0 ? labels : ['Nenhum gasto'],
       datasets: [{
         data: valores.length > 0 ? valores : [0],
-        backgroundColor: valores.length > 0 ? cores.slice(0, labels.length) : ['#1e293b'],
+        backgroundColor: backgroundColors,
         borderRadius: 4,
         borderWidth: 0
       }]
@@ -537,7 +549,7 @@ function renderizarGraficoPie(mapaMacro, total) {
         }
       },
       scales: {
-        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.08)' } },
         y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
       }
     }
