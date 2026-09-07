@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '4.3';
+  const APP_VERSION = '4.4';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -794,12 +794,16 @@ function atualizarRecorrentes() {
       ? `<span style="color:var(--yellow)">${r.valor ? fmt(r.valor) + ' est.' : '—'}</span>`
       : `<span style="color:var(--red);font-weight:600;font-family:var(--font-mono)">${fmt(r.valor)}</span>`;
 
+    const [macroP, microP] = (r.categoria_macro || '10.0 Outros').split(' — ');
+    const macroNome = macroP.split(' ').slice(1).join(' ') || macroP;
+    const microStr = microP ? `<br><small style="color:var(--text-dim)">🏷️ ${microP.split(' ').slice(1).join(' ') || microP}</small>` : '';
+
     tr.innerHTML = `
       <td>Dia ${r.dia_vencimento}</td>
       <td><strong>${r.nome}</strong>${empresaStr}${cartaoTag}</td>
       <td>${tipoTag}</td>
       <td>${respTag}</td>
-      <td style="font-size:11px">${(r.categoria_macro || '10.0 Outros').split(' ').slice(1).join(' ')}</td>
+      <td style="font-size:11px"><strong>${macroNome}</strong>${microStr}</td>
       <td><small>${r.dias_alerta || 3}d antes</small><br>${statusText}</td>
       <td>${valorStr}</td>
       <td style="text-align:center;white-space:nowrap;">
@@ -812,7 +816,7 @@ function atualizarRecorrentes() {
 }
 
 // ===================================================
-// SELETOR CASCATA: MICRO PARA LANÇAMENTO MANUAL E EDIÇÃO
+// SELETOR CASCATA: MICRO PARA LANÇAMENTO MANUAL E CONTAS FIXAS
 // ===================================================
 window.atualizarMicroGasto = function(macroVal) {
   const sel = document.getElementById('gasto-micro');
@@ -822,10 +826,30 @@ window.atualizarMicroGasto = function(macroVal) {
   sel.innerHTML = lista.map(m => `<option value="${m}">${m}</option>`).join('');
 };
 
-// inicializa micro do form de novo gasto ao carregar
+window.atualizarMicroRecorrente = function(macroVal, microSelecionado = null) {
+  const sel = document.getElementById('rec-micro');
+  if (!sel) return;
+  const chave = resolverChaveMacro(macroVal);
+  const lista = SUBCATEGORIAS_MAP[chave] || ['10.1 Diversos'];
+  sel.innerHTML = lista.map(m => `<option value="${m}">${m}</option>`).join('');
+  if (microSelecionado) sel.value = microSelecionado;
+};
+
+window.atualizarMicroRecorrenteEdicao = function(macroVal, microSelecionado = null) {
+  const sel = document.getElementById('edit-rec-micro');
+  if (!sel) return;
+  const chave = resolverChaveMacro(macroVal);
+  const lista = SUBCATEGORIAS_MAP[chave] || ['10.1 Diversos'];
+  sel.innerHTML = lista.map(m => `<option value="${m}">${m}</option>`).join('');
+  if (microSelecionado) sel.value = microSelecionado;
+};
+
+// inicializa selects de micro ao carregar
 window.addEventListener('DOMContentLoaded', () => {
   const macroEl = document.getElementById('gasto-macro');
   if (macroEl) atualizarMicroGasto(macroEl.value);
+  const recMacroEl = document.getElementById('rec-macro');
+  if (recMacroEl) atualizarMicroRecorrente(recMacroEl.value);
 });
 
 window.abrirEdicaoRecorrente = function(id) {
@@ -839,7 +863,11 @@ window.abrirEdicaoRecorrente = function(id) {
   document.getElementById('edit-rec-dia').value = r.dia_vencimento;
   document.getElementById('edit-rec-dias-alerta').value = r.dias_alerta || 3;
   document.getElementById('edit-rec-responsavel').value = r.responsavel || 'Casal';
-  document.getElementById('edit-rec-macro').value = r.categoria_macro || '8.0 Empresa / Negócios';
+  
+  const [macroP, microP] = (r.categoria_macro || '8.0 Empresa / Negócios').split(' — ');
+  document.getElementById('edit-rec-macro').value = macroP || '8.0 Empresa / Negócios';
+  atualizarMicroRecorrenteEdicao(macroP || '8.0 Empresa / Negócios', microP);
+
   document.getElementById('modal-editar-recorrente').classList.remove('hidden');
 };
 
@@ -1111,7 +1139,9 @@ function configurarEventos() {
     const dia_vencimento = parseInt(document.getElementById('edit-rec-dia').value);
     const dias_alerta = parseInt(document.getElementById('edit-rec-dias-alerta').value) || 3;
     const responsavel = document.getElementById('edit-rec-responsavel').value;
-    const categoria_macro = document.getElementById('edit-rec-macro').value;
+    const macro = document.getElementById('edit-rec-macro').value;
+    const micro = document.getElementById('edit-rec-micro')?.value || '';
+    const categoria_macro = micro ? `${macro} — ${micro}` : macro;
     if (!nome || !dia_vencimento) return alert('Preencha os campos!');
     if (supabaseClient) {
       await supabaseClient.from('gastos_recorrentes').update({ nome, empresa, tipo_valor, valor, dia_vencimento, dias_alerta, responsavel, categoria_macro }).eq('id', id);
@@ -1127,18 +1157,22 @@ function configurarEventos() {
   // Confirmar pagamento de conta fixa
   document.getElementById('btn-confirmar-pagamento-rec')?.addEventListener('click', async () => {
     const nomeConta = document.getElementById('pagar-rec-nome').value;
-    const macro     = document.getElementById('pagar-rec-macro').value;
+    const catMacroRaw = document.getElementById('pagar-rec-macro').value;
     const valor     = parseFloat(document.getElementById('pagar-rec-valor').value);
     const pago_por  = document.getElementById('pagar-rec-responsavel').value;
     if (!valor || valor <= 0) return alert('Informe o valor pago!');
 
+    const [macro, micro] = catMacroRaw.split(' — ');
+    const macroFinal = macro || catMacroRaw;
+
     if (supabaseClient) {
       let catId = null;
-      const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', macro).maybeSingle();
+      const { data: ex } = await supabaseClient.from('categorias').select('id').ilike('nome', macroFinal).maybeSingle();
       if (ex) { catId = ex.id; }
-      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macro, icone: '📌' }]).select('id').single(); if (nv) catId = nv.id; }
+      else { const { data: nv } = await supabaseClient.from('categorias').insert([{ nome: macroFinal, icone: '📌' }]).select('id').single(); if (nv) catId = nv.id; }
 
-      const descFinal = `[Conta Fixa] ${nomeConta}`;
+      const prefixo = micro ? `[${micro}]` : '[Conta Fixa]';
+      const descFinal = `${prefixo} ${nomeConta}`;
       await supabaseClient.from('transacoes').insert([{
         descricao: descFinal,
         valor: valor,
@@ -1188,26 +1222,40 @@ function configurarEventos() {
   document.getElementById('form-nova-recorrente').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nome         = document.getElementById('rec-nome').value.trim();
-    const empresa      = document.getElementById('rec-empresa').value.trim();
+    const empresaRaw   = document.getElementById('rec-empresa').value.trim();
     const tipo_valor   = document.getElementById('rec-tipo-valor').value;
     const valorRaw     = document.getElementById('rec-valor').value;
     const valor        = valorRaw ? parseFloat(valorRaw) : 0;
     const dia_vencimento = parseInt(document.getElementById('rec-dia').value);
     const dias_alerta  = parseInt(document.getElementById('rec-dias-alerta').value) || 3;
     const responsavel  = document.getElementById('rec-responsavel').value;
-    const categoria_macro = document.getElementById('rec-macro').value;
+    const macro        = document.getElementById('rec-macro').value;
+    const micro        = document.getElementById('rec-micro')?.value || '';
+    const categoria_macro = micro ? `${macro} — ${micro}` : macro;
+
+    const forma_pagamento = document.getElementById('rec-forma-pagamento')?.value || 'boleto';
+    const cartao          = document.getElementById('rec-cartao')?.value.trim() || '';
+    let empresaFinal = empresaRaw;
+    if (forma_pagamento === 'cartao') {
+      const tagCartao = cartao ? `💳 ${cartao}` : '💳 Cartão';
+      empresaFinal = empresaRaw ? `${empresaRaw} — ${tagCartao}` : tagCartao;
+    }
+
     if (!nome || !dia_vencimento) return alert('Preencha pelo menos o nome e o dia de vencimento!');
     if (supabaseClient) {
       const { error } = await supabaseClient.from('gastos_recorrentes').insert([{
-        nome, empresa, tipo_valor, valor, dia_vencimento, dias_alerta, responsavel, categoria_macro, ativo: true
+        nome, empresa: empresaFinal, tipo_valor, valor, dia_vencimento, dias_alerta, responsavel, categoria_macro, ativo: true
       }]);
       if (error) {
-        mostrarErroRecorrentes(`Erro ao salvar: ${error.message}. Execute o SQL fornecido no Supabase e tente novamente.`);
+        mostrarErroRecorrentes(`Erro ao salvar: ${error.message}.`);
         return;
       }
       carregarDados();
     }
     e.target.reset();
+    document.getElementById('rec-cartao-wrapper').style.display = 'none';
+    const recMacroEl = document.getElementById('rec-macro');
+    if (recMacroEl) atualizarMicroRecorrente(recMacroEl.value);
   });
 
   // Formulário: Novo Investimento

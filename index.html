@@ -350,20 +350,28 @@
                 <input type="text" id="rec-cartao" placeholder="Ex: Nubank, C6 Gold, Inter">
               </div>
             </div>
-            <div class="field">
-              <label>Centro de Custo Macro <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button></label>
-              <select id="rec-macro">
-                <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
-                <option value="3.0 Moradia">3.0 Moradia</option>
-                <option value="1.0 Alimentação">1.0 Alimentação</option>
-                <option value="2.0 Transporte">2.0 Transporte</option>
-                <option value="4.0 Saúde">4.0 Saúde</option>
-                <option value="5.0 Lazer">5.0 Lazer</option>
-                <option value="6.0 Educação">6.0 Educação</option>
-                <option value="7.0 Roupas &amp; Cuidados Pessoais">7.0 Roupas &amp; Cuidados Pessoais</option>
-                <option value="9.0 Doações &amp; Presentes">9.0 Doações &amp; Presentes</option>
-                <option value="10.0 Outros">10.0 Outros</option>
-              </select>
+            <div class="field-row">
+              <div class="field">
+                <label>Centro de Custo — Macro <button type="button" onclick="abrirGuiaCategorias()" class="btn-info-inline" title="Ver Guia de Centros de Custo">i</button></label>
+                <select id="rec-macro" onchange="atualizarMicroRecorrente(this.value)">
+                  <option value="1.0 Alimentação">1.0 Alimentação</option>
+                  <option value="2.0 Transporte">2.0 Transporte</option>
+                  <option value="3.0 Moradia">3.0 Moradia</option>
+                  <option value="4.0 Saúde">4.0 Saúde</option>
+                  <option value="5.0 Lazer">5.0 Lazer</option>
+                  <option value="6.0 Educação">6.0 Educação</option>
+                  <option value="7.0 Roupas &amp; Cuidados Pessoais">7.0 Roupas &amp; Cuidados Pessoais</option>
+                  <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+                  <option value="9.0 Doações &amp; Presentes">9.0 Doações &amp; Presentes</option>
+                  <option value="10.0 Outros">10.0 Outros</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Subcategoria — Micro</label>
+                <select id="rec-micro">
+                  <!-- Preenchido dinamicamente via JS -->
+                </select>
+              </div>
             </div>
             <button type="submit" class="btn-primary">Adicionar Conta Fixa</button>
           </form>
@@ -751,20 +759,26 @@
             <option value="Ela">Giu 👩</option>
           </select>
         </div>
+      </div>
+      <div class="field-row">
         <div class="field">
-          <label>Centro de Custo</label>
-          <select id="edit-rec-macro">
-            <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
-            <option value="3.0 Moradia">3.0 Moradia</option>
+          <label>Centro de Custo — Macro</label>
+          <select id="edit-rec-macro" onchange="atualizarMicroRecorrenteEdicao(this.value)">
             <option value="1.0 Alimentação">1.0 Alimentação</option>
             <option value="2.0 Transporte">2.0 Transporte</option>
+            <option value="3.0 Moradia">3.0 Moradia</option>
             <option value="4.0 Saúde">4.0 Saúde</option>
             <option value="5.0 Lazer">5.0 Lazer</option>
             <option value="6.0 Educação">6.0 Educação</option>
-            <option value="7.0 Roupas & Cuidados Pessoais">7.0 Roupas & Cuidados Pessoais</option>
-            <option value="9.0 Doações & Presentes">9.0 Doações & Presentes</option>
+            <option value="7.0 Roupas &amp; Cuidados Pessoais">7.0 Roupas &amp; Cuidados Pessoais</option>
+            <option value="8.0 Empresa / Negócios">8.0 Empresa / Negócios</option>
+            <option value="9.0 Doações &amp; Presentes">9.0 Doações &amp; Presentes</option>
             <option value="10.0 Outros">10.0 Outros</option>
           </select>
+        </div>
+        <div class="field">
+          <label>Subcategoria — Micro</label>
+          <select id="edit-rec-micro"></select>
         </div>
       </div>
       <div class="modal-btns">
@@ -837,6 +851,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.3"></script>
+  <script src="app.js?v=4.4"></script>
 </body>
 </html>
