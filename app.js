@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '4.6';
+  const APP_VERSION = '4.7';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
