@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '4.4';
+  const APP_VERSION = '4.5';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -857,7 +857,28 @@ window.abrirEdicaoRecorrente = function(id) {
   if (!r) return;
   document.getElementById('edit-rec-id').value = r.id;
   document.getElementById('edit-rec-nome').value = r.nome;
-  document.getElementById('edit-rec-empresa').value = r.empresa || '';
+
+  // Extrai nome da empresa e cartão se houver
+  let nomeEmpresaLimpa = r.empresa || '';
+  let nomeCartao = r.cartao || '';
+  let isCartao = (r.forma_pagamento === 'cartao') || (r.empresa && r.empresa.includes('💳'));
+
+  if (r.empresa && r.empresa.includes('💳')) {
+    const match = r.empresa.match(/^(.*?)\s*—\s*💳\s*(.*)$/);
+    if (match) {
+      nomeEmpresaLimpa = match[1].trim();
+      nomeCartao = match[2].trim();
+    } else if (r.empresa.startsWith('💳')) {
+      nomeEmpresaLimpa = '';
+      nomeCartao = r.empresa.replace('💳', '').trim();
+    }
+  }
+
+  document.getElementById('edit-rec-empresa').value = nomeEmpresaLimpa;
+  document.getElementById('edit-rec-forma-pagamento').value = isCartao ? 'cartao' : 'boleto';
+  document.getElementById('edit-rec-cartao').value = nomeCartao;
+  document.getElementById('edit-rec-cartao-wrapper').style.display = isCartao ? '' : 'none';
+
   document.getElementById('edit-rec-tipo-valor').value = r.tipo_valor || 'fixo';
   document.getElementById('edit-rec-valor').value = r.valor;
   document.getElementById('edit-rec-dia').value = r.dia_vencimento;
@@ -1133,7 +1154,7 @@ function configurarEventos() {
   document.getElementById('btn-salvar-rec-edicao').addEventListener('click', async () => {
     const id = document.getElementById('edit-rec-id').value;
     const nome = document.getElementById('edit-rec-nome').value.trim();
-    const empresa = document.getElementById('edit-rec-empresa').value.trim();
+    const empresaRaw = document.getElementById('edit-rec-empresa').value.trim();
     const tipo_valor = document.getElementById('edit-rec-tipo-valor').value;
     const valor = parseFloat(document.getElementById('edit-rec-valor').value);
     const dia_vencimento = parseInt(document.getElementById('edit-rec-dia').value);
@@ -1142,9 +1163,27 @@ function configurarEventos() {
     const macro = document.getElementById('edit-rec-macro').value;
     const micro = document.getElementById('edit-rec-micro')?.value || '';
     const categoria_macro = micro ? `${macro} — ${micro}` : macro;
+
+    const forma_pagamento = document.getElementById('edit-rec-forma-pagamento')?.value || 'boleto';
+    const cartao = document.getElementById('edit-rec-cartao')?.value.trim() || '';
+    let empresaFinal = empresaRaw;
+    if (forma_pagamento === 'cartao') {
+      const tagCartao = cartao ? `💳 ${cartao}` : '💳 Cartão';
+      empresaFinal = empresaRaw ? `${empresaRaw} — ${tagCartao}` : tagCartao;
+    }
+
     if (!nome || !dia_vencimento) return alert('Preencha os campos!');
     if (supabaseClient) {
-      await supabaseClient.from('gastos_recorrentes').update({ nome, empresa, tipo_valor, valor, dia_vencimento, dias_alerta, responsavel, categoria_macro }).eq('id', id);
+      await supabaseClient.from('gastos_recorrentes').update({
+        nome,
+        empresa: empresaFinal,
+        tipo_valor,
+        valor,
+        dia_vencimento,
+        dias_alerta,
+        responsavel,
+        categoria_macro
+      }).eq('id', id);
       document.getElementById('modal-editar-recorrente').classList.add('hidden');
       carregarDados();
     }
