@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '4.2';
+  const APP_VERSION = '4.3';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -550,7 +550,14 @@ function renderizarGraficoPie(mapaMacro, total) {
       },
       scales: {
         x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.08)' } },
-        y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+        y: {
+          ticks: {
+            color: '#94a3b8',
+            autoSkip: false,
+            font: { size: 12 }
+          },
+          grid: { display: false }
+        }
       }
     }
   });

@@ -441,7 +441,7 @@ body {
 .card-top h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
 .tag { font-size: 11px; background: var(--surface); color: var(--text-dim); padding: 4px 10px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
 
-.chart-wrapper { position: relative; height: 220px; width: 100%; }
+.chart-wrapper { position: relative; height: 350px; width: 100%; }
 .chart-wrapper canvas { width: 100% !important; height: 100% !important; }
 
 .tip-bar {
@@ -900,7 +900,7 @@ tr:last-child td { border-bottom: none; }
   .card-top { flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 10px; }
   .card-top h2 { font-size: 13.5px; }
 
-  .chart-wrapper { height: 250px; }
+  .chart-wrapper { height: 340px; }
 
   .field-row, .form-row-three {
     grid-template-columns: 1fr;
