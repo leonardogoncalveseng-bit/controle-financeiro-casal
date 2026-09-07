@@ -1,4 +1,4 @@
-﻿// ===================================================
+// ===================================================
 // APLICATIVO FINANCEIRO DO CASAL v2.0
 // ===================================================
 
@@ -1032,6 +1032,11 @@ function configurarEventos() {
 
   document.getElementById('filtro-categoria-macro').addEventListener('change', (e) => {
     estado.filtroMacro = e.target.value;
+    atualizarUI();
+  });
+
+  document.getElementById('filtro-pessoa').addEventListener('change', (e) => {
+    estado.filtroPessoa = e.target.value;
     atualizarUI();
   });
 
