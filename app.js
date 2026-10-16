@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '4.8';
+  const APP_VERSION = '4.9';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -206,6 +206,49 @@ async function carregarDados() {
   atualizarUI();
 }
 
+function normalizarTexto(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function transacaoCorrespondeAConta(t, c) {
+  if (!t || !t.descricao) return false;
+  const tNorm = normalizarTexto(t.descricao);
+  const nomeNorm = normalizarTexto(c.nome);
+  const empLimpa = c.empresa ? c.empresa.replace(/—.*💳.*/, '').replace(/💳.*/, '').trim() : '';
+  const empNorm = normalizarTexto(empLimpa);
+
+  // 1. O nome da conta está diretamente na descrição (ex: 'internet apto', 'total pass', 'iptu', 'energia')
+  if (nomeNorm.length >= 3 && tNorm.includes(nomeNorm)) return true;
+
+  // 2. Ou palavras-chave significativas do nome (>= 4 letras, ex: 'contador' em 'contadora')
+  const palavrasNome = nomeNorm.split(' ').filter(p => p.length >= 4);
+  const temPalavraChave = palavrasNome.some(p => tNorm.includes(p));
+
+  // 3. Empresa bate e tem palavra-chave do nome ou valor aproximado
+  if (empNorm.length >= 3 && tNorm.includes(empNorm)) {
+    if (temPalavraChave) return true;
+    if (c.valor > 0 && Math.abs(Number(t.valor) - Number(c.valor)) <= 2.00) return true;
+  }
+
+  // 4. Se bateu palavra-chave principal e valor aproximado
+  if (temPalavraChave && c.valor > 0 && Math.abs(Number(t.valor) - Number(c.valor)) <= 2.00) {
+    return true;
+  }
+
+  // 5. Caso legado: se a descrição contém [Conta Fixa] e o nome
+  if (t.descricao.includes('[Conta Fixa]') && (tNorm.includes(nomeNorm) || (empNorm && tNorm.includes(empNorm)))) {
+    return true;
+  }
+
+  return false;
+}
+
 // Rotina para lançar no extrato despesas de cartão cujo dia de vencimento já chegou
 async function processarBaixasAutomaticasCartao() {
   if (!supabaseClient || !estado.recorrentes || !estado.recorrentes.length) return;
@@ -224,10 +267,17 @@ async function processarBaixasAutomaticasCartao() {
     // Só debita se o dia de cobrança já chegou ou passou no mês atual
     if (diaHoje < r.dia_vencimento) continue;
 
-    // Verifica se já existe lançamento deste mês no extrato
+    // Verifica se já existe lançamento deste mês no extrato (ou adiantado)
     const jaRegistrado = estado.transacoes && estado.transacoes.some(t => {
-      if (!t.data || !t.data.startsWith(anoMesAtual)) return false;
-      return t.descricao && t.descricao.includes(r.nome);
+      if (!t.data) return false;
+      const noMesAtual = t.data.startsWith(anoMesAtual);
+      const bate = transacaoCorrespondeAConta(t, r);
+      if (noMesAtual && bate) return true;
+      if (r.dia_vencimento <= 10 && !noMesAtual) {
+        const d = new Date(t.data + 'T12:00:00');
+        if (d.getDate() >= 25 && bate) return true;
+      }
+      return false;
     });
 
     if (jaRegistrado) continue;
@@ -396,7 +446,8 @@ function atualizarUI() {
     const val = Number(t.valor) || 0;
     
     // Fixos vs Variáveis
-    if (t.descricao.includes('[Conta Fixa]')) {
+    const ehFixa = t.descricao.includes('[Conta Fixa]') || (estado.recorrentes && estado.recorrentes.some(r => transacaoCorrespondeAConta(t, r)));
+    if (ehFixa) {
       sumFixos += val;
     } else {
       sumVariaveis += val;
@@ -864,10 +915,17 @@ function atualizarRecorrentes() {
       }
     }
 
-    // Verifica se já foi pago ou debitado este mês
+    // Verifica se já foi pago ou debitado este mês (ou adiantado no fim do mês anterior)
     const jaPagoEsteMes = estado.transacoes && estado.transacoes.some(t => {
-      if (!t.data || !t.data.startsWith(anoMesAtual)) return false;
-      return t.descricao && (t.descricao.includes(r.nome) || (nomeEmpresa && t.descricao.includes(nomeEmpresa)));
+      if (!t.data) return false;
+      const noMesAtual = t.data.startsWith(anoMesAtual);
+      const bate = transacaoCorrespondeAConta(t, r);
+      if (noMesAtual && bate) return true;
+      if (r.dia_vencimento <= 10 && !noMesAtual) {
+        const d = new Date(t.data + 'T12:00:00');
+        if (d.getDate() >= 25 && bate) return true;
+      }
+      return false;
     });
 
     let statusText = '✅ Ok';

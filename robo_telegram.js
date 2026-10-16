@@ -93,6 +93,49 @@ bot.on('message', async (msg) => {
   }
 });
 
+function normalizarTexto(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function transacaoCorrespondeAConta(t, c) {
+  if (!t || !t.descricao) return false;
+  const tNorm = normalizarTexto(t.descricao);
+  const nomeNorm = normalizarTexto(c.nome);
+  const empLimpa = c.empresa ? c.empresa.replace(/—.*💳.*/, '').replace(/💳.*/, '').trim() : '';
+  const empNorm = normalizarTexto(empLimpa);
+
+  // 1. O nome da conta está diretamente na descrição (ex: 'internet apto', 'total pass', 'iptu', 'energia')
+  if (nomeNorm.length >= 3 && tNorm.includes(nomeNorm)) return true;
+
+  // 2. Ou palavras-chave significativas do nome (>= 4 letras, ex: 'contador' em 'contadora')
+  const palavrasNome = nomeNorm.split(' ').filter(p => p.length >= 4);
+  const temPalavraChave = palavrasNome.some(p => tNorm.includes(p));
+
+  // 3. Empresa bate e tem palavra-chave do nome ou valor aproximado
+  if (empNorm.length >= 3 && tNorm.includes(empNorm)) {
+    if (temPalavraChave) return true;
+    if (c.valor > 0 && Math.abs(Number(t.valor) - Number(c.valor)) <= 2.00) return true;
+  }
+
+  // 4. Se bateu palavra-chave principal e valor aproximado
+  if (temPalavraChave && c.valor > 0 && Math.abs(Number(t.valor) - Number(c.valor)) <= 2.00) {
+    return true;
+  }
+
+  // 5. Caso legado: se a descrição contém [Conta Fixa] e o nome
+  if (t.descricao.includes('[Conta Fixa]') && (tNorm.includes(nomeNorm) || (empNorm && tNorm.includes(empNorm)))) {
+    return true;
+  }
+
+  return false;
+}
+
 // Verificação diária de contas recorrentes (Respeita o campo dias_alerta de cada conta!)
 async function verificarContasAVencer() {
   if (!supabase || !grupoChatId) return;
@@ -105,24 +148,38 @@ async function verificarContasAVencer() {
     const hoje = hojeObj.getDate();
     const anoMesAtual = `${hojeObj.getFullYear()}-${String(hojeObj.getMonth() + 1).padStart(2, '0')}`;
     
-    // Buscar transações deste mês para checar se a conta já foi paga
-    const { data: transacoesMes } = await supabase
+    // Buscar transações dos últimos 35 dias (cobre o mês atual e pagamentos antecipados do fim do mês anterior)
+    const dataLimitePassada = new Date(hojeObj.getTime() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const { data: transacoesRecentes } = await supabase
       .from('transacoes')
-      .select('descricao')
-      .gte('data', `${anoMesAtual}-01`);
+      .select('descricao, valor, data')
+      .gte('data', dataLimitePassada);
 
     contas.forEach(c => {
       const diasRestantes = c.dia_vencimento - hoje;
       const limiteAlerta = c.dias_alerta || 3; // Padrão: 3 dias, mas configurável (ex: 10 dias)
 
       if (diasRestantes >= 0 && diasRestantes <= limiteAlerta) {
-        let empresaStr = c.empresa ? ` (${c.empresa})` : '';
-        const nomeContaFormatado = `[Conta Fixa] ${c.nome}${empresaStr}`;
-        
-        // Verifica se já foi paga neste mês
-        const jaPaga = transacoesMes && transacoesMes.some(t => t.descricao === nomeContaFormatado);
-        if (jaPaga) return; // Pula o aviso!
+        // Verifica se já foi paga neste mês ou adiantada no fim do mês anterior
+        const jaPaga = transacoesRecentes && transacoesRecentes.some(t => {
+          if (!t.data) return false;
+          const noMesAtual = t.data.startsWith(anoMesAtual);
+          const bate = transacaoCorrespondeAConta(t, c);
 
+          if (noMesAtual && bate) return true;
+
+          // Pagamento adiantado no fim do mês anterior para contas que vencem no início do mês (dia 1 a 10)
+          if (c.dia_vencimento <= 10 && !noMesAtual) {
+            const d = new Date(t.data + 'T12:00:00');
+            const diaT = d.getDate();
+            if (diaT >= 25 && bate) return true;
+          }
+          return false;
+        });
+
+        if (jaPaga) return; // Pula o aviso! Conta já paga!
+
+        let empresaStr = c.empresa ? ` (${c.empresa})` : '';
         let msgDias = diasRestantes === 0 ? 'VENCE HOJE! 🚨' : `vence em ${diasRestantes} dia(s) ⏰`;
 
         bot.sendMessage(
