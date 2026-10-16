@@ -78,33 +78,41 @@ const CENTROS_CUSTO_PADRAO = {
   'curso': { macro: '6.0 Educação', micro: '6.2 Cursos / Treinamentos' },
   'livro': { macro: '6.0 Educação', micro: '6.3 Material / Livros' },
 
-  // 7.0 ROUPAS & COMPRAS
-  'roupa': { macro: '7.0 Roupas & Compras', micro: '7.1 Vestuário' },
-  'sapato': { macro: '7.0 Roupas & Compras', micro: '7.1 Vestuário' },
-  'shopping': { macro: '7.0 Roupas & Compras', micro: '7.2 Eletrônicos / Presentes' },
+  // 7.0 ROUPAS & CUIDADOS PESSOAIS
+  'roupa': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.1 Vestuário / Calçados' },
+  'sapato': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.1 Vestuário / Calçados' },
+  'chuteira': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.1 Vestuário / Calçados' },
+  'manguito': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.1 Vestuário / Calçados' },
+  'shopping': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.4 Eletrônicos / Presentes pessoais' },
+  'barbeiro': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.2 Salão / Barbeiro' },
+  'salao': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.2 Salão / Barbeiro' },
+  'salão': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.2 Salão / Barbeiro' },
+  'cabeleireiro': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.2 Salão / Barbeiro' },
+  'cabelo': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.2 Salão / Barbeiro' },
+  'manicure': { macro: '7.0 Roupas & Cuidados Pessoais', micro: '7.3 Estética / Cosméticos' },
 
-  // 9.0 EMPRESA / NEGÓCIOS
-  'empresa': { macro: '9.0 Empresa / Negócios', micro: '9.1 Contabilidade / Contador' },
-  'contador': { macro: '9.0 Empresa / Negócios', micro: '9.1 Contabilidade / Contador' },
-  'contabilidade': { macro: '9.0 Empresa / Negócios', micro: '9.1 Contabilidade / Contador' },
-  'theos': { macro: '9.0 Empresa / Negócios', micro: '9.1 Contabilidade / Contador' },
-  'sistema': { macro: '9.0 Empresa / Negócios', micro: '9.2 Sistemas / Software' },
-  'software': { macro: '9.0 Empresa / Negócios', micro: '9.2 Sistemas / Software' },
-  'hospedagem': { macro: '9.0 Empresa / Negócios', micro: '9.2 Sistemas / Software' },
-  'das': { macro: '9.0 Empresa / Negócios', micro: '9.3 Impostos / DAS / Taxas' },
-  'cnpj': { macro: '9.0 Empresa / Negócios', micro: '9.3 Impostos / DAS / Taxas' },
+  // 8.0 EMPRESA / NEGÓCIOS
+  'empresa': { macro: '8.0 Empresa / Negócios', micro: '8.1 Contabilidade / Contador' },
+  'contador': { macro: '8.0 Empresa / Negócios', micro: '8.1 Contabilidade / Contador' },
+  'contadora': { macro: '8.0 Empresa / Negócios', micro: '8.1 Contabilidade / Contador' },
+  'contabilidade': { macro: '8.0 Empresa / Negócios', micro: '8.1 Contabilidade / Contador' },
+  'theos': { macro: '8.0 Empresa / Negócios', micro: '8.1 Contabilidade / Contador' },
+  'sistema': { macro: '8.0 Empresa / Negócios', micro: '8.2 Sistemas / Software / Hospedagem' },
+  'software': { macro: '8.0 Empresa / Negócios', micro: '8.2 Sistemas / Software / Hospedagem' },
+  'hospedagem': { macro: '8.0 Empresa / Negócios', micro: '8.2 Sistemas / Software / Hospedagem' },
+  'das': { macro: '8.0 Empresa / Negócios', micro: '8.3 Impostos / DAS / Taxas CNPJ' },
+  'cnpj': { macro: '8.0 Empresa / Negócios', micro: '8.3 Impostos / DAS / Taxas CNPJ' },
 
-  // 11.0 PETS
-  'pet': { macro: '11.0 Pets & Animais', micro: '11.1 Ração / Alimentação Pet' },
-  'racao': { macro: '11.0 Pets & Animais', micro: '11.1 Ração / Alimentação Pet' },
-  'ração': { macro: '11.0 Pets & Animais', micro: '11.1 Ração / Alimentação Pet' },
-  'veterinario': { macro: '11.0 Pets & Animais', micro: '11.2 Veterinário / Remédios' },
+  // 9.0 DOAÇÕES & PRESENTES
+  'presente': { macro: '9.0 Doações & Presentes', micro: '9.1 Presentes / Aniversários' },
+  'doacao': { macro: '9.0 Doações & Presentes', micro: '9.3 Caridade / Doações' },
+  'doação': { macro: '9.0 Doações & Presentes', micro: '9.3 Caridade / Doações' },
 
-  // 12.0 CUIDADOS PESSOAIS
-  'barbeiro': { macro: '12.0 Cuidados Pessoais', micro: '12.1 Salão / Barbeiro' },
-  'salao': { macro: '12.0 Cuidados Pessoais', micro: '12.1 Salão / Barbeiro' },
-  'salão': { macro: '12.0 Cuidados Pessoais', micro: '12.1 Salão / Barbeiro' },
-  'cabeleireiro': { macro: '12.0 Cuidados Pessoais', micro: '12.1 Salão / Barbeiro' }
+  // 10.0 OUTROS
+  'pet': { macro: '10.0 Outros', micro: '10.1 Diversos' },
+  'racao': { macro: '10.0 Outros', micro: '10.1 Diversos' },
+  'ração': { macro: '10.0 Outros', micro: '10.1 Diversos' },
+  'veterinario': { macro: '10.0 Outros', micro: '10.1 Diversos' }
 };
 
 /**
@@ -243,10 +251,10 @@ async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'El
     }
   }
 
-  // 4d. Fallback para 15.0 Outros
+  // 4d. Fallback para 10.0 Outros
   if (!macro) {
-    macro = '15.0 Outros';
-    micro = '15.1 Diversos';
+    macro = '10.0 Outros';
+    micro = '10.1 Diversos';
   }
 
   let estabelecimento = palavras.slice(1).join(' ');

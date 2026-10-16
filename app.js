@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '4.7';
+  const APP_VERSION = '4.8';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -366,7 +366,7 @@ function atualizarUI() {
   // 4. Maior/Menor macro
   const mapaMacro = {};
   filtradas.forEach(t => {
-    const nom = t.categoria ? t.categoria.nome : '10.0 Outros';
+    const nom = resolverChaveMacro(t.categoria ? t.categoria.nome : '10.0 Outros');
     mapaMacro[nom] = (mapaMacro[nom] || 0) + Number(t.valor);
   });
   let maiorMacro = '—', maiorVal = 0, menorMacro = '—', menorVal = Infinity;
@@ -527,7 +527,11 @@ function obterTransacoesFiltradas() {
   }
 
   if (estado.filtroMacro !== 'todas') {
-    res = res.filter(t => t.categoria && t.categoria.nome.toLowerCase().includes(estado.filtroMacro.toLowerCase().split(' ').slice(1).join(' ')));
+    const macroAlvo = resolverChaveMacro(estado.filtroMacro);
+    res = res.filter(t => {
+      const catNome = t.categoria ? t.categoria.nome : '10.0 Outros';
+      return resolverChaveMacro(catNome) === macroAlvo;
+    });
   }
 
   return res;
@@ -693,7 +697,7 @@ function renderizarDetalhamento(filtradas) {
 
   filtradas.forEach(t => {
     const val = Number(t.valor) || 0;
-    const macro = t.categoria ? t.categoria.nome : '10.0 Outros';
+    const macro = resolverChaveMacro(t.categoria ? t.categoria.nome : '10.0 Outros');
     
     let micro = 'Outros';
     const match = t.descricao.match(/^\[(.*?)\]/);
