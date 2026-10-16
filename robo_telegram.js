@@ -136,6 +136,24 @@ function transacaoCorrespondeAConta(t, c) {
   return false;
 }
 
+function obterDataHojeBrasil(dataBase = new Date()) {
+  try {
+    const partes = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(dataBase);
+    const ano = partes.find(p => p.type === 'year').value;
+    const mes = partes.find(p => p.type === 'month').value;
+    const dia = partes.find(p => p.type === 'day').value;
+    return `${ano}-${mes}-${dia}`;
+  } catch (e) {
+    const d = new Date(dataBase.getTime() - 3 * 3600 * 1000);
+    return d.toISOString().split('T')[0];
+  }
+}
+
 // Verificação diária de contas recorrentes (Respeita o campo dias_alerta de cada conta!)
 async function verificarContasAVencer() {
   if (!supabase || !grupoChatId) return;
@@ -144,11 +162,13 @@ async function verificarContasAVencer() {
     const { data: contas } = await supabase.from('gastos_recorrentes').select('*').eq('ativo', true);
     if (!contas || contas.length === 0) return;
 
-    const hojeObj = new Date();
-    const hoje = hojeObj.getDate();
-    const anoMesAtual = `${hojeObj.getFullYear()}-${String(hojeObj.getMonth() + 1).padStart(2, '0')}`;
+    const hojeBrasil = obterDataHojeBrasil();
+    const [anoHoje, mesHoje, diaHoje] = hojeBrasil.split('-').map(Number);
+    const hoje = diaHoje;
+    const anoMesAtual = `${anoHoje}-${String(mesHoje).padStart(2, '0')}`;
     
     // Buscar transações dos últimos 35 dias (cobre o mês atual e pagamentos antecipados do fim do mês anterior)
+    const hojeObj = new Date();
     const dataLimitePassada = new Date(hojeObj.getTime() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const { data: transacoesRecentes } = await supabase
       .from('transacoes')

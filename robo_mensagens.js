@@ -13,6 +13,24 @@ if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
 }
 
+function obterDataHojeBrasil(dataBase = new Date()) {
+  try {
+    const partes = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(dataBase);
+    const ano = partes.find(p => p.type === 'year').value;
+    const mes = partes.find(p => p.type === 'month').value;
+    const dia = partes.find(p => p.type === 'day').value;
+    return `${ano}-${mes}-${dia}`;
+  } catch (e) {
+    const d = new Date(dataBase.getTime() - 3 * 3600 * 1000);
+    return d.toISOString().split('T')[0];
+  }
+}
+
 /**
  * Tabela de Centros de Custo Hierárquicos Expandida
  */
@@ -185,7 +203,7 @@ async function processarTextoMensagemComAprendizado(texto, remetentePadrao = 'El
   }
 
   // 2. Extrair DATA RETROATIVA se informada no final (ex: 25/07)
-  let dataGasto = new Date().toISOString().split('T')[0];
+  let dataGasto = obterDataHojeBrasil();
   const tokenData = palavras[palavras.length - 1];
 
   const matchData = tokenData.match(/^(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?$/);
