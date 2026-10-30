@@ -81,7 +81,7 @@ bot.on('message', async (msg) => {
         `📅 *Data:* ${dataFormatada}\n` +
         `📁 *Centro de Custo:* ${gasto.macro}\n` +
         `  └ 🏷️ *Subcategoria:* ${gasto.micro}\n` +
-        `🏪 *Lugar:* ${gasto.descricao}\n` +
+        `📝 *Descrição:* ${gasto.descricao}\n` +
         `💰 *Valor:* R$ ${gasto.valor.toFixed(2)}\n` +
         `👤 *Pago por:* ${gasto.pago_por === 'Ele' ? 'Leo 👨' : 'Giu 👩'}\n\n` +
         `_Disponível no aplicativo!_ 📊`,

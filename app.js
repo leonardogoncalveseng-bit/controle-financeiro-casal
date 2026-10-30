@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '5.0';
+  const APP_VERSION = '5.1';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -1396,7 +1396,8 @@ function configurarEventos() {
         if (error) throw new Error(error.message);
 
         // Ensinar o robô
-        const pChave = descricao.split(/\s+/)[0].toLowerCase();
+        const fraseLimpa = descricao.trim().toLowerCase();
+        const pChave = (fraseLimpa.includes(' ') && fraseLimpa.length > 3) ? fraseLimpa : fraseLimpa.split(/\s+/)[0];
         if (pChave && pChave.length > 2) {
           const { data: rEx } = await supabaseClient.from('regras_mapeamento').select('id').ilike('palavra_chave', pChave).maybeSingle();
           if (rEx) await supabaseClient.from('regras_mapeamento').update({ categoria_macro: novaMacro, subcategoria_micro: novaMicro }).eq('id', rEx.id);
