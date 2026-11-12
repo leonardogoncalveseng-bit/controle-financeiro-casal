@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '5.1';
+  const APP_VERSION = '5.2';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -342,17 +342,10 @@ async function processarBaixasAutomaticasCartao() {
     // Só debita se o dia de cobrança já chegou ou passou no mês atual
     if (diaHoje < r.dia_vencimento) continue;
 
-    // Verifica se já existe lançamento deste mês no extrato (ou adiantado)
+    // Verifica se já existe lançamento deste mês no extrato
     const jaRegistrado = estado.transacoes && estado.transacoes.some(t => {
       if (!t.data) return false;
-      const noMesAtual = t.data.startsWith(anoMesAtual);
-      const bate = transacaoCorrespondeAConta(t, r);
-      if (noMesAtual && bate) return true;
-      if (r.dia_vencimento <= 10 && !noMesAtual) {
-        const d = new Date(t.data + 'T12:00:00');
-        if (d.getDate() >= 25 && bate) return true;
-      }
-      return false;
+      return t.data.startsWith(anoMesAtual) && transacaoCorrespondeAConta(t, r);
     });
 
     if (jaRegistrado) continue;
@@ -997,17 +990,10 @@ function atualizarRecorrentes() {
       }
     }
 
-    // Verifica se já foi pago ou debitado este mês (ou adiantado no fim do mês anterior)
+    // Verifica se já foi pago ou debitado este mês
     const jaPagoEsteMes = estado.transacoes && estado.transacoes.some(t => {
       if (!t.data) return false;
-      const noMesAtual = t.data.startsWith(anoMesAtual);
-      const bate = transacaoCorrespondeAConta(t, r);
-      if (noMesAtual && bate) return true;
-      if (r.dia_vencimento <= 10 && !noMesAtual) {
-        const d = new Date(t.data + 'T12:00:00');
-        if (d.getDate() >= 25 && bate) return true;
-      }
-      return false;
+      return t.data.startsWith(anoMesAtual) && transacaoCorrespondeAConta(t, r);
     });
 
     let statusText = '✅ Ok';
@@ -1020,7 +1006,7 @@ function atualizarRecorrentes() {
     } else {
       if (dias === 0) statusText = '🚨 Vence Hoje';
       else if (dias > 0 && dias <= (r.dias_alerta || 3)) statusText = `⏰ Em ${dias}d`;
-      else if (dias < 0) statusText = `📌 Dia ${r.dia_vencimento}`;
+      else if (dias < 0) statusText = `⚠️ Venceu dia ${r.dia_vencimento}`;
     }
 
     const respTag = r.responsavel === 'Ele' ? '👨 Leo' : (r.responsavel === 'Ela' ? '👩 Giu' : '💑 Casal');

@@ -180,21 +180,10 @@ async function verificarContasAVencer() {
       const limiteAlerta = c.dias_alerta || 3; // Padrão: 3 dias, mas configurável (ex: 10 dias)
 
       if (diasRestantes >= 0 && diasRestantes <= limiteAlerta) {
-        // Verifica se já foi paga neste mês ou adiantada no fim do mês anterior
+        // Verifica se já foi paga neste mês
         const jaPaga = transacoesRecentes && transacoesRecentes.some(t => {
           if (!t.data) return false;
-          const noMesAtual = t.data.startsWith(anoMesAtual);
-          const bate = transacaoCorrespondeAConta(t, c);
-
-          if (noMesAtual && bate) return true;
-
-          // Pagamento adiantado no fim do mês anterior para contas que vencem no início do mês (dia 1 a 10)
-          if (c.dia_vencimento <= 10 && !noMesAtual) {
-            const d = new Date(t.data + 'T12:00:00');
-            const diaT = d.getDate();
-            if (diaT >= 25 && bate) return true;
-          }
-          return false;
+          return t.data.startsWith(anoMesAtual) && transacaoCorrespondeAConta(t, c);
         });
 
         if (jaPaga) return; // Pula o aviso! Conta já paga!
