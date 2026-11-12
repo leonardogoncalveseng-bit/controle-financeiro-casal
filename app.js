@@ -104,7 +104,7 @@ let estado = {
 // INICIALIZAÇÃO
 // ===================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const APP_VERSION = '5.2';
+  const APP_VERSION = '5.3';
   fetch('version.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
@@ -602,7 +602,8 @@ function atualizarUI() {
   }
 
   // 7. Tabela, gráficos e módulos
-  preencherTabelaExtrato(filtradas);
+  const buscaAtiva = document.getElementById('input-busca-extrato')?.value || '';
+  preencherTabelaExtrato(filtradas, buscaAtiva);
   renderizarGraficoPie(mapaMacro, total);
   renderizarGraficoLinhaEvolucao();
   renderizarDetalhamento(filtradas);
@@ -882,6 +883,55 @@ function renderizarDetalhamento(filtradas) {
 // ===================================================
 // TABELA DE EXTRATO
 // ===================================================
+function atualizarTotalizadorExtrato(filtradas) {
+  const elBar = document.getElementById('extrato-total-bar');
+  const elQtd = document.getElementById('extrato-qtd-itens');
+  const elSoma = document.getElementById('extrato-total-soma');
+  const elDetalhes = document.getElementById('extrato-total-detalhes');
+  const tfoot = document.getElementById('tfoot-transacoes');
+  const tfootValor = document.getElementById('tfoot-total-valor');
+  const tfootQtd = document.getElementById('tfoot-total-qtd');
+
+  if (!elBar && !tfoot) return;
+
+  const totalGeral = filtradas.reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
+  const totalLeo = filtradas.filter(t => t.pago_por === 'Ele').reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
+  const totalGiu = filtradas.filter(t => t.pago_por === 'Ela').reduce((acc, t) => acc + (Number(t.valor) || 0), 0);
+  const count = filtradas.length;
+
+  if (elQtd) elQtd.textContent = `${count} ${count === 1 ? 'lançamento' : 'lançamentos'}`;
+  if (elSoma) elSoma.textContent = fmt(totalGeral);
+
+  if (tfoot) {
+    if (count === 0) {
+      tfoot.style.display = 'none';
+    } else {
+      tfoot.style.display = '';
+      if (tfootValor) tfootValor.textContent = fmt(totalGeral);
+      if (tfootQtd) tfootQtd.textContent = String(count);
+    }
+  }
+
+  if (elDetalhes) {
+    if (count === 0) {
+      elDetalhes.innerHTML = '';
+    } else if (totalLeo > 0 && totalGiu > 0) {
+      const pctLeo = totalGeral > 0 ? ((totalLeo / totalGeral) * 100).toFixed(0) : 0;
+      const pctGiu = totalGeral > 0 ? ((totalGiu / totalGeral) * 100).toFixed(0) : 0;
+      elDetalhes.innerHTML = `
+        <span class="extrato-pill-pessoa">👨 Leo: <strong>${fmt(totalLeo)}</strong> (${pctLeo}%)</span>
+        <span class="extrato-pill-pessoa">👩 Giu: <strong>${fmt(totalGiu)}</strong> (${pctGiu}%)</span>
+      `;
+    } else if (totalLeo > 0) {
+      elDetalhes.innerHTML = `<span class="extrato-pill-pessoa">👨 Leo: <strong>${fmt(totalLeo)}</strong> (100%)</span>`;
+    } else if (totalGiu > 0) {
+      elDetalhes.innerHTML = `<span class="extrato-pill-pessoa">👩 Giu: <strong>${fmt(totalGiu)}</strong> (100%)</span>`;
+    } else {
+      elDetalhes.innerHTML = '';
+    }
+  }
+}
+
 function preencherTabelaExtrato(lista, filtroBusca = '') {
   const tbody = document.getElementById('tbody-transacoes');
   tbody.innerHTML = '';
@@ -894,6 +944,10 @@ function preencherTabelaExtrato(lista, filtroBusca = '') {
       r.pago_por.toLowerCase().includes(t)
     );
   }
+
+  // Atualiza sempre a soma e contagem dos gastos presentes no filtro
+  atualizarTotalizadorExtrato(filtradas);
+
   if (filtradas.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum gasto encontrado.</td></tr>';
     return;

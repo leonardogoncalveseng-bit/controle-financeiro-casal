@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="style.css?v=4.3">
+  <link rel="stylesheet" href="style.css?v=5.3">
   <!-- Proteção de sessão: redireciona para login se não autenticado -->
   <script>
     if (sessionStorage.getItem('fc_logado') !== 'sim') {
@@ -276,7 +276,28 @@
             <tbody id="tbody-transacoes">
               <tr><td colspan="6" class="empty">Carregando extrato...</td></tr>
             </tbody>
+            <tfoot id="tfoot-transacoes" style="display:none;">
+              <tr>
+                <td colspan="4" style="text-align:right; font-weight:600; color:var(--text-dim);">
+                  Soma dos Gastos Filtrados (<span id="tfoot-total-qtd">0</span> itens):
+                </td>
+                <td id="tfoot-total-valor" style="color:var(--red); font-weight:700; font-family:var(--font-mono); font-size:14px; white-space:nowrap;">
+                  R$ 0,00
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
+        </div>
+
+        <!-- BARRA DE TOTALIZAÇÃO DO FILTRO (EMBAIXO DA TABELA) -->
+        <div class="extrato-total-bar" id="extrato-total-bar">
+          <div class="extrato-total-info">
+            <span class="extrato-badge-count" id="extrato-qtd-itens">0 lançamentos</span>
+            <span class="extrato-label">Total Filtrado:</span>
+            <strong class="extrato-total-destaque" id="extrato-total-soma">R$ 0,00</strong>
+          </div>
+          <div class="extrato-total-detalhes" id="extrato-total-detalhes"></div>
         </div>
       </section>
 
@@ -861,6 +882,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=5.2"></script>
+  <script src="app.js?v=5.3"></script>
 </body>
 </html>
